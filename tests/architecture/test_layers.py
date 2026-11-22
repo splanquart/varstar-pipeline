@@ -41,9 +41,7 @@ FORBIDDEN = {
 MAY_IMPORT_LEGACY = {"domain": False, "application": False, "adapters": True, "cli": True}
 
 # (importing module, imported name) — to be emptied by the end of the migration (step 8).
-TOLERATED: set[tuple[str, str]] = {
-    ("varstar.application.inventory", "varstar.qa"),   # header_checks → domain/qa at step 4
-}
+TOLERATED: set[tuple[str, str]] = set()
 
 
 def module_name(path: Path) -> str:

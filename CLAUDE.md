@@ -45,7 +45,7 @@ varstar darks-todo <dossier>           # liste des darks manquants à refaire
 pytest                                  # tests unitaires + e2e « minisky » (mini-images synthétiques)
 pytest -m siril                         # seulement les tests qui appellent le vrai siril-cli (sautés s'il est absent)
 pytest -m real_data                     # tests sur données réelles
-pytest --update-golden                  # réécrit tests/e2e/golden/ (changement voulu : l'expliquer dans le commit)
+pytest --update-golden                  # réécrit tests/e2e/golden/ et tests/snapshots/ (changement voulu : l'expliquer dans le commit)
 tools/check_coverage.sh                 # couverture par couche (ENFORCE=1 : seuils bloquants)
 python tools/compare_outputs.py capture <workdir>             # instantané de recette (sept06) → <workdir>/_baseline
 python tools/compare_outputs.py compare <workdir>/_baseline <workdir>

@@ -10,7 +10,9 @@ import copy
 import fnmatch
 import json
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
+
+import numpy as np
 
 from varstar.domain.model import Frame, Inventory, SourceScan
 
@@ -71,6 +73,7 @@ class InMemoryArtifactStore:
     def __init__(self, root: Path = Path("/work")):
         self.root = root
         self.files: dict[str, str] = {}
+        self.images: dict[str, np.ndarray] = {}
         self.writes: list[str] = []
 
     def exists(self, rel: str) -> bool:
@@ -84,10 +87,14 @@ class InMemoryArtifactStore:
         self.writes.append(rel)
 
     def write_json(self, rel: str, data: Any) -> None:
-        self.write_text(rel, json.dumps(data, indent=2, ensure_ascii=False))
+        self.write_text(rel, json.dumps(data, indent=2, ensure_ascii=False, default=str))
 
     def write_yaml(self, rel: str, data: Any) -> None:
         self.write_text(rel, json.dumps(data, default=str))   # the format does not matter to the use cases
+
+    def write_image(self, rel: str, data: np.ndarray) -> None:
+        self.images[rel] = np.asarray(data, dtype=np.float32).copy()
+        self.writes.append(rel)
 
 
 class FakeProvenance:
@@ -131,3 +138,58 @@ class RecordingInventoryReport:
     def markdown(self, inv: Inventory, qa_items: list[Any]) -> str:
         self.qa_items = qa_items
         return f"# Inventaire\n{len(inv.light_groups)} groupe(s), {len(qa_items)} contrôle(s)\n"
+
+
+class FakePixelStats:
+    """``PixelStats`` answering from tables: statistics per relative path, flats per set id, images per path.
+
+    ``stats`` maps ``frame.rel_path`` to a statistics dict (``builders.make_frame_stats``);
+    ``default`` builds the statistics of any other frame (``None``: ``KeyError``, like a missing measure).
+    """
+
+    def __init__(self, stats: dict[str, dict[str, Any]] | None = None,
+                 default: Callable[[Frame], dict[str, Any]] | None = None,
+                 flats: dict[str, np.ndarray] | None = None, images: dict[str, np.ndarray] | None = None):
+        self.stats = stats or {}
+        self.default = default
+        self.flats = flats or {}
+        self.images = {str(k): v for k, v in (images or {}).items()}
+        self.measured: list[str] = []
+        self.flat_calls: list[tuple[str, int, int, float]] = []
+
+    def frame_stats(self, frames: list[Frame], saturation: float,
+                    progress: str | None = None) -> dict[str, dict[str, Any]]:
+        out = {}
+        for f in frames:
+            self.measured.append(f.rel_path)
+            st = self.stats.get(f.rel_path)
+            if st is None:
+                if self.default is None:
+                    raise KeyError(f.rel_path)
+                st = self.default(f)
+            out[str(f.path)] = copy.deepcopy(st)
+        return out
+
+    def quick_flat(self, set_id: str, frames: list[Frame], bin_px: int, dark_level: float) -> np.ndarray:
+        self.flat_calls.append((set_id, len(frames), bin_px, dark_level))
+        flat = self.flats.get(set_id)
+        if flat is None:
+            flat = np.ones((8, 8), dtype=np.float32)
+        return (flat / np.median(flat)).astype(np.float32)
+
+    def read_image(self, path) -> np.ndarray:
+        if str(path) not in self.images:
+            raise FileNotFoundError(path)
+        return np.asarray(self.images[str(path)], dtype=np.float32).copy()
+
+
+class RecordingQAReport:
+    """``QAReport`` producing a one-line summary and remembering the reports rendered."""
+
+    def __init__(self):
+        self.rendered: list[dict[str, Any]] = []
+
+    def markdown(self, report: dict[str, Any]) -> str:
+        self.rendered.append(copy.deepcopy(report))
+        counts = {s: len(report.get(s, [])) for s in ("header", "raw", "calibrated")}
+        return f"# Contrôles qualité\n{counts}\n"

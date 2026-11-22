@@ -38,6 +38,34 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(skip)
 
 
+SNAPSHOT_DIR = Path(__file__).parent / "snapshots"
+
+
+@pytest.fixture
+def snapshot(request):
+    """``snapshot(name, text)``: compare a rendered text with tests/snapshots/<name> (or rewrite it with
+    ``--update-golden``)."""
+    import difflib
+
+    update = request.config.getoption("--update-golden")
+
+    def check(name: str, text: str) -> None:
+        path = SNAPSHOT_DIR / name
+        if update:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text, encoding="utf-8")
+            return
+        if not path.exists():
+            pytest.fail(f"instantané absent : {name} — lancer `pytest --update-golden` puis relire le diff")
+        expected = path.read_text(encoding="utf-8")
+        if text != expected:
+            delta = "".join(difflib.unified_diff(expected.splitlines(True), text.splitlines(True), name, "obtenu"))
+            pytest.fail(f"rendu différent de l'instantané {name} :\n{delta}\n"
+                        "Si le changement est voulu : `pytest --update-golden` et expliquer pourquoi dans le commit.")
+
+    return check
+
+
 @pytest.fixture
 def cfg():
     return load_config()

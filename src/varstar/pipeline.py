@@ -372,13 +372,7 @@ def run_calibrate(plan: dict[str, Any], inv: Inventory, keys: list[str], cfg: di
             errors[key] = str(exc)
     if results:
         items, rows = qa.calibrated_checks(plan, results, cfg)
-        report = qa.load_report(workdir)
-        old = {r["group"]: r for r in report.get("tables", {}).get("calibrated", [])}
-        old.update({r["group"]: r for r in rows})
-        keep = [d for d in report.get("calibrated", []) if d.get("data", {}).get("group") not in results]
-        report["calibrated"] = keep + [i.to_dict() for i in items]
-        report.setdefault("tables", {})["calibrated"] = list(old.values())
-        qa.save_report(workdir, report)
+        qa.record_calibrated(workdir, items, rows, results)
         for i in items:
             getattr(log, "error" if i.severity == "error" else "warning")(f"[{i.check}] {i.message}")
     update_provenance(workdir, "calibrate", cfg, {

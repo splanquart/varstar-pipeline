@@ -14,7 +14,7 @@ from typing import Any
 from .. import __version__
 from ..domain.inventory import adu_scale_samples, build_inventory, usable_frames
 from ..domain.model import AduScaleReading, Inventory, SensorKey
-from ..qa import header_checks
+from ..domain.qa.headers import header_checks
 from .ports import ArtifactStore, FrameSource, InventoryReport, PixelReader, ProvenanceRecorder
 
 log = logging.getLogger("varstar")

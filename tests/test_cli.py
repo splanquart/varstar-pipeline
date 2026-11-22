@@ -41,3 +41,16 @@ def test_darks_todo_command(complete_session):
     res = runner.invoke(app, ["darks-todo", str(complete_session)])
     assert res.exit_code == 0
     assert "Aucun dark manquant" in res.output
+
+
+def test_check_command(tmp_path):
+    from fitsgen import two_nights
+
+    root = two_nights(tmp_path / "Y", level2=541.0)
+    res = runner.invoke(app, ["check", str(root), "-w", str(tmp_path / "w")])
+    assert res.exit_code == 0, res.output
+    assert "P1" in res.output and "offset" in res.output
+    md = (tmp_path / "w" / "qa" / "qa.md").read_text()
+    assert "Niveau des darks par nuit" in md and "Conseil pour la prochaine séance" in md
+    res = runner.invoke(app, ["check", str(root), "-w", str(tmp_path / "w"), "--headers-only"])
+    assert res.exit_code == 0 and "[P1" not in res.output

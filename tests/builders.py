@@ -110,3 +110,47 @@ def sept06_frames() -> list[Frame]:
 def make_scan(frames: list[Frame], **kw: Any):
     from varstar.domain.model import SourceScan
     return SourceScan(Path("/raw"), frames, **kw)
+
+
+# --------------------------------------------------------------------------- pixel statistics (in memory)
+
+CORNERS = ("haut_gauche", "haut_droit", "bas_gauche", "bas_droit")
+
+
+def make_frame_stats(level: float = 500.0, sigma: float = 12.0, *, corners: float | dict[str, float] = 0.0,
+                     block_range: float = 0.0, p005: float | None = None, frac_saturated: float = 0.0,
+                     adu_scale: int = 4, corner_npix: int = 100) -> dict[str, Any]:
+    """Quick statistics of one raw frame, as ``domain.qa.pixels.frame_quick_stats`` returns them."""
+    if not isinstance(corners, dict):
+        corners = {k: float(corners) for k in CORNERS}
+    return {"median": float(level), "robust_sigma": float(sigma),
+            "p005": float(level - 3 * sigma if p005 is None else p005), "corners": corners,
+            "corner_npix": corner_npix, "block_range": float(block_range), "frac_saturated": frac_saturated,
+            "adu_scale": adu_scale, "shape": [2822, 4144]}
+
+
+def stats_for(frames, **kw: Any) -> dict[str, dict[str, Any]]:
+    """Same statistics for every frame, keyed like the ``PixelStats`` port (``str(frame.path)``)."""
+    return {str(f.path): make_frame_stats(**kw) for f in frames}
+
+
+def inventory_of(frames: list[Frame], cfg: dict[str, Any] | None = None, *, adu_scale: int | None = 4,
+                 **scan: Any) -> Inventory:
+    """Inventory built by the domain from frames in memory (ADU scale measured as ``adu_scale``)."""
+    from varstar.domain.inventory import build_inventory
+    from varstar.domain.model import AduScaleReading
+
+    readings = None if adu_scale is None else {
+        f.sensor_key: AduScaleReading(f.rel_path, scale=adu_scale) for f in frames}
+    return build_inventory(make_scan(frames, **scan), cfg or make_settings(), readings, dt.datetime(2026, 1, 1))
+
+
+def two_nights_frames(*, light_temp: float = -12.0) -> list[Frame]:
+    """In-memory twin of ``fitsgen.two_nights``: darks the nights of 02/09 and 07/09, lights both nights."""
+    return [
+        *series_frames("light/H/SESSION_sept02", LIGHT, 300, "2021-09-02T23:30:00", 3, step_s=600, filter="H"),
+        *series_frames("light/H/SESSION_sept06", LIGHT, 300, "2021-09-06T23:04:00", 3, step_s=600, filter="H",
+                       ccd_temp=light_temp),
+        *series_frames("dark/a", DARK, 300, "2021-09-02T20:00:00", 5, step_s=310),
+        *series_frames("dark/b", DARK, 300, "2021-09-07T02:00:00", 5, step_s=310),
+    ]

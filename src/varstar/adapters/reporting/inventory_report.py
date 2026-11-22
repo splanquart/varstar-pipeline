@@ -5,9 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 from ...domain.model import Inventory
-from ...qa import items_markdown
 from ..serialization import inventory_to_dict
 from .markdown import inventory_markdown
+from .qa_markdown import items_markdown
 
 
 class InventoryReportAdapter:

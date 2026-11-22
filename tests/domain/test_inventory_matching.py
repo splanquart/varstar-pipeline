@@ -5,7 +5,7 @@ import datetime as dt
 from hypothesis import given
 from hypothesis import strategies as st
 
-from builders import SENSOR, make_frame, make_scan, make_settings, sept06_frames, series_frames
+from builders import SENSOR, make_frame, make_scan, make_settings, sept06_frames, series_frames, two_nights_frames
 from varstar.domain.inventory import adu_scale_samples, build_inventory, build_sets, darks_todo, usable_frames
 from varstar.domain.model import DARK, DARKFLAT, FLAT, LIGHT, UNKNOWN, AduScaleReading, SensorKey
 
@@ -230,3 +230,17 @@ def test_build_sets_is_a_partition_independent_of_order(frames, gap_hours):
         reference = build_sets(sorted(members, key=lambda f: f.rel_path), kind, gap_hours)
         assert [sorted(f.rel_path for f in s.frames) for s in sets] == [
             sorted(f.rel_path for f in s.frames) for s in reference]
+
+
+def test_same_night_darks_only():
+    """D16: darks of the night of the lights; without any, the nearest single night (B), never a mix."""
+    frames = two_nights_frames() + series_frames("light/H/SESSION_sept12", LIGHT, 300, "2021-09-12T23:00:00", 2,
+                                                 step_s=600, filter="H")
+    by = {g.label: g for g in inventory(frames).light_groups}
+    assert by["sept02"].dark.level == "A" and [s.id for s in by["sept02"].dark.sets] == ["DARK-300s-20210902"]
+    assert by["sept06"].dark.level == "A" and [s.id for s in by["sept06"].dark.sets] == ["DARK-300s-20210907"]
+    g12 = by["sept12"]
+    assert g12.dark.level == "B" and [s.id for s in g12.dark.sets] == ["DARK-300s-20210907"]
+    assert "même nuit" in g12.dark.reasons[-1]
+    mixed = inventory(frames, make_settings(matching={"dark_same_night": False}))
+    assert len(next(g for g in mixed.light_groups if g.label == "sept12").dark.sets) == 2

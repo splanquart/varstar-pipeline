@@ -6,7 +6,9 @@ import json
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import yaml
+from astropy.io import fits
 
 
 class Workspace:
@@ -31,7 +33,12 @@ class Workspace:
         p.write_text(text, encoding="utf-8")
 
     def write_json(self, rel: str, data: Any) -> None:
-        self.write_text(rel, json.dumps(data, indent=2, ensure_ascii=False))
+        self.write_text(rel, json.dumps(data, indent=2, ensure_ascii=False, default=str))
 
     def write_yaml(self, rel: str, data: Any) -> None:
         self.write_text(rel, yaml.safe_dump(data, allow_unicode=True, sort_keys=False))
+
+    def write_image(self, rel: str, data: np.ndarray) -> None:
+        p = self.path(rel)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        fits.writeto(p, np.asarray(data, dtype=np.float32), overwrite=True)

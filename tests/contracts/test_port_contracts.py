@@ -4,14 +4,18 @@ If a fake drifts from the real behaviour, these tests fail, so the use-case test
 fakes) stay meaningful.
 """
 
+import datetime as dt
 from pathlib import Path
 
+import numpy as np
 import pytest
 
-from builders import make_frame, make_settings
-from fakes import FakeProvenance, InMemoryArtifactStore, InMemoryFrameSource
-from fitsgen import write_frame
+from builders import make_frame, make_frame_stats, make_settings
+from fakes import FakePixelReader, FakePixelStats, FakeProvenance, InMemoryArtifactStore, InMemoryFrameSource
+from fitsgen import noise, write_frame
 from varstar.adapters.discovery import FilesystemFrameSource
+from varstar.adapters.fits_io import FitsPixelReader
+from varstar.adapters.pixel_stats import PixelStatsCache
 from varstar.adapters.provenance import ProvenanceStore
 from varstar.adapters.workspace import Workspace
 from varstar.domain.headers import folder_label_from_path
@@ -90,6 +94,12 @@ def test_artifact_store_round_trips(store):
     assert isinstance(store.root, Path)
 
 
+def test_artifact_store_writes_images_and_tolerates_dates(store):
+    store.write_image("qa/flats/ratio.fits", np.ones((4, 6), dtype=np.float64))
+    store.write_json("qa/x.json", {"night": dt.date(2021, 9, 6)})
+    assert store.read_json("qa/x.json") == {"night": "2021-09-06"}
+
+
 # --------------------------------------------------------------------------- ProvenanceRecorder
 
 
@@ -118,3 +128,66 @@ def test_provenance_fingerprints(provenance, tmp_path):
     sections = ["inventory", "matching"]
     assert provenance.config_fingerprint(cfg, sections) == provenance.config_fingerprint(other_section, sections)
     assert provenance.config_fingerprint(cfg, sections) != provenance.config_fingerprint(other_matching, sections)
+
+
+# --------------------------------------------------------------------------- PixelReader
+
+
+@pytest.fixture(params=["fake", "real"])
+def pixel_reader(request, tmp_path):
+    path = write_frame(tmp_path / "a.fits", "LIGHT", 300, "2021-09-06T23:00:00", filt="H", scale=4)
+    frame = make_frame(LIGHT, rel_path="a.fits")
+    frame.path = path
+    return (FakePixelReader(4) if request.param == "fake" else FitsPixelReader()), frame
+
+
+def test_pixel_reader_adu_scale(pixel_reader):
+    reader, frame = pixel_reader
+    assert reader.adu_scale(frame) == 4
+
+
+# --------------------------------------------------------------------------- PixelStats
+
+LEVEL, SIGMA = 1000.0, 12.0
+
+
+@pytest.fixture(params=["fake", "real"])
+def pixel_stats(request, tmp_path):
+    """Three dark frames around LEVEL ADU (×4 data), and an image of the work directory."""
+    frames = []
+    for i in range(3):
+        f = make_frame(DARK, rel_path=f"dark/{i}.fits")
+        f.path = tmp_path / "raw" / f.rel_path
+        frames.append(f)
+    image = tmp_path / "work" / "calibrated" / "a.fit"
+    if request.param == "real":
+        for i, f in enumerate(frames):
+            write_frame(f.path, "DARK", 300, "2021-09-07T02:00:00", data=noise(LEVEL, SIGMA, i, shape=(64, 96)))
+        Workspace(tmp_path / "work").write_image("calibrated/a.fit", np.full((8, 8), 3.5))
+        return PixelStatsCache(tmp_path / "work", step=1), frames, image
+    stats = {f.rel_path: make_frame_stats(LEVEL, SIGMA) for f in frames}
+    return FakePixelStats(stats, images={image: np.full((8, 8), 3.5)}), frames, image
+
+
+def test_pixel_stats_frame_stats(pixel_stats):
+    pixels, frames, _ = pixel_stats
+    stats = pixels.frame_stats(frames, 65532.0)
+    assert list(stats) == [str(f.path) for f in frames]
+    for st in stats.values():
+        assert set(st) >= set(make_frame_stats())
+        assert st["median"] == pytest.approx(LEVEL, abs=2) and st["robust_sigma"] == pytest.approx(SIGMA, rel=0.15)
+        assert st["adu_scale"] == 4 and st["frac_saturated"] == 0
+
+
+def test_pixel_stats_quick_flat_is_normalised(pixel_stats):
+    pixels, frames, _ = pixel_stats
+    flat = pixels.quick_flat("FLAT-x", frames, 8, 0.0)
+    assert flat.dtype == np.float32 and flat.ndim == 2 and np.median(flat) == pytest.approx(1)
+
+
+def test_pixel_stats_read_image(pixel_stats, tmp_path):
+    pixels, _, image = pixel_stats
+    img = pixels.read_image(image)
+    assert img.dtype == np.float32 and img.shape == (8, 8) and np.all(img == 3.5)
+    with pytest.raises(FileNotFoundError):
+        pixels.read_image(tmp_path / "work" / "absent.fits")
