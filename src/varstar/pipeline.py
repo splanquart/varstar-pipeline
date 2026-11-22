@@ -252,7 +252,8 @@ def run_masters(inv: Inventory, groups: list[LightGroup], cfg: dict[str, Any], w
                                                    encoding="utf-8")
     (workdir / "masters" / "masters.md").write_text(masters_markdown(plan, workdir), encoding="utf-8")
     update_provenance(workdir, "masters", cfg, {
-        "siril_version": siril.version(), "library": str(library.root),
+        "siril_version": siril.version(), "siril_python_init_guard": siril.guard_status(),
+        "library": str(library.root),
         "masters": {mid: {"kind": m.kind, "dir": str(m.dir), "sources": m.meta["sources"],
                           "rejection": m.meta["rejection"], "n": m.meta["n_frames"]}
                     for mid, m in masters.items()},
@@ -387,6 +388,7 @@ def run_calibrate(plan: dict[str, Any], inv: Inventory, keys: list[str], cfg: di
                        "bpm": plan["groups"][k]["bpm"], "ampglow": plan["groups"][k]["ampglow"]}
                    for k in results},
         "errors": errors,
+        "siril_python_init_guard": siril.guard_status(),
     })
     return {"results": results, "errors": errors, "qa": qa.load_report(workdir).get("calibrated", [])}
 
