@@ -32,6 +32,7 @@ Construire par jalons (SPEC §10), dans l'ordre. À la fin de chaque jalon : tes
 - Les noms de fichiers N.I.N.A. contiennent des espaces (`NGC 1499`) : Siril doit travailler sur des liens symboliques aux noms sûrs.
 - Tests unitaires sur des FITS synthétiques générés par les tests (aucune dépendance au jeu réel de 15 Go). Tests d'intégration réels marqués `@pytest.mark.real_data` et désactivés par défaut.
 - Étapes idempotentes avec cache : relancer ne recalcule que ce qui a changé.
+- Problèmes repérés en chemin : issues GitHub de `splanquart/varstar-pipeline` (`gh issue create`, en français : symptôme, cause, impact, piste). Les citer par leur URL dans le code ou les tests.
 
 ## Commandes
 Disponibles : `inventory`, `check`, `darks-todo`, `run` (étapes `inventory`, `check`, `masters`, `calibrate`). Environnement : `.venv/` (installer avec `pip install -e .`). Tests Siril de bout en bout dans `tests/test_pipeline_siril.py` (sautés si `siril-cli` est absent).

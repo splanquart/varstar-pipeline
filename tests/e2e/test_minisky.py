@@ -115,7 +115,7 @@ def test_check_command(check_run, minisky):
     checks = {(i["check"], i["severity"]) for i in items}
     assert ("H1", "warning") in checks          # misfiled flat
     # The s2 darks (sensor at −5 °C) are flagged as different from the other nights. The
-    # diagnosis itself (currently "light leak") ignores CCD-TEMP: see issues/002.
+    # diagnosis itself (currently "light leak") ignores CCD-TEMP: see https://github.com/splanquart/varstar-pipeline/issues/3
     warm = [i for i in items if i["check"] in ("P1", "P2") and i["severity"] == "warning"
             and any("2021-09-10" in f for f in i["files"])]
     assert warm
