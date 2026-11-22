@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import datetime as dt
 import re
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import Any
 
 from astropy.io import fits
 
-LIGHT, DARK, FLAT, DARKFLAT, BIAS, UNKNOWN = "LIGHT", "DARK", "FLAT", "DARKFLAT", "BIAS", "UNKNOWN"
+from .domain.model import BIAS, DARK, DARKFLAT, FLAT, LIGHT, UNKNOWN, Frame, SensorKey  # noqa: F401
 
 _IMAGETYP_MAP = {
     "LIGHT": LIGHT, "SCIENCE": LIGHT, "OBJECT": LIGHT,
@@ -33,74 +32,6 @@ def normalize_imagetyp(value: Any) -> str:
     text = re.sub(r"\bFRAMES?\b", "", text)
     text = re.sub(r"[\s_\-]+", "", text)
     return _IMAGETYP_MAP.get(text, UNKNOWN)
-
-
-class SensorKey(NamedTuple):
-    instrument: str
-    gain: float | None
-    offset: float | None
-    xbin: int
-    ybin: int
-    naxis1: int
-    naxis2: int
-
-    def label(self) -> str:
-        off = "?" if self.offset is None else f"{self.offset:g}"
-        gain = "?" if self.gain is None else f"{self.gain:g}"
-        return (f"{self.instrument} | gain {gain} | offset {off} | "
-                f"bin {self.xbin}x{self.ybin} | {self.naxis1}x{self.naxis2}")
-
-
-@dataclass
-class Frame:
-    path: Path
-    rel_path: str
-    imagetyp: str
-    imagetyp_raw: str | None
-    exptime: float | None
-    gain: float | None
-    offset: float | None
-    xbin: int
-    ybin: int
-    naxis1: int
-    naxis2: int
-    bitpix: int
-    instrument: str
-    ccd_temp: float | None
-    set_temp: float | None
-    filter: str | None
-    date_obs: dt.datetime | None
-    object: str | None = None
-    ra: float | None = None
-    dec: float | None = None
-    focallen: float | None = None
-    xpixsz: float | None = None
-    egain: float | None = None
-    sitelat: float | None = None
-    sitelong: float | None = None
-    siteelev: float | None = None
-    airmass: float | None = None
-    telescope: str | None = None
-    swcreate: str | None = None
-    focpos: float | None = None
-    foctemp: float | None = None
-    centalt: float | None = None
-    cloudcvr: float | None = None
-    ambtemp: float | None = None
-    dewpoint: float | None = None
-    humidity: float | None = None
-    folder_label: str | None = None
-    issues: list[str] = field(default_factory=list)
-
-    @property
-    def sensor_key(self) -> SensorKey:
-        return SensorKey(self.instrument, self.gain, self.offset, self.xbin, self.ybin,
-                         self.naxis1, self.naxis2)
-
-    def session_date(self, offset_hours: float = -12.0) -> dt.date | None:
-        if self.date_obs is None:
-            return None
-        return (self.date_obs + dt.timedelta(hours=offset_hours)).date()
 
 
 def _num(header: fits.Header, *keys: str) -> float | None:

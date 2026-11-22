@@ -12,7 +12,8 @@ import yaml
 
 from . import __version__
 from .discovery import discover
-from .inventory import Inventory, build_inventory
+from .domain.model import Inventory
+from .inventory import build_inventory
 from .inventory_io import inventory_markdown, inventory_to_dict
 from .provenance import (code_fingerprint, config_fingerprint, files_fingerprint, read_manifest, update_provenance,
                          write_manifest)

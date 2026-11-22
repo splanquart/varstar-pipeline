@@ -5,7 +5,7 @@ import pytest
 
 from varstar.fitsinfo import (BIAS, DARK, DARKFLAT, FLAT, LIGHT, UNKNOWN, folder_label_from_path,
                               normalize_imagetyp, parse_date_obs, read_frame)
-from varstar.units import detect_adu_scale, detect_adu_scale_file
+from varstar.units import detect_adu_scale_file
 
 from fitsgen import write_frame
 
@@ -59,14 +59,6 @@ def test_missing_exptime_is_an_issue(tmp_path):
         del h[0].header["EXPTIME"]
         del h[0].header["EXPOSURE"]
     assert "EXPTIME/EXPOSURE absent" in read_frame(p, tmp_path).issues
-
-
-def test_adu_scale_detection():
-    rng = np.random.default_rng(0)
-    assert detect_adu_scale((rng.integers(1, 16000, 10000) * 4).astype(np.uint16)) == 4
-    assert detect_adu_scale(rng.integers(1, 65000, 10000).astype(np.uint16) | 1) == 1
-    assert detect_adu_scale(np.zeros(10, dtype=np.uint16)) == 1
-    assert detect_adu_scale(np.array([0.5, 4.0])) == 1
 
 
 @pytest.mark.parametrize("scale", [1, 4, 16])

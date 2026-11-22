@@ -5,8 +5,8 @@ from __future__ import annotations
 import datetime as dt
 from typing import Any
 
-from .fitsinfo import DARK, DARKFLAT, FLAT, LIGHT
-from .inventory import DarkTodo, FrameSet, Inventory, LightGroup, Match, darks_todo
+from .domain.model import DARK, DARKFLAT, FLAT, LIGHT, DarkTodo, FrameSet, Inventory, LightGroup, Match
+from .inventory import darks_todo
 
 SEVERITY_FR = {"error": "ERREUR", "warning": "Avertissement", "info": "Info"}
 

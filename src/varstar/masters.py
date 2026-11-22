@@ -22,7 +22,7 @@ from typing import Any
 import numpy as np
 from astropy.io import fits
 
-from .fitsinfo import Frame
+from .domain.model import Frame
 from .imageio import NORM_SCALE, read_adu, read_siril_output, write_mask
 from .siril import Siril, link_sequence
 

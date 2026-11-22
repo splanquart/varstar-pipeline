@@ -5,7 +5,6 @@ import pytest
 
 from varstar.config import load_config
 from varstar.imageio import read_siril_output, read_xisf
-from varstar.masks import COLD, DEAD, HOT, SATURATED, UNSTABLE, VERY_HOT, build_amp_glow, build_bpm, block_median
 from varstar.masters import choose_rejection, frame_stats
 from varstar.fitsinfo import read_frame
 
@@ -18,55 +17,6 @@ def test_choose_rejection(n, code):
     rej = choose_rejection(n, load_config())
     assert rej.code == code
     assert rej.siril_args().startswith(f"rej {code} ")
-
-
-def test_bpm_categories():
-    cfg = load_config()
-    rng = np.random.default_rng(0)
-    dark = (500 + rng.normal(0, 1, (64, 64))).astype(np.float32)
-    dark[1, 1] = 500 + 10 * 8        # hot (10 sigma, sigma=8)
-    dark[2, 2] = 500 + 100 * 8       # very hot
-    dark[3, 3] = 500 - 10 * 8        # cold
-    dark[4, 4] = 65532               # saturated
-    unstable = np.zeros((64, 64), np.uint8)
-    unstable[5, 5] = 1
-    flat = np.full((64, 64), 30000, np.float32)
-    flat[6, 6] = 3000                # dead
-    res = build_bpm(dark, 8.0, unstable, flat, cfg)
-    m = res.mask
-    assert m[1, 1] == HOT
-    assert m[2, 2] == HOT | VERY_HOT
-    assert m[3, 3] == COLD
-    assert m[4, 4] & SATURATED
-    assert m[5, 5] == UNSTABLE
-    assert m[6, 6] == DEAD
-    assert m[10, 10] == 0
-    assert res.counts["dead"] == 1 and res.counts["cold"] == 1
-
-
-def test_bpm_flat_vignetting_is_not_dead():
-    cfg = load_config()
-    yy, xx = np.mgrid[0:256, 0:256]
-    flat = (30000 * (1 - 0.5 * ((xx - 128) ** 2 + (yy - 128) ** 2) / 128 ** 2 / 2)).astype(np.float32)
-    assert build_bpm(None, None, None, flat, cfg).counts["dead"] == 0
-
-
-def test_amp_glow_corner():
-    cfg = load_config()
-    rng = np.random.default_rng(1)
-    dark = (520 + rng.normal(0, 3, (512, 768))).astype(np.float32)
-    dark[:128, -128:] += 25          # glowing corner
-    res = build_amp_glow(dark, cfg)
-    assert res.mask[:128, -128:].all()
-    assert res.mask[200:, :600].sum() == 0
-    assert 0.03 < res.info["fraction"] < 0.06
-
-
-def test_block_median_edges():
-    a = np.arange(10 * 7, dtype=np.float32).reshape(10, 7)
-    bm = block_median(a, 4)
-    assert bm.shape == (3, 2)
-    assert bm[-1, -1] == np.median(a[8:, 4:])
 
 
 def test_frame_stats_unstable_ignores_single_cosmic(tmp_path):

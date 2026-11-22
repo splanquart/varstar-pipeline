@@ -13,10 +13,11 @@ import numpy as np
 from astropy.io import fits
 
 from .calibrate import calibrate_group
-from .fitsinfo import Frame
+from .domain.model import Frame, LightGroup
 from .imageio import NORM_SCALE, XisfError, read_xisf, write_mask
-from .inventory import Inventory, LightGroup, build_inventory
-from .masks import BIT_NAMES, BIT_NAMES_FR, build_amp_glow, build_bpm
+from .domain.model import Inventory
+from .inventory import build_inventory
+from .domain.masks import BIT_NAMES, BIT_NAMES_FR, build_amp_glow, build_bpm
 from .masters import BuildContext, Library, MasterRecord, build_dark_master, build_flat_master
 from .provenance import config_fingerprint, update_provenance
 from . import qa

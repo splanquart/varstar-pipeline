@@ -25,9 +25,9 @@ from typing import Any, Iterable
 import numpy as np
 from astropy.io import fits
 
-from . import units
-from .fitsinfo import DARK, DARKFLAT, FLAT, LIGHT, Frame
-from .inventory import FrameSet, Inventory, LightGroup, _nearest_night, match_darkflats, set_night
+from .domain.units import detect_adu_scale
+from .domain.model import DARK, DARKFLAT, FLAT, LIGHT, Frame, FrameSet, Inventory, LightGroup
+from .inventory import _nearest_night, match_darkflats, set_night
 
 log = logging.getLogger("varstar")
 
@@ -335,7 +335,7 @@ def quick_stats(path: str, step: int = 4, saturation: float = 65532.0) -> dict[s
         "corner_npix": int(cy * cx),
         "block_range": max(blocks) - min(blocks),
         "frac_saturated": float(np.mean(sub >= saturation)),
-        "adu_scale": units.detect_adu_scale(ints[::step, ::step]),
+        "adu_scale": detect_adu_scale(ints[::step, ::step]),
         "shape": list(data.shape),
     }
 

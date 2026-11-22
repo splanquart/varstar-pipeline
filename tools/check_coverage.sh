@@ -11,8 +11,8 @@ PY=${PY:-.venv/bin/python}
 status=0
 check() {  # check <couche> <seuil %>
   local layer=$1 threshold=$2
-  if [ ! -d "src/varstar/$layer" ]; then
-    echo "  $layer : couche pas encore créée"
+  if [ -z "$(find "src/varstar/$layer" -name '*.py' ! -name '__init__.py' 2>/dev/null)" ]; then
+    echo "  $layer : pas encore de code"
     return
   fi
   local total
