@@ -33,3 +33,10 @@ def detect_adu_scale_file(path: Path) -> int:
         if bscale != 1 or float(bzero) != int(bzero):
             return detect_adu_scale(sample * bscale + bzero)
         return detect_adu_scale(sample.astype(np.int64) + int(bzero))
+
+
+class FitsPixelReader:
+    """``PixelReader`` on raw FITS files (read-only)."""
+
+    def adu_scale(self, frame: Frame) -> int:
+        return detect_adu_scale_file(frame.path)

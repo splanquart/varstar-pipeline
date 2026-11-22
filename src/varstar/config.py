@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import copy
-import datetime as dt
 from importlib import resources
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+from .domain.settings import optical_setup_periods  # noqa: F401  (re-exported)
 
 
 def load_defaults() -> dict[str, Any]:
@@ -39,28 +40,6 @@ def load_config(path: str | Path | None = None, overrides: dict[str, Any] | None
     if overrides:
         cfg = deep_merge(cfg, overrides)
     return cfg
-
-
-def optical_setup_periods(cfg: dict[str, Any]) -> list[tuple[dt.date, dt.date]]:
-    """Parse matching.same_optical_setup into a list of inclusive (start, end) dates."""
-    raw = cfg.get("matching", {}).get("same_optical_setup") or []
-    periods = []
-    for item in raw:
-        if not isinstance(item, (list, tuple)) or len(item) != 2:
-            raise ValueError(f"same_optical_setup : période invalide {item!r} (attendu [début, fin])")
-        start, end = (_as_date(x) for x in item)
-        if end < start:
-            start, end = end, start
-        periods.append((start, end))
-    return periods
-
-
-def _as_date(x: Any) -> dt.date:
-    if isinstance(x, dt.datetime):
-        return x.date()
-    if isinstance(x, dt.date):
-        return x
-    return dt.date.fromisoformat(str(x))
 
 
 def resolve_workdir(source: Path, cfg: dict[str, Any], workdir: str | Path | None = None) -> Path:

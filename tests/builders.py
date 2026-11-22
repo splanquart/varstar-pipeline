@@ -16,6 +16,7 @@ from varstar.domain.model import (DARK, FLAT, LIGHT, Frame, FrameSet, Inventory,
 
 T0 = dt.datetime(2021, 9, 6, 23, 0, 0)
 SENSOR = SensorKey("ASI Camera (1) (ASCO", 120.0, None, 2, 2, 4144, 2822)
+NINA_DEFAULTS = {"egain": 1.00224268436432, "xpixsz": 4.63, "focallen": 274.0}
 
 
 def make_settings(**overrides: Any) -> dict[str, Any]:
@@ -29,6 +30,8 @@ def make_frame(imagetyp: str = LIGHT, date_obs: dt.datetime = T0, *, exptime: fl
                **extra: Any) -> Frame:
     if filter == "auto":   # lights and flats get a filter, darks none
         filter = "H" if imagetyp in (LIGHT, FLAT) else None
+    for key, value in NINA_DEFAULTS.items():
+        extra.setdefault(key, value)
     stamp = f"{date_obs:%Y-%m-%d_%H-%M-%S}" if date_obs else "nodate"
     rel = rel_path or f"{imagetyp.lower()}/{stamp}_{filter or 'Dark'}_{exptime:g}s.fits"
     return Frame(path=Path("/raw") / rel, rel_path=rel, imagetyp=imagetyp, imagetyp_raw=imagetyp,
@@ -70,3 +73,40 @@ def make_inventory(groups: list[LightGroup], *, frames: list[Frame] | None = Non
     frames = frames if frames is not None else [f for g in groups for f in g.frames]
     return Inventory(Path("/raw"), cfg or make_settings(), frames, groups, sets or {}, [make_sensor_info()], [],
                      [], [], {}, dt.datetime(2026, 1, 1))
+
+
+# --------------------------------------------------------------------------- sessions (in memory)
+
+
+def series_frames(folder: str, imagetyp: str, exptime: float, start: str, n: int, *, step_s: float = 60,
+                  filter: str | None = None, **kw: Any) -> list[Frame]:
+    """In-memory twin of ``fitsgen.series``: same folders, same times, labels taken from the path."""
+    from varstar.domain.headers import folder_label_from_path
+
+    t0 = dt.datetime.fromisoformat(start)
+    out = []
+    for i in range(n):
+        t = t0 + dt.timedelta(seconds=i * step_s)
+        rel = f"{folder}/{t:%Y-%m-%d_%H-%M-%S}_{filter or 'Dark'}_{exptime:.2f}s_{i:04d}.fits"
+        out.append(make_frame(imagetyp, t, exptime=exptime, filter=filter, rel_path=rel,
+                              folder_label=folder_label_from_path(rel), **kw))
+    return out
+
+
+def sept06_frames() -> list[Frame]:
+    """In-memory twin of the ``complete_session`` fixture: one complete night, level A everywhere."""
+    from varstar.domain.model import DARKFLAT
+    return [
+        *series_frames("light/H/SESSION_sept06", LIGHT, 300, "2021-09-06T23:04:00", 3, step_s=600, filter="H"),
+        *series_frames("light/S/SESSION_sept06", LIGHT, 300, "2021-09-06T23:09:00", 3, step_s=600, filter="S"),
+        *series_frames("flat/SESSION_sept06", FLAT, 1.13, "2021-09-07T13:21:00", 3, step_s=2, filter="H"),
+        *series_frames("flat/SESSION_sept06", FLAT, 2.62, "2021-09-07T13:22:00", 3, step_s=2, filter="S"),
+        *series_frames("dark/darklight/300s", DARK, 300, "2021-09-07T02:00:00", 4, step_s=310),
+        *series_frames("dark/darkflat", DARKFLAT, 1.13, "2021-09-08T18:25:00", 3, step_s=2),
+        *series_frames("dark/darkflat", DARKFLAT, 2.62, "2021-09-07T13:28:00", 3, step_s=3),
+    ]
+
+
+def make_scan(frames: list[Frame], **kw: Any):
+    from varstar.domain.model import SourceScan
+    return SourceScan(Path("/raw"), frames, **kw)

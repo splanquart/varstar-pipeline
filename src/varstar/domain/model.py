@@ -275,3 +275,24 @@ class Inventory:
 
     def counts_by_type(self) -> Counter:
         return Counter(f.imagetyp for f in self.frames)
+
+
+@dataclass
+class SourceScan:
+    """What was found under a source folder: frames read from the headers and folder facts."""
+
+    root: Path
+    frames: list[Frame]
+    unreadable: list[str] = field(default_factory=list)   # "<relative path> (<exception>)"
+    ignored_dirs: list[str] = field(default_factory=list)
+    empty_dirs: list[str] = field(default_factory=list)
+    other_extensions: dict[str, int] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class AduScaleReading:
+    """ADU scale measured on the pixels of one sample frame (or why it could not be)."""
+
+    sample: str                 # relative path of the frame read
+    scale: int | None = None
+    error: str | None = None
