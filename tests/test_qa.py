@@ -7,7 +7,7 @@ from varstar import qa
 from varstar.cli import app
 from varstar.inventory import build_inventory
 
-from conftest import series
+from fitsgen import series
 
 SHAPE = (128, 160)
 

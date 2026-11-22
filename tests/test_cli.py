@@ -29,7 +29,7 @@ def test_inventory_command_writes_outputs_and_caches(complete_session, tmp_path)
 
 
 def test_inventory_reruns_when_files_change(complete_session, tmp_path):
-    from conftest import write_frame
+    from fitsgen import write_frame
     wd = tmp_path / "work"
     runner.invoke(app, ["inventory", str(complete_session), "-w", str(wd)])
     write_frame(complete_session / "light/H/new.fits", "LIGHT", 300, "2021-09-07T01:30:00", filt="H")

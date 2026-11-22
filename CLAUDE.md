@@ -41,6 +41,12 @@ varstar check <dossier> [--headers-only] # contrôles qualité précoces (qa/qa.
 varstar run <dossier> [-c config.yaml] # pipeline complet
 varstar run <dossier> --from photometry  # reprise à une étape
 varstar darks-todo <dossier>           # liste des darks manquants à refaire
-pytest                                  # tests unitaires
+pytest                                  # tests unitaires + e2e « minisky » (mini-images synthétiques)
+pytest -m siril                         # seulement les tests qui appellent le vrai siril-cli (sautés s'il est absent)
 pytest -m real_data                     # tests sur données réelles
+pytest --update-golden                  # réécrit tests/e2e/golden/ (changement voulu : l'expliquer dans le commit)
+tools/check_coverage.sh                 # couverture par couche (ENFORCE=1 : seuils bloquants)
+python tools/compare_outputs.py capture <workdir>             # instantané de recette (sept06) → <workdir>/_baseline
+python tools/compare_outputs.py compare <workdir>/_baseline <workdir>
 ```
+Générateurs de FITS de test : `tests/fitsgen.py` (`write_frame`, `series`) ; jeu e2e : `tests/e2e/minisky.py`.

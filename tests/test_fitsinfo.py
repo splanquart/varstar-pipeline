@@ -7,7 +7,7 @@ from varstar.fitsinfo import (BIAS, DARK, DARKFLAT, FLAT, LIGHT, UNKNOWN, folder
                               normalize_imagetyp, parse_date_obs, read_frame)
 from varstar.units import detect_adu_scale, detect_adu_scale_file
 
-from conftest import write_frame
+from fitsgen import write_frame
 
 
 @pytest.mark.parametrize("raw,expected", [

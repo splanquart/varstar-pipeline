@@ -9,7 +9,7 @@ from varstar.masks import COLD, DEAD, HOT, SATURATED, UNSTABLE, VERY_HOT, build_
 from varstar.masters import choose_rejection, frame_stats
 from varstar.fitsinfo import read_frame
 
-from conftest import write_frame
+from fitsgen import write_frame
 
 
 @pytest.mark.parametrize("n,code", [(3, "p"), (7, "p"), (8, "s"), (14, "s"), (15, "w"), (25, "w"), (26, "l"),

@@ -5,7 +5,7 @@ from varstar.config import load_config
 from varstar.discovery import discover
 from varstar.inventory import build_inventory, darks_todo, worst
 
-from conftest import series, write_frame
+from fitsgen import series, write_frame
 
 
 def levels(inv):

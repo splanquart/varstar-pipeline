@@ -10,10 +10,9 @@ from astropy.io import fits
 from varstar.config import load_config
 from varstar.pipeline import run_pipeline
 
-from conftest import series
+from fitsgen import series
 
-SIRIL = Path("/Applications/Siril.app/Contents/MacOS/siril-cli")
-pytestmark = pytest.mark.skipif(not SIRIL.exists(), reason="siril-cli absent")
+pytestmark = pytest.mark.siril
 
 SHAPE = (60, 80)
 GRAD = np.linspace(0.8, 1.2, SHAPE[1])[None, :] * np.ones(SHAPE)
