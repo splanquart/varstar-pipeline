@@ -1,0 +1,4 @@
+# Configuration NGC 1499 / 2021 — seules les valeurs qui diffèrent des défauts.
+matching:
+  same_optical_setup:
+    - [2021-09-02, 2021-09-07]   # Q1 confirmée : aucune modification optique entre sept02 et sept06

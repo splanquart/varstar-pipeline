@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "varstar"
+version = "0.1.0"
+description = "Raw N.I.N.A. frames -> calibration -> astrometry -> differential photometry -> variable star detection"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy", "scipy", "astropy", "photutils", "astroquery", "pandas",
+    "matplotlib", "pyyaml", "typer",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+varstar = "varstar.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+varstar = ["defaults.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["real_data: integration tests on the real NGC1499 dataset (disabled by default)"]
+addopts = "-m 'not real_data'"
