@@ -13,13 +13,12 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Iterable
 
-from . import units
+from .adapters.fits_io import detect_adu_scale_file, read_frame
 from .config import optical_setup_periods
 from .discovery import discover
 from .domain.model import (BIAS, DARK, DARKFLAT, FLAT, LEVELS, LIGHT, UNKNOWN, Anomaly,  # noqa: F401
                            DarkTodo, Frame, FrameSet, Inventory, LightGroup, Match, SensorInfo, SensorKey,
                            worst)
-from .fitsinfo import read_frame
 
 # --------------------------------------------------------------------------- helpers
 
@@ -303,7 +302,7 @@ def _sensor_infos(frames: list[Frame], read_pixels: bool, anomalies: list[Anomal
         if read_pixels:
             sample = sorted(lights, key=lambda f: f.rel_path)[0]
             try:
-                scale = units.detect_adu_scale_file(sample.path)
+                scale = detect_adu_scale_file(sample.path)
                 source = sample.rel_path
             except Exception as exc:  # unreadable pixels must not stop the inventory
                 anomalies.append(Anomaly("warning", "adu_scale_failed",
