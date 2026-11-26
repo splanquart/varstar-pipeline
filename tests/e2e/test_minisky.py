@@ -114,11 +114,11 @@ def test_check_command(check_run, minisky):
     items = qa["header"] + qa["raw"]
     checks = {(i["check"], i["severity"]) for i in items}
     assert ("H1", "warning") in checks          # misfiled flat
-    # The s2 darks (sensor at −5 °C) are flagged as different from the other nights. The
-    # diagnosis itself (currently "light leak") ignores CCD-TEMP: see https://github.com/splanquart/varstar-pipeline/issues/3
-    warm = [i for i in items if i["check"] in ("P1", "P2") and i["severity"] == "warning"
+    # The s2 darks (sensor at −5 °C instead of −12 °C) are a temperature change, not a light leak:
+    # https://github.com/splanquart/varstar-pipeline/issues/3
+    warm = [i for i in items if i["check"] in ("P1", "P2", "P9") and i["severity"] == "warning"
             and any("2021-09-10" in f for f in i["files"])]
-    assert warm
+    assert [i["check"] for i in warm] == ["P9"] and warm[0]["data"]["delta_temp_c"] == 7.0
     assert (wd / "qa" / "qa.md").exists()
     assert M.file_state(minisky.root) == minisky.raw_state
 

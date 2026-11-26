@@ -55,7 +55,7 @@ def frames_to_measure(inv: Inventory) -> list[Frame]:
 
 
 def raw_pixel_checks(inv: Inventory, cfg: Settings, stats: FrameStats) -> RawChecks:
-    """P1, P2, P3, P7 and P8 (unsorted, P4 is added by the caller)."""
+    """P1, P2, P3, P7, P8 and P9 (unsorted, P4 is added by the caller)."""
     q = cfg.qa
     off = offset_hours(cfg)
     sensor = inv.sensors[0] if inv.sensors else None
@@ -80,7 +80,7 @@ def raw_pixel_checks(inv: Inventory, cfg: Settings, stats: FrameStats) -> RawChe
                      "folders": s.folders})
     tables["dark_levels"] = rows
 
-    # P1 / P2 (set level): same exposure, different nights or series.
+    # P1 / P2 / P9 (set level): same exposure, different nights or series.
     jump = float(q.offset_jump_adu)
     by_exp: dict[tuple, list[FrameSet]] = defaultdict(list)
     for s in dark_sets:
@@ -111,6 +111,23 @@ def raw_pixel_checks(inv: Inventory, cfg: Settings, stats: FrameStats) -> RawChe
                     "sigma_ref_adu": round(ref_sigma, 2), "sigma_adu": round(sig, 2), "classification": kind,
                     "corner_diff_adu": round(corner_diff, 2)}
             files = [f.rel_path for s in members for f in s.frames]
+            warm = temperature_excess(ref, members, delta, cfg.matching.temp_tolerance_c)
+            if warm is not None:
+                t_ref, t_new = warm
+                data.update(classification="température", mean_ccd_temp_c=round(t_new, 2),
+                            reference_ccd_temp_c=round(t_ref, 2), delta_temp_c=round(t_new - t_ref, 2))
+                items.append(QAItem(
+                    "P9", "warning",
+                    f"darks {exp:g} s, nuit(s) du {nights_txt} : capteur à {t_new:.1f} °C contre {t_ref:.1f} °C "
+                    f"les autres nuits (ΔT = {t_new - t_ref:+.1f} °C) → niveau {delta:+.1f} ADU ({lvl:.1f} contre "
+                    f"{ref_level:.1f} ADU), bruit {sig:.2f} contre {ref_sigma:.2f} ADU : courant d'obscurité "
+                    f"{'plus fort' if delta > 0 else 'plus faible'} (température), pas une fuite de lumière ni un "
+                    "saut d'offset. Ces darks ne sont appariés qu'à des lights à la même température", files,
+                    "darks inutilisables pour les lights prises à la consigne habituelle ; s'ils étaient "
+                    "utilisés, courant d'obscurité et pixels chauds mal soustraits → résidus dans le fond",
+                    "vérifier le refroidissement (consigne SET-TEMP tenue, attente de stabilisation avant les "
+                    f"darks) et refaire ces darks à {t_ref:.0f} °C", data))
+                continue
             npix = min(stats[str(f.path)].get("corner_npix", 1) for s in members for f in s.frames)
             corner_err = ref_sigma / math.sqrt(max(npix, 1)) / math.sqrt(max(min(s.n for s in members), 1))
             nonuniform = delta > 0 and corner_diff > max(jump, 2.0, 5 * corner_err)
@@ -204,6 +221,28 @@ def raw_pixel_checks(inv: Inventory, cfg: Settings, stats: FrameStats) -> RawChe
                 "faire des darks la même nuit que les lights, offset fixé", {"raw_sky_adu": round(sky, 2)}))
     tables["raw_sky"] = sky_rows
     return RawChecks(items, tables, summaries)
+
+
+def temperature_excess(ref: list[FrameSet], members: list[FrameSet], delta_adu: float,
+                       tolerance_c: float) -> tuple[float, float] | None:
+    """(reference, member) mean CCD temperatures when they explain a dark level difference.
+
+    A warmer sensor has a stronger dark current: the excess looks like light (non uniform, shot
+    noise). The temperature explains it when the two series differ by more than ``tolerance_c``
+    (the matching tolerance) and the level moves the same way as the temperature.
+    See https://github.com/splanquart/varstar-pipeline/issues/3
+    """
+    t_ref, t_new = _mean_ccd_temp(ref), _mean_ccd_temp(members)
+    if t_ref is None or t_new is None or abs(t_new - t_ref) <= tolerance_c or delta_adu == 0:
+        return None
+    if (t_new > t_ref) != (delta_adu > 0):
+        return None
+    return t_ref, t_new
+
+
+def _mean_ccd_temp(sets: list[FrameSet]) -> float | None:
+    temps = [f.ccd_temp for s in sets for f in s.frames if f.ccd_temp is not None]
+    return float(np.mean(temps)) if temps else None
 
 
 # --------------------------------------------------------------------------- P4: successive flats
