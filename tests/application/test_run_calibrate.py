@@ -62,7 +62,7 @@ def test_run_calibrate_isolates_failures_and_runs_the_checks(env):
     said, prov = [], FakeProvenance()
     res = run_calibrate(plan, [g_ok.key, g_bad.key, "absent"], {"qa": {"calibrated_background_min_adu": 0.0}},
                         SENSOR, pixels=FakePixelStats(images=images), qa_report=RecordingQAReport(), provenance=prov,
-                        tool_status={"active": True}, progress=said.append, **env)
+                        progress=said.append, **env)
     assert list(res["results"]) == [g_ok.key]
     assert res["errors"] == {g_bad.key: "Siril a échoué",
                              "absent": "groupe absent du plan des masters (relancer l'étape masters)"}
@@ -71,7 +71,7 @@ def test_run_calibrate_isolates_failures_and_runs_the_checks(env):
     assert env["store"].read_json("qa/qa.json")["calibrated"] == res["qa"]
     record = prov.records["calibrate"]
     assert set(record["images"]) == set(g_ok.files) and record["groups"][g_ok.key]["dark"]["id"] == "d1"
-    assert record["errors"] == res["errors"] and record["siril_python_init_guard"] == {"active": True}
+    assert record["errors"] == res["errors"] and record["siril_python_init_guard"] == {"mode": "off", "active": False}
 
 
 def test_run_calibrate_without_any_result(env):

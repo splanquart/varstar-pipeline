@@ -17,6 +17,9 @@ a layer may import them except ``cli`` and ``adapters`` (temporary).
 
 Everywhere: no import of a private name (``_xxx``) from another module.
 
+Composition root: in ``cli``, only ``cli.bootstrap`` instantiates adapters, so it is the only
+``cli`` module importing ``varstar.adapters`` (pure formatting in ``adapters.reporting`` excepted).
+
 ``TOLERATED`` lists the known violations being migrated away. The list must only shrink:
 the test also fails when a tolerated violation has disappeared, so that it gets removed.
 """
@@ -39,6 +42,8 @@ FORBIDDEN = {
 }
 # Which legacy (flat) modules a layer may still import during the migration.
 MAY_IMPORT_LEGACY = {"domain": False, "application": False, "adapters": True, "cli": True}
+
+COMPOSITION_ROOTS = {"varstar.cli.bootstrap"}
 
 # (importing module, imported name) — to be emptied by the end of the migration (step 8).
 TOLERATED: set[tuple[str, str]] = set()
@@ -110,6 +115,9 @@ def violations() -> set[tuple[str, str]]:
                     found.add((module, target))
             if is_legacy(target) and not MAY_IMPORT_LEGACY[layer]:
                 found.add((module, target))
+            if layer == "cli" and module not in COMPOSITION_ROOTS and matches(target, "varstar.adapters") \
+                    and not matches(target, "varstar.adapters.reporting"):
+                found.add((module, target))
     return found
 
 
@@ -134,6 +142,11 @@ def test_checker_detects_violations(tmp_path, monkeypatch):
     (pkg / "qa.py").write_text("def _helper():\n    pass\n")
     (pkg / "domain" / "bad.py").write_text(
         "from astropy.io import fits\nfrom .. import qa\nfrom ..qa import _helper\n")
+    (pkg / "cli").mkdir()
+    (pkg / "cli" / "__init__.py").write_text("")
+    (pkg / "cli" / "app.py").write_text("from ..adapters.siril import Siril\nfrom ..adapters.reporting import md\n")
+    (pkg / "cli" / "bootstrap.py").write_text("from ..adapters.siril import Siril\n")
     monkeypatch.setattr(__import__(__name__), "PKG", pkg)
     assert violations() == {("varstar.domain.bad", "astropy.io"), ("varstar.domain.bad", "varstar.qa"),
-                            ("varstar.domain.bad", "varstar.qa._helper")}
+                            ("varstar.domain.bad", "varstar.qa._helper"),
+                            ("varstar.cli.app", "varstar.adapters.siril")}

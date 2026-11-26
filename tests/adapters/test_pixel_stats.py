@@ -98,3 +98,11 @@ def test_worker_processes_give_the_same_results(tmp_path, cfg):
     flats = frames[:3]
     assert np.array_equal(PixelStatsCache(tmp_path / "w2", step=1, processes=2).quick_flat("x", flats, 8, 0.0),
                           PixelStatsCache(tmp_path / "w1", step=1).quick_flat("x", flats, 8, 0.0))
+
+
+def test_progress_goes_to_the_reporter(tmp_path, cfg):
+    root = two_nights(tmp_path / "Y")
+    frames = build_inventory(root, cfg).calibration_sets["DARK"][0].frames
+    said = []
+    PixelStatsCache(tmp_path / "w", step=1, say=said.append).frame_stats(frames, 65532, progress="contrôles")
+    assert said == ["  contrôles : statistiques rapides de 5 image(s) brute(s) …"]

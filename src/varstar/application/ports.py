@@ -50,7 +50,13 @@ class PixelStats(Protocol):
 
 
 Progress = Callable[[str], None]
-"""Receives one-line progress messages for the user (French)."""
+"""Receives one-line progress messages for the user (French), e.g. ``Reporter.progress``."""
+
+
+class Reporter(Protocol):
+    """Where the use cases tell the user what they are doing (replaces ``print``)."""
+
+    def progress(self, message: str) -> None: ...
 
 
 class ArtifactStore(Protocol):
@@ -150,6 +156,9 @@ class Calibrator(Protocol):
 
     def calibrate(self, group: GroupPlan, outputs: dict[str, Path], sensor: CalibrationSensor) -> None:
         """Write one calibrated image per raw light (``outputs``: raw path → output path)."""
+
+    def status(self) -> dict[str, Any]:
+        """State of the tool (e.g. Siril workarounds), for provenance.json."""
 
 
 class MastersReport(Protocol):

@@ -161,7 +161,9 @@ class FakePixelStats:
 
     def __init__(self, stats: dict[str, dict[str, Any]] | None = None,
                  default: Callable[[Frame], dict[str, Any]] | None = None,
-                 flats: dict[str, np.ndarray] | None = None, images: dict[str, np.ndarray] | None = None):
+                 flats: dict[str, np.ndarray] | None = None, images: dict[str, np.ndarray] | None = None,
+                 default_image: np.ndarray | None = None):
+        self.default_image = default_image
         self.stats = stats or {}
         self.default = default
         self.flats = flats or {}
@@ -191,6 +193,8 @@ class FakePixelStats:
 
     def read_image(self, path) -> np.ndarray:
         if str(path) not in self.images:
+            if self.default_image is not None:
+                return np.asarray(self.default_image, dtype=np.float32).copy()
             raise FileNotFoundError(path)
         return np.asarray(self.images[str(path)], dtype=np.float32).copy()
 
@@ -312,6 +316,9 @@ class FakeCalibrator:
         self.failing = set(failing)
         self.calls: list[str] = []
 
+    def status(self) -> dict[str, Any]:
+        return {"mode": "off", "active": False}
+
     def calibrate(self, group: GroupPlan, outputs: dict[str, Path], sensor: CalibrationSensor) -> None:
         self.calls.append(group.key)
         if group.key in self.failing:
@@ -327,3 +334,13 @@ class RecordingMastersReport:
     def markdown(self, plan: dict[str, Any], qa_items, masks: dict[str, dict[str, Any]]) -> str:
         self.calls.append((copy.deepcopy(plan), qa_items, copy.deepcopy(masks)))
         return f"# Masters\n{len(plan['masters'])} master(s)\n"
+
+
+class RecordingReporter:
+    """``Reporter`` keeping the progress lines."""
+
+    def __init__(self):
+        self.lines: list[str] = []
+
+    def progress(self, message: str) -> None:
+        self.lines.append(message)

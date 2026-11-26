@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 from astropy.io import fits
@@ -61,11 +61,13 @@ def file_id(f: Frame) -> str:
 class PixelStatsCache:
     """``PixelStats`` on FITS files, cached under ``<workdir>/qa``."""
 
-    def __init__(self, workdir: Path, *, step: int = 4, processes: int = 1):
+    def __init__(self, workdir: Path, *, step: int = 4, processes: int = 1,
+                 say: Callable[[str], None] | None = None):
         self.dir = Path(workdir) / "qa"
         self.path = self.dir / "frame_stats.json"
         self.step = int(step)
         self.processes = max(1, int(processes))
+        self.say = say or (lambda message: None)
         self._data: dict[str, Any] | None = None
 
     @property
@@ -83,16 +85,17 @@ class PixelStatsCache:
         return self._data
 
     @classmethod
-    def from_config(cls, workdir: Path, cfg: dict[str, Any]) -> "PixelStatsCache":
+    def from_config(cls, workdir: Path, cfg: dict[str, Any],
+                    say: Callable[[str], None] | None = None) -> "PixelStatsCache":
         return cls(workdir, step=int(cfg["qa"].get("pixel_step", 4)),
-                   processes=int(cfg.get("runtime", {}).get("processes", 1)))
+                   processes=int(cfg.get("runtime", {}).get("processes", 1)), say=say)
 
     def frame_stats(self, frames: list[Frame], saturation: float,
                     progress: str | None = None) -> dict[str, dict[str, Any]]:
         todo = [f for f in frames if self.data.get(str(f.path), {}).get("id") != file_id(f)]
         if todo:
             if progress:
-                print(f"  {progress} : statistiques rapides de {len(todo)} image(s) brute(s) …", flush=True)
+                self.say(f"  {progress} : statistiques rapides de {len(todo)} image(s) brute(s) …")
             paths = [str(f.path) for f in todo]
             if self.processes > 1 and len(todo) > 4:
                 with ProcessPoolExecutor(self.processes) as ex:

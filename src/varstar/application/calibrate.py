@@ -56,7 +56,7 @@ def calibrate_group(group: GroupPlan, *, calibrator: Calibrator, source: FrameSo
 
 def run_calibrate(plan: MastersPlan, keys: list[str], cfg: dict[str, Any], sensor: CalibrationSensor, *,
                   calibrator: Calibrator, source: FrameSource, store: ArtifactStore, pixels: PixelStats,
-                  qa_report: QAReport, provenance: ProvenanceRecorder, tool_status: dict[str, Any] | None = None,
+                  qa_report: QAReport, provenance: ProvenanceRecorder,
                   progress: Progress = _silent, force: bool = False) -> dict[str, Any]:
     """Step « calibrate » for the groups ``keys`` of the plan; returns results, errors and C* findings."""
     results: dict[str, dict[str, Any]] = {}
@@ -84,7 +84,7 @@ def run_calibrate(plan: MastersPlan, keys: list[str], cfg: dict[str, Any], senso
         "groups": {k: {f: groups[k][f] for f in ("level", "dark", "flat", "darkflat", "bpm", "ampglow")}
                    for k in results} if results else {},
         "errors": errors,
-        "siril_python_init_guard": tool_status,
+        "siril_python_init_guard": calibrator.status(),
     })
     return {"results": results, "errors": errors, "qa": load_report(store).get("calibrated", [])}
 

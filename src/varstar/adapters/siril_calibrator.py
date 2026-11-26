@@ -72,6 +72,9 @@ class SirilCalibrator:
         self.siril = siril
         self.workdir = Path(workdir)
 
+    def status(self) -> dict:
+        return self.siril.guard_status()
+
     def calibrate(self, group: GroupPlan, outputs: dict[str, Path], sensor: CalibrationSensor) -> None:
         raws = [Path(p) for p in group.files]
         if group.dark is None and group.flat is None:

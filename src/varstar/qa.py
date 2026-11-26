@@ -10,6 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Iterable
 
+from .adapters.console import ConsoleReporter
 from .adapters.pixel_stats import PixelStatsCache, binned_frame, quick_stats  # noqa: F401
 from .adapters.reporting.qa_markdown import (SEVERITY_FR, QAReportAdapter, items_markdown,  # noqa: F401
                                              qa_markdown, summary_line)
@@ -23,8 +24,7 @@ from .domain.qa.model import SEVERITIES, STAGES, QAItem, report_items  # noqa: F
 from .domain.qa.pixels import flat_ratio_metrics  # noqa: F401
 
 
-def _say(message: str) -> None:
-    print(message, flush=True)
+_say = ConsoleReporter().progress
 
 
 class StatsCache(PixelStatsCache):
@@ -40,7 +40,8 @@ class StatsCache(PixelStatsCache):
 
 
 def raw_checks(inv: Inventory, cfg: dict[str, Any], workdir: Path) -> tuple[list[QAItem], dict[str, Any]]:
-    return _check.raw_checks(inv, cfg, store=Workspace(workdir), pixels=PixelStatsCache.from_config(workdir, cfg),
+    return _check.raw_checks(inv, cfg, store=Workspace(workdir),
+                             pixels=PixelStatsCache.from_config(workdir, cfg, _say),
                              progress=_say)
 
 
@@ -64,7 +65,8 @@ def record_calibrated(workdir: Path, items: list[QAItem], rows: list[dict[str, A
 
 
 def run_checks(inv: Inventory, cfg: dict[str, Any], workdir: Path, raw: bool = True) -> dict[str, Any]:
-    return _check.run_checks(inv, cfg, store=Workspace(workdir), pixels=PixelStatsCache.from_config(workdir, cfg),
+    return _check.run_checks(inv, cfg, store=Workspace(workdir),
+                             pixels=PixelStatsCache.from_config(workdir, cfg, _say),
                              report=QAReportAdapter(), raw=raw, progress=_say)
 
 

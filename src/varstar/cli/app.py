@@ -1,4 +1,8 @@
-"""Command-line interface (`varstar ...`). User-facing messages are in French."""
+"""Command-line interface (`varstar ...`). User-facing messages are in French.
+
+The use cases are reached through ``bootstrap`` (composition root); only the reporting
+adapters (pure formatting) are imported here.
+"""
 
 from __future__ import annotations
 
@@ -7,10 +11,12 @@ from typing import Optional
 
 import typer
 
-from .config import load_config, resolve_workdir
-from .inventory import build_inventory, darks_todo
-from .inventory_io import todo_markdown
-from .steps import run_inventory
+from ..adapters.reporting.markdown import todo_markdown
+from ..adapters.reporting.qa_markdown import SEVERITY_FR, summary_line
+from ..config import load_config, resolve_workdir
+from ..domain.inventory import darks_todo
+from ..domain.qa.model import report_items
+from . import bootstrap
 
 app = typer.Typer(add_completion=False, help="Pipeline de détection d'étoiles variables (N.I.N.A. → rapport).")
 
@@ -26,7 +32,7 @@ def inventory(source: Path = SourceArg, config: Optional[Path] = ConfigOpt,
     """Inventaire des fichiers et niveaux de calibration, sans aucun calcul sur les images."""
     cfg = load_config(config)
     wd = resolve_workdir(source, cfg, workdir)
-    res = run_inventory(source, cfg, wd, force=force)
+    res = bootstrap.run_inventory(source, cfg, wd, force=force)
     data = res.data
     if res.skipped:
         typer.echo("Inventaire inchangé depuis la dernière exécution (utiliser --force pour recalculer).")
@@ -49,16 +55,13 @@ def run(source: Path = SourceArg, config: Optional[Path] = ConfigOpt, workdir: O
         filters: Optional[str] = typer.Option(None, "--filters", help="ex. H,S"),
         force: bool = typer.Option(False, "--force", help="Ignorer les caches de l'espace de travail")) -> None:
     """Pipeline complet (étapes disponibles : inventory, check, masters, calibrate)."""
-    from .pipeline import PipelineError, run_pipeline
-    from .siril import SirilError
-
     cfg = load_config(config)
     wd = resolve_workdir(source, cfg, workdir)
     split = lambda s: [x.strip() for x in s.split(",") if x.strip()] if s else None  # noqa: E731
     typer.echo(f"Dossier de travail : {wd}")
     try:
-        summary = run_pipeline(source, cfg, wd, from_step, split(sessions), split(filters), force=force)
-    except (PipelineError, SirilError) as exc:
+        summary = bootstrap.run_pipeline(source, cfg, wd, from_step, split(sessions), split(filters), force=force)
+    except bootstrap.USER_ERRORS as exc:
         typer.echo(f"ERREUR : {exc}", err=True)
         raise typer.Exit(1)
     plan = summary["plan"]
@@ -88,16 +91,10 @@ def run(source: Path = SourceArg, config: Optional[Path] = ConfigOpt, workdir: O
 def check(source: Path = SourceArg, config: Optional[Path] = ConfigOpt, workdir: Optional[Path] = WorkdirOpt,
           headers_only: bool = typer.Option(False, "--headers-only", help="En-têtes seulement (aucun pixel lu)")) -> None:
     """Contrôles qualité précoces (en-têtes + pixels bruts), à lancer dès le lendemain d'une séance."""
-    from .qa import SEVERITY_FR, all_items, run_checks, summary_line
-
     cfg = load_config(config)
     wd = resolve_workdir(source, cfg, workdir)
-    wd.mkdir(parents=True, exist_ok=True)
-    from .steps import setup_logging
-    setup_logging(wd, "check", cfg["runtime"].get("log_level", "INFO"))
-    inv = build_inventory(source, cfg, exclude=[wd])
-    report = run_checks(inv, cfg, wd, raw=not headers_only)
-    items = all_items(report, ("header",) if headers_only else ("header", "raw"))
+    report = bootstrap.run_checks(source, cfg, wd, raw=not headers_only)
+    items = report_items(report, ("header",) if headers_only else ("header", "raw"))
     typer.echo(f"Contrôles qualité : {summary_line(items)}")
     for i in items:
         if i.severity != "info":
@@ -113,7 +110,7 @@ def check(source: Path = SourceArg, config: Optional[Path] = ConfigOpt, workdir:
 def darks_todo_cmd(source: Path = SourceArg, config: Optional[Path] = ConfigOpt) -> None:
     """Liste des darks (et darks de flat) manquants à refaire."""
     cfg = load_config(config)
-    inv = build_inventory(source, cfg)
+    inv = bootstrap.load_inventory(source, cfg)
     typer.echo("\n".join(todo_markdown(darks_todo(inv))))
 
 
