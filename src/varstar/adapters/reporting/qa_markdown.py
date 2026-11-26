@@ -75,7 +75,7 @@ def qa_markdown(report: dict[str, Any]) -> str:
               "| Filtre | Flat 1 | Flat 2 | Structure locale % | Forme % | Bruit % | Verdict |",
               "|---|---|---|---|---|---|---|"]
         for r in t["flat_pairs"]:
-            L.append(f"| {r['filter']} | {r['a']} ({', '.join(r['a_labels'])}) | {r['b']} ({', '.join(r['b_labels'])}) | "
+            L.append(f"| {r['filter']} | {_flat_name(r['a'], r['a_labels'])} | {_flat_name(r['b'], r['b_labels'])} | "
                      f"{r['dust_pct']:.2f} | {r['shape_pct']:.2f} | {r['noise_pct']:.2f} | {r['verdict']} |")
         L.append("")
     if t.get("calibrated"):
@@ -96,3 +96,11 @@ class QAReportAdapter:
 
     def markdown(self, report: dict[str, Any]) -> str:
         return qa_markdown(report)
+
+
+def _flat_name(set_id: str, labels: list[str]) -> str:
+    """Flat series with its session labels, without empty parentheses when it has none.
+
+    See https://github.com/splanquart/varstar-pipeline/issues/6
+    """
+    return f"{set_id} ({', '.join(labels)})" if labels else set_id

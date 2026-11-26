@@ -42,7 +42,7 @@ Rapport de deux flats normalisés. *Structure locale* : anneaux de poussière d�
 
 | Filtre | Flat 1 | Flat 2 | Structure locale % | Forme % | Bruit % | Verdict |
 |---|---|---|---|---|---|---|
-| H | FLAT-H-1 (sept06) | FLAT-H-2 () | 2.10 | 0.40 | 0.10 | poussières déplacées |
+| H | FLAT-H-1 (sept06) | FLAT-H-2 | 2.10 | 0.40 | 0.10 | poussières déplacées |
 
 ## Images calibrées (contrôles C1, C3)
 

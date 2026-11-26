@@ -40,3 +40,9 @@ def test_empty_stage_and_items_section():
     lines = items_markdown(items, "## QA")
     assert lines[0] == "## QA" and "- **P1 — avertissement** : m" in lines
     assert items_markdown([])[-2] == "Aucun problème détecté."
+
+
+def test_flat_without_session_label_has_no_empty_parentheses():
+    # https://github.com/splanquart/varstar-pipeline/issues/6
+    md = QAReportAdapter().markdown(REPORT)
+    assert "| H | FLAT-H-1 (sept06) | FLAT-H-2 | 2.10 |" in md and "()" not in md
