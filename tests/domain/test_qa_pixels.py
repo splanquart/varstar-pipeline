@@ -9,7 +9,8 @@ from hypothesis.extra.numpy import arrays
 from builders import make_frames
 from varstar.domain.model import FLAT
 from varstar.domain.qa.pixels import (ampglow_zones, bin_frame, calibrated_frame_stats, clipped_mean,
-                                      combine_quick_flat, flat_compare_frames, flat_ratio_metrics,
+                                      combine_quick_flat, flat_compare_frames, flat_ratio_block,
+                                      flat_ratio_metrics,
                                       frame_quick_stats, robust_sigma)
 
 
@@ -93,6 +94,36 @@ def test_flat_ratio_metrics():
     assert moved["dust_pct"] > 2.0
     tilted = (a * (1 + 0.05 * xx / 300)).astype(np.float32)
     assert flat_ratio_metrics(a, tilted)["shape_pct"] > 2.0
+
+
+def test_flat_ratio_block_shrinks_on_small_images():
+    # https://github.com/splanquart/varstar-pipeline/issues/2
+    assert flat_ratio_block((352, 518)) == 16            # ASI294MM bin 2, flats binned x8: unchanged
+    assert flat_ratio_block((32, 48)) == 8              # at least 4 blocks per side
+    assert flat_ratio_block((12, 400)) == 3
+    assert flat_ratio_block((8, 12)) == 0               # 64x96 binned x8: too small
+    assert flat_ratio_block((0, 0)) == 0 and flat_ratio_block((5,)) == 0
+
+
+def test_flat_ratio_metrics_on_small_images():
+    rng = np.random.default_rng(2)
+    a, b = (1 + 0.001 * rng.standard_normal((2, 32, 48))).astype(np.float32)
+    met = flat_ratio_metrics(a, b)
+    assert met["block_px"] == 8 and met["shape_pct"] < 1 and met["dust_pct"] < 1
+    assert flat_ratio_metrics(a[:8, :12], b[:8, :12]) is None
+    assert flat_ratio_metrics(np.ones((0, 0), np.float32), np.ones((0, 0), np.float32)) is None
+    with pytest.raises(ValueError, match="tailles différentes"):
+        flat_ratio_metrics(a, b[:16])
+
+
+@given(st.integers(0, 70), st.integers(0, 70))
+def test_flat_ratio_metrics_never_raises_on_any_shape(h, w):
+    a = np.ones((h, w), np.float32)
+    met = flat_ratio_metrics(a, a)
+    if min(h, w) < 12:
+        assert met is None
+    else:
+        assert met["shape_pct"] == 0 and met["dust_pct"] == 0 and 3 <= met["block_px"] <= 16
 
 
 def test_ampglow_zones_and_their_band():

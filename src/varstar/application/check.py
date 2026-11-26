@@ -17,8 +17,8 @@ from ..domain.qa.calibrated import ampglow_residual_items, calibrated_group_chec
 from ..domain.qa.headers import header_checks
 from ..domain.qa.model import QAItem, sort_items
 from ..domain.qa.pixels import ampglow_zones, calibrated_frame_stats, flat_compare_frames, flat_ratio_metrics
-from ..domain.qa.raw import (flat_comparison_series, flat_dark_level, flat_pair_check, frames_to_measure,
-                             raw_pixel_checks, saturation_adu)
+from ..domain.qa.raw import (flat_compare_failed, flat_comparison_series, flat_dark_level, flat_pair_check,
+                             flat_pair_skipped, frames_to_measure, raw_pixel_checks, saturation_adu)
 from ..domain.settings import Settings
 from .ports import ArtifactStore, PixelStats, Progress, QAReport
 
@@ -67,10 +67,24 @@ def raw_checks(inv: Inventory, cfg: Settings, *, store: ArtifactStore, pixels: P
         rows = []
         for filt, sets in flat_comparison_series(inv):
             progress(f"  contrôles : comparaison des flats {filt} ({len(sets)} séries) …")
-            flats = {s.id: pixels.quick_flat(s.id, flat_compare_frames(s.frames, max_frames), bin_px,
-                                             flat_dark_level(s, inv, cfg, res.summaries)) for s in sets}
+            # A failing check is reported (P4 error), it does not stop the run (https://github.com/splanquart/varstar-pipeline/issues/2).
+            try:
+                flats = {s.id: pixels.quick_flat(s.id, flat_compare_frames(s.frames, max_frames), bin_px,
+                                                 flat_dark_level(s, inv, cfg, res.summaries)) for s in sets}
+            except Exception as exc:
+                log.exception("comparaison des flats %s", filt)
+                items.append(flat_compare_failed(filt, sets, exc))
+                continue
             for a, b in zip(sets, sets[1:]):
-                met = flat_ratio_metrics(flats[a.id], flats[b.id])
+                try:
+                    met = flat_ratio_metrics(flats[a.id], flats[b.id])
+                except Exception as exc:
+                    log.exception("comparaison des flats %s / %s", a.id, b.id)
+                    items.append(flat_compare_failed(filt, [a, b], exc))
+                    continue
+                if met is None:
+                    items.append(flat_pair_skipped(filt, a, b, flats[a.id].shape, bin_px))
+                    continue
                 rel = f"qa/flats/ratio_{a.id}_vs_{b.id}.fits"
                 store.write_image(rel, (flats[a.id] / flats[b.id]).astype(np.float32))
                 item, row = flat_pair_check(inv, cfg, filt, a, b, met, str(store.root / rel))

@@ -258,3 +258,34 @@ def flat_pair_check(inv: Inventory, cfg: Settings, filt: str | None, a: FrameSet
          "position dans le champ, en partie absorbée par la photométrie différentielle (terme de champ)"),
         "faire des flats à chaque session sans démonter le train optique entre lights et flats ; "
         "nettoyer le filtre/capteur seulement juste avant une nouvelle série de flats", row), row
+
+
+def _flat_label(s: FrameSet) -> str:
+    return f"{s.start:%d/%m}" + (f" ({', '.join(s.folder_labels)})" if s.folder_labels else "")
+
+
+def flat_pair_skipped(filt: str | None, a: FrameSet, b: FrameSet, shape: tuple[int, ...],
+                      bin_px: int) -> QAItem:
+    """Finding when two binned flats are too small to be compared (P4 is skipped, not failed).
+
+    See https://github.com/splanquart/varstar-pipeline/issues/2
+    """
+    size = "×".join(str(n) for n in shape)
+    return QAItem(
+        "P4", "info",
+        f"flats {filt} du {_flat_label(a)} et du {_flat_label(b)} non comparés : image trop petite "
+        f"({size} px après binning ×{bin_px})",
+        [], "aucun contrôle des poussières et du vignetage entre ces flats",
+        "réduire qa.flat_compare_bin pour les petites images (recadrage, binning fort)",
+        {"filter": filt, "a": a.id, "b": b.id, "binned_shape": list(shape), "bin_px": bin_px})
+
+
+def flat_compare_failed(filt: str | None, sets: list[FrameSet], error: Exception) -> QAItem:
+    """Finding when the comparison of flats fails: the QA reports it instead of stopping the run."""
+    return QAItem(
+        "P4", "error",
+        f"comparaison des flats {filt} impossible ({', '.join(_flat_label(s) for s in sets)}) : "
+        f"{type(error).__name__} : {error}",
+        [], "aucun contrôle des poussières et du vignetage entre ces flats",
+        "signaler le problème (issue GitHub) avec le journal logs/<étape>.log ; le reste du pipeline continue",
+        {"filter": filt, "sets": [s.id for s in sets], "error": f"{type(error).__name__}: {error}"})

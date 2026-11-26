@@ -82,6 +82,40 @@ def test_flat_comparison_writes_the_ratio_and_reports_moved_dust(ports):
     assert [c[3] for c in ports["pixels"].flat_calls] == [516.0, 516.0]
 
 
+def two_flat_series():
+    frames = sept06_frames() + series_frames("flat/SESSION_sept10", FLAT, 1.13, "2021-09-10T13:00:00", 3,
+                                             step_s=2, filter="H")
+    inv = inventory_of(frames)
+    return inv, sorted((s for s in inv.calibration_sets[FLAT] if s.filter == "H"), key=lambda s: s.start)
+
+
+def test_flats_too_small_to_compare_are_reported_not_fatal(ports):
+    # https://github.com/splanquart/varstar-pipeline/issues/2: 64x96 px binned x8 crashed P4.
+    inv, (a, b) = two_flat_series()
+    ports["pixels"].flats = {a.id: np.ones((8, 12), np.float32), b.id: np.ones((8, 12), np.float32)}
+    items, tables = raw_checks(inv, inv.config, store=ports["store"], pixels=ports["pixels"])
+    (p4,) = [i for i in items if i.check == "P4"]
+    assert p4.severity == "info" and "image trop petite (8×12 px après binning ×8)" in p4.message
+    assert tables["flat_pairs"] == [] and not ports["store"].images
+
+
+def test_a_failing_flat_comparison_becomes_an_error_item(ports):
+    inv, (a, b) = two_flat_series()
+    ports["pixels"].flats = {a.id: np.ones((64, 96), np.float32), b.id: np.ones((32, 48), np.float32)}
+    items, tables = raw_checks(inv, inv.config, store=ports["store"], pixels=ports["pixels"])
+    (p4,) = [i for i in items if i.check == "P4"]
+    assert p4.severity == "error" and "ValueError" in p4.message and p4.data["sets"] == [a.id, b.id]
+    assert items[0] is p4 and tables["flat_pairs"] == []
+
+    def broken(*args):
+        raise OSError("fichier illisible")
+
+    ports["pixels"].quick_flat = broken
+    items, _ = raw_checks(inv, inv.config, store=ports["store"], pixels=ports["pixels"])
+    (p4,) = [i for i in items if i.check == "P4"]
+    assert p4.severity == "error" and "OSError : fichier illisible" in p4.message
+
+
 def test_flat_comparison_can_be_disabled(ports):
     frames = sept06_frames() + series_frames("flat/SESSION_sept10", FLAT, 1.13, "2021-09-10T13:00:00", 3,
                                              step_s=2, filter="H")

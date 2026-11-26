@@ -779,10 +779,11 @@
           "b_labels": [
             "s2"
           ],
-          "dust_pct": 0.214,
+          "block_px": 8,
+          "dust_pct": 0.233,
           "filter": "H",
-          "noise_pct": 0.175,
-          "shape_pct": 0.041,
+          "noise_pct": 0.173,
+          "shape_pct": 0.117,
           "verdict": "identiques"
         }
       ],
