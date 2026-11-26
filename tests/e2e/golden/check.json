@@ -1,0 +1,353 @@
+{
+  "exit_code": 0,
+  "qa.json": {
+    "header": [
+      {
+        "advice": "ranger les fichiers selon le type, la pose et le filtre réels",
+        "check": "H1",
+        "data": {
+          "details": [
+            "dark/oops : 1 fichier(s), type FLAT dans un dossier « dark » → classé selon l'en-tête"
+          ]
+        },
+        "files": [
+          "dark/oops/2021-09-07_06-00-08_NGC 1499_H_1.13s_120_0000.fits"
+        ],
+        "impact": "aucun (le pipeline classe par en-tête)",
+        "message": "1 fichier(s) rangé(s) dans un dossier qui contredit l'en-tête (l'en-tête fait foi)",
+        "severity": "warning"
+      },
+      {
+        "advice": "utiliser un pilote qui écrit OFFSET (pilote natif ZWO dans N.I.N.A. plutôt qu'ASCOM) et fixer l'offset dans le profil de la caméra",
+        "check": "H2",
+        "data": {},
+        "files": [],
+        "impact": "un dark d'offset différent décale tout le fond calibré (retiré en grande partie par le fond local, mais fausse la mise à l'échelle des darks)",
+        "message": "OFFSET absent de tous les en-têtes : impossible de vérifier que darks et lights ont le même offset (seul le contrôle P1 sur les pixels peut le voir)",
+        "severity": "warning"
+      },
+      {
+        "advice": "faire au moins 15 darks par pose et par nuit",
+        "check": "H9",
+        "data": {},
+        "files": [],
+        "impact": "master dark plus bruité, rejet des cosmiques moins robuste",
+        "message": "s1 / H : 8 darks seulement (< 15) pour le master",
+        "severity": "info"
+      },
+      {
+        "advice": "faire au moins 15 flats par filtre",
+        "check": "H9",
+        "data": {},
+        "files": [],
+        "impact": "flat plus bruité",
+        "message": "s1 / H : 5 flats seulement (< 15)",
+        "severity": "info"
+      },
+      {
+        "advice": "faire au moins 15 darks par pose et par nuit",
+        "check": "H9",
+        "data": {},
+        "files": [],
+        "impact": "master dark plus bruité, rejet des cosmiques moins robuste",
+        "message": "s1 / S : 8 darks seulement (< 15) pour le master",
+        "severity": "info"
+      },
+      {
+        "advice": "faire au moins 15 flats par filtre",
+        "check": "H9",
+        "data": {},
+        "files": [],
+        "impact": "flat plus bruité",
+        "message": "s1 / S : 5 flats seulement (< 15)",
+        "severity": "info"
+      },
+      {
+        "advice": "faire au moins 15 darks par pose et par nuit",
+        "check": "H9",
+        "data": {},
+        "files": [],
+        "impact": "master dark plus bruité, rejet des cosmiques moins robuste",
+        "message": "s2 / H : 8 darks seulement (< 15) pour le master",
+        "severity": "info"
+      },
+      {
+        "advice": "faire au moins 15 flats par filtre",
+        "check": "H9",
+        "data": {},
+        "files": [],
+        "impact": "flat plus bruité",
+        "message": "s2 / H : 5 flats seulement (< 15)",
+        "severity": "info"
+      },
+      {
+        "advice": "faire au moins 15 darks par pose et par nuit",
+        "check": "H9",
+        "data": {},
+        "files": [],
+        "impact": "master dark plus bruité, rejet des cosmiques moins robuste",
+        "message": "s3 / S : 5 darks seulement (< 15) pour le master",
+        "severity": "info"
+      }
+    ],
+    "raw": [
+      {
+        "advice": "couvercle opaque, caméra recouverte, darks dans le noir complet",
+        "check": "P2",
+        "data": {
+          "classification": "lumière",
+          "corner_diff_adu": 4.58,
+          "delta_adu": 12.53,
+          "exptime": 300.0,
+          "reference_sets": [
+            "DARK-300s-20210921",
+            "DARK-300s-20210907"
+          ],
+          "sets": [
+            "DARK-300s-20210910"
+          ],
+          "sigma_adu": 9.18,
+          "sigma_ref_adu": 5.97
+        },
+        "files": [
+          "dark/darklight/300s/2021-09-10_02-00-00__Dark_300.00s_120_0000.fits",
+          "dark/darklight/300s/2021-09-10_02-05-10__Dark_300.00s_120_0001.fits",
+          "dark/darklight/300s/2021-09-10_02-10-20__Dark_300.00s_120_0002.fits",
+          "dark/darklight/300s/2021-09-10_02-15-30__Dark_300.00s_120_0003.fits",
+          "dark/darklight/300s/2021-09-10_02-20-40__Dark_300.00s_120_0004.fits"
+        ],
+        "impact": "dark trop haut → fond calibré trop bas, flux des étoiles faibles biaisés",
+        "message": "darks 300 s, nuit(s) du 09/09 (s2) : +12.5 ADU par rapport aux autres nuits (506.0 ADU), bruit 9.18 contre 5.97 ADU, excès non uniforme jusqu'à 4.6 ADU dans les coins → fuite de lumière probable",
+        "severity": "warning"
+      }
+    ],
+    "tables": {
+      "dark_levels": [
+        {
+          "exptime": 300.0,
+          "folders": [
+            "dark/darklight/300s"
+          ],
+          "kind": "DARK",
+          "level_adu": 506.4,
+          "mean_ccd_temp": -12.0,
+          "n": 8,
+          "night": "2021-09-06",
+          "set": "DARK-300s-20210907",
+          "sigma_adu": 6.05
+        },
+        {
+          "exptime": 300.0,
+          "folders": [
+            "dark/darklight/300s"
+          ],
+          "kind": "DARK",
+          "level_adu": 518.5,
+          "mean_ccd_temp": -5.0,
+          "n": 5,
+          "night": "2021-09-09",
+          "set": "DARK-300s-20210910",
+          "sigma_adu": 9.18
+        },
+        {
+          "exptime": 300.0,
+          "folders": [
+            "dark/darklight/300s"
+          ],
+          "kind": "DARK",
+          "level_adu": 505.6,
+          "mean_ccd_temp": -12.0,
+          "n": 5,
+          "night": "2021-09-20",
+          "set": "DARK-300s-20210921",
+          "sigma_adu": 5.88
+        },
+        {
+          "exptime": 1.13,
+          "folders": [
+            "dark/darkflat"
+          ],
+          "kind": "DARKFLAT",
+          "level_adu": 500.0,
+          "mean_ccd_temp": -12.0,
+          "n": 5,
+          "night": "2021-09-06",
+          "set": "DARKFLAT-1.13s-20210907",
+          "sigma_adu": 3.22
+        },
+        {
+          "exptime": 2.62,
+          "folders": [
+            "dark/darkflat"
+          ],
+          "kind": "DARKFLAT",
+          "level_adu": 499.9,
+          "mean_ccd_temp": -12.0,
+          "n": 5,
+          "night": "2021-09-06",
+          "set": "DARKFLAT-2.62s-20210907",
+          "sigma_adu": 3.26
+        }
+      ],
+      "flat_levels": [
+        {
+          "filter": "H",
+          "level_max_frac": 0.36,
+          "level_min_frac": 0.36,
+          "max_frac_saturated": 0.0,
+          "n": 5,
+          "set": "FLAT-H-1.13s-20210907"
+        },
+        {
+          "filter": "S",
+          "level_max_frac": 0.36,
+          "level_min_frac": 0.36,
+          "max_frac_saturated": 0.0,
+          "n": 5,
+          "set": "FLAT-S-2.62s-20210907"
+        },
+        {
+          "filter": "H",
+          "level_max_frac": 0.36,
+          "level_min_frac": 0.36,
+          "max_frac_saturated": 0.0,
+          "n": 5,
+          "set": "FLAT-H-1.13s-20210910"
+        }
+      ],
+      "flat_pairs": [
+        {
+          "a": "FLAT-H-1.13s-20210907",
+          "a_labels": [
+            "s1"
+          ],
+          "b": "FLAT-H-1.13s-20210910",
+          "b_labels": [
+            "s2"
+          ],
+          "dust_pct": 0.214,
+          "filter": "H",
+          "noise_pct": 0.175,
+          "shape_pct": 0.041,
+          "verdict": "identiques"
+        }
+      ],
+      "raw_sky": [
+        {
+          "dark_level": "A",
+          "dark_level_adu": 506.4,
+          "group": "s1 / H",
+          "light_median_adu": 1433.8,
+          "raw_sky_adu": 927.4
+        },
+        {
+          "dark_level": "A",
+          "dark_level_adu": 506.4,
+          "group": "s1 / S",
+          "light_median_adu": 1434.4,
+          "raw_sky_adu": 928.0
+        },
+        {
+          "dark_level": "B",
+          "dark_level_adu": 506.4,
+          "group": "s2 / H",
+          "light_median_adu": 1433.5,
+          "raw_sky_adu": 927.2
+        },
+        {
+          "dark_level": "A",
+          "dark_level_adu": 505.6,
+          "group": "s3 / S",
+          "light_median_adu": 1433.9,
+          "raw_sky_adu": 928.3
+        }
+      ]
+    }
+  },
+  "qa.md": [
+    "# Contrôles qualité",
+    "",
+    "- Généré le <NOW>",
+    "- Bilan : 0 erreur(s), 3 avertissement(s), 7 info(s)",
+    "",
+    "## 1. En-têtes",
+    "",
+    "- **H1 — avertissement** : 1 fichier(s) rangé(s) dans un dossier qui contredit l'en-tête (l'en-tête fait foi)",
+    "  - Impact : aucun (le pipeline classe par en-tête)",
+    "  - Conseil pour la prochaine séance : ranger les fichiers selon le type, la pose et le filtre réels",
+    "  - Fichiers : `2021-09-07_06-00-08_NGC 1499_H_1.13s_120_0000.fits`",
+    "- **H2 — avertissement** : OFFSET absent de tous les en-têtes : impossible de vérifier que darks et lights ont le même offset (seul le contrôle P1 sur les pixels peut le voir)",
+    "  - Impact : un dark d'offset différent décale tout le fond calibré (retiré en grande partie par le fond local, mais fausse la mise à l'échelle des darks)",
+    "  - Conseil pour la prochaine séance : utiliser un pilote qui écrit OFFSET (pilote natif ZWO dans N.I.N.A. plutôt qu'ASCOM) et fixer l'offset dans le profil de la caméra",
+    "- **H9 — info** : s1 / H : 8 darks seulement (< 15) pour le master",
+    "  - Impact : master dark plus bruité, rejet des cosmiques moins robuste",
+    "  - Conseil pour la prochaine séance : faire au moins 15 darks par pose et par nuit",
+    "- **H9 — info** : s1 / H : 5 flats seulement (< 15)",
+    "  - Impact : flat plus bruité",
+    "  - Conseil pour la prochaine séance : faire au moins 15 flats par filtre",
+    "- **H9 — info** : s1 / S : 8 darks seulement (< 15) pour le master",
+    "  - Impact : master dark plus bruité, rejet des cosmiques moins robuste",
+    "  - Conseil pour la prochaine séance : faire au moins 15 darks par pose et par nuit",
+    "- **H9 — info** : s1 / S : 5 flats seulement (< 15)",
+    "  - Impact : flat plus bruité",
+    "  - Conseil pour la prochaine séance : faire au moins 15 flats par filtre",
+    "- **H9 — info** : s2 / H : 8 darks seulement (< 15) pour le master",
+    "  - Impact : master dark plus bruité, rejet des cosmiques moins robuste",
+    "  - Conseil pour la prochaine séance : faire au moins 15 darks par pose et par nuit",
+    "- **H9 — info** : s2 / H : 5 flats seulement (< 15)",
+    "  - Impact : flat plus bruité",
+    "  - Conseil pour la prochaine séance : faire au moins 15 flats par filtre",
+    "- **H9 — info** : s3 / S : 5 darks seulement (< 15) pour le master",
+    "  - Impact : master dark plus bruité, rejet des cosmiques moins robuste",
+    "  - Conseil pour la prochaine séance : faire au moins 15 darks par pose et par nuit",
+    "",
+    "## 2. Pixels des images brutes",
+    "",
+    "- **P2 — avertissement** : darks 300 s, nuit(s) du 09/09 (s2) : +12.5 ADU par rapport aux autres nuits (506.0 ADU), bruit 9.18 contre 5.97 ADU, excès non uniforme jusqu'à 4.6 ADU dans les coins → fuite de lumière probable",
+    "  - Impact : dark trop haut → fond calibré trop bas, flux des étoiles faibles biaisés",
+    "  - Conseil pour la prochaine séance : couvercle opaque, caméra recouverte, darks dans le noir complet",
+    "  - Fichiers : `2021-09-10_02-00-00__Dark_300.00s_120_0000.fits`, `2021-09-10_02-05-10__Dark_300.00s_120_0001.fits`, `2021-09-10_02-10-20__Dark_300.00s_120_0002.fits` (+2)",
+    "",
+    "## Niveau des darks par nuit (contrôle P1)",
+    "",
+    "| Série | Pose | Nuit | N | Niveau ADU | σ ADU | T °C | Dossier(s) |",
+    "|---|---|---|---|---|---|---|---|",
+    "| DARK-300s-20210907 | 300 s | 2021-09-06 | 8 | 506.4 | 6.05 | -12.0 | dark/darklight/300s |",
+    "| DARK-300s-20210910 | 300 s | 2021-09-09 | 5 | 518.5 | 9.18 | -5.0 | dark/darklight/300s |",
+    "| DARK-300s-20210921 | 300 s | 2021-09-20 | 5 | 505.6 | 5.88 | -12.0 | dark/darklight/300s |",
+    "| DARKFLAT-1.13s-20210907 | 1.13 s | 2021-09-06 | 5 | 500.0 | 3.22 | -12.0 | dark/darkflat |",
+    "| DARKFLAT-2.62s-20210907 | 2.62 s | 2021-09-06 | 5 | 499.9 | 3.26 | -12.0 | dark/darkflat |",
+    "",
+    "## Fond de ciel brut estimé (contrôle P8)",
+    "",
+    "Médiane des lights − niveau des darks appariés. Une valeur négative signifie des darks plus hauts que les lights.",
+    "",
+    "| Groupe | Lights ADU | Darks ADU | Fond estimé ADU | Niveau dark |",
+    "|---|---|---|---|---|",
+    "| s1 / H | 1433.8 | 506.4 | +927.4 | A |",
+    "| s1 / S | 1434.4 | 506.4 | +928.0 | A |",
+    "| s2 / H | 1433.5 | 506.4 | +927.2 | B |",
+    "| s3 / S | 1433.9 | 505.6 | +928.3 | A |",
+    "",
+    "## Flats successifs (contrôle P4)",
+    "",
+    "Rapport de deux flats normalisés. *Structure locale* : anneaux de poussière déplacés ; *forme* : vignetage différent (caméra tournée, tirage, panneau). Les rapports sont dans `qa/flats/ratio_*.fits`.",
+    "",
+    "| Filtre | Flat 1 | Flat 2 | Structure locale % | Forme % | Bruit % | Verdict |",
+    "|---|---|---|---|---|---|---|",
+    "| H | FLAT-H-1.13s-20210907 (s1) | FLAT-H-1.13s-20210910 (s2) | 0.21 | 0.04 | 0.17 | identiques |",
+    ""
+  ],
+  "stdout": [
+    "  contrôles : statistiques rapides de 55 image(s) brute(s) …",
+    "  contrôles : comparaison des flats H (2 séries) …",
+    "Contrôles qualité : 0 erreur(s), 3 avertissement(s), 7 info(s)",
+    "  [H1 avertissement] 1 fichier(s) rangé(s) dans un dossier qui contredit l'en-tête (l'en-tête fait foi)",
+    "      → ranger les fichiers selon le type, la pose et le filtre réels",
+    "  [H2 avertissement] OFFSET absent de tous les en-têtes : impossible de vérifier que darks et lights ont le même offset (seul le contrôle P1 sur les pixels peut le voir)",
+    "      → utiliser un pilote qui écrit OFFSET (pilote natif ZWO dans N.I.N.A. plutôt qu'ASCOM) et fixer l'offset dans le profil de la caméra",
+    "  [P2 avertissement] darks 300 s, nuit(s) du 09/09 (s2) : +12.5 ADU par rapport aux autres nuits (506.0 ADU), bruit 9.18 contre 5.97 ADU, excès non uniforme jusqu'à 4.6 ADU dans les coins → fuite de lumière probable",
+    "      → couvercle opaque, caméra recouverte, darks dans le noir complet",
+    "Rapport : <TMP>/work_check/qa/qa.md"
+  ]
+}

@@ -1,0 +1,28 @@
+"""Interpretation of matching.same_optical_setup (periods where flats can be shared)."""
+
+import datetime as dt
+
+import pytest
+
+from varstar.domain.settings import optical_setup_periods
+
+
+def cfg(periods):
+    return periods
+
+
+def test_periods_accept_strings_dates_and_datetimes_and_reorder():
+    periods = optical_setup_periods(cfg([["2021-09-02", "2021-09-07"],
+                                         [dt.datetime(2021, 9, 20, 12), dt.date(2021, 9, 12)]]))
+    assert periods == [(dt.date(2021, 9, 2), dt.date(2021, 9, 7)), (dt.date(2021, 9, 12), dt.date(2021, 9, 20))]
+
+
+@pytest.mark.parametrize("raw", [None, []])
+def test_no_period(raw):
+    assert optical_setup_periods(cfg(raw)) == []
+
+
+@pytest.mark.parametrize("bad", [["2021-09-02"], "2021-09-02", ["2021-09-02", "2021-09-03", "2021-09-04"]])
+def test_invalid_period_is_reported_in_french(bad):
+    with pytest.raises(ValueError, match="période invalide"):
+        optical_setup_periods(cfg([bad]))

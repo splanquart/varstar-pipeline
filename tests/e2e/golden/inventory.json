@@ -1,0 +1,640 @@
+{
+  "exit_code": 0,
+  "inventory.json": {
+    "anomalies": [
+      {
+        "code": "folder_type",
+        "files": [
+          "dark/oops/2021-09-07_06-00-08_NGC 1499_H_1.13s_120_0000.fits"
+        ],
+        "message": "dark/oops : 1 fichier(s), type FLAT dans un dossier « dark » → classé selon l'en-tête",
+        "severity": "warning"
+      },
+      {
+        "code": "offset_missing",
+        "files": [],
+        "message": "OFFSET absent de tous les en-têtes → offset considéré constant",
+        "severity": "warning"
+      },
+      {
+        "code": "unused_sets",
+        "files": [],
+        "message": "1 série(s) de calibration non utilisée(s) : DARK-300s-20210910",
+        "severity": "info"
+      }
+    ],
+    "calibration_sets": {
+      "DARK": [
+        {
+          "end_utc": "2021-09-07T02:36:10",
+          "exptime": 300.0,
+          "files": [
+            "dark/darklight/300s/2021-09-07_02-00-00__Dark_300.00s_120_0000.fits",
+            "dark/darklight/300s/2021-09-07_02-05-10__Dark_300.00s_120_0001.fits",
+            "dark/darklight/300s/2021-09-07_02-10-20__Dark_300.00s_120_0002.fits",
+            "dark/darklight/300s/2021-09-07_02-15-30__Dark_300.00s_120_0003.fits",
+            "dark/darklight/300s/2021-09-07_02-20-40__Dark_300.00s_120_0004.fits",
+            "dark/darklight/300s/2021-09-07_02-25-50__Dark_300.00s_120_0005.fits",
+            "dark/darklight/300s/2021-09-07_02-31-00__Dark_300.00s_120_0006.fits",
+            "dark/darklight/300s/2021-09-07_02-36-10__Dark_300.00s_120_0007.fits"
+          ],
+          "filter": null,
+          "folders": [
+            "dark/darklight/300s"
+          ],
+          "id": "DARK-300s-20210907",
+          "kind": "DARK",
+          "mean_ccd_temp": -12.0,
+          "n": 8,
+          "sensor_key": {
+            "gain": 120.0,
+            "instrument": "ASI Camera (1) (ASCO",
+            "naxis1": 96,
+            "naxis2": 64,
+            "offset": null,
+            "xbin": 2,
+            "ybin": 2
+          },
+          "start_utc": "2021-09-07T02:00:00"
+        },
+        {
+          "end_utc": "2021-09-10T02:20:40",
+          "exptime": 300.0,
+          "files": [
+            "dark/darklight/300s/2021-09-10_02-00-00__Dark_300.00s_120_0000.fits",
+            "dark/darklight/300s/2021-09-10_02-05-10__Dark_300.00s_120_0001.fits",
+            "dark/darklight/300s/2021-09-10_02-10-20__Dark_300.00s_120_0002.fits",
+            "dark/darklight/300s/2021-09-10_02-15-30__Dark_300.00s_120_0003.fits",
+            "dark/darklight/300s/2021-09-10_02-20-40__Dark_300.00s_120_0004.fits"
+          ],
+          "filter": null,
+          "folders": [
+            "dark/darklight/300s"
+          ],
+          "id": "DARK-300s-20210910",
+          "kind": "DARK",
+          "mean_ccd_temp": -5.0,
+          "n": 5,
+          "sensor_key": {
+            "gain": 120.0,
+            "instrument": "ASI Camera (1) (ASCO",
+            "naxis1": 96,
+            "naxis2": 64,
+            "offset": null,
+            "xbin": 2,
+            "ybin": 2
+          },
+          "start_utc": "2021-09-10T02:00:00"
+        },
+        {
+          "end_utc": "2021-09-21T02:20:40",
+          "exptime": 300.0,
+          "files": [
+            "dark/darklight/300s/2021-09-21_02-00-00__Dark_300.00s_120_0000.fits",
+            "dark/darklight/300s/2021-09-21_02-05-10__Dark_300.00s_120_0001.fits",
+            "dark/darklight/300s/2021-09-21_02-10-20__Dark_300.00s_120_0002.fits",
+            "dark/darklight/300s/2021-09-21_02-15-30__Dark_300.00s_120_0003.fits",
+            "dark/darklight/300s/2021-09-21_02-20-40__Dark_300.00s_120_0004.fits"
+          ],
+          "filter": null,
+          "folders": [
+            "dark/darklight/300s"
+          ],
+          "id": "DARK-300s-20210921",
+          "kind": "DARK",
+          "mean_ccd_temp": -12.0,
+          "n": 5,
+          "sensor_key": {
+            "gain": 120.0,
+            "instrument": "ASI Camera (1) (ASCO",
+            "naxis1": 96,
+            "naxis2": 64,
+            "offset": null,
+            "xbin": 2,
+            "ybin": 2
+          },
+          "start_utc": "2021-09-21T02:00:00"
+        }
+      ],
+      "DARKFLAT": [
+        {
+          "end_utc": "2021-09-07T07:00:08",
+          "exptime": 1.13,
+          "files": [
+            "dark/darkflat/2021-09-07_07-00-00__Dark_1.13s_120_0000.fits",
+            "dark/darkflat/2021-09-07_07-00-02__Dark_1.13s_120_0001.fits",
+            "dark/darkflat/2021-09-07_07-00-04__Dark_1.13s_120_0002.fits",
+            "dark/darkflat/2021-09-07_07-00-06__Dark_1.13s_120_0003.fits",
+            "dark/darkflat/2021-09-07_07-00-08__Dark_1.13s_120_0004.fits"
+          ],
+          "filter": null,
+          "folders": [
+            "dark/darkflat"
+          ],
+          "id": "DARKFLAT-1.13s-20210907",
+          "kind": "DARKFLAT",
+          "mean_ccd_temp": -12.0,
+          "n": 5,
+          "sensor_key": {
+            "gain": 120.0,
+            "instrument": "ASI Camera (1) (ASCO",
+            "naxis1": 96,
+            "naxis2": 64,
+            "offset": null,
+            "xbin": 2,
+            "ybin": 2
+          },
+          "start_utc": "2021-09-07T07:00:00"
+        },
+        {
+          "end_utc": "2021-09-07T07:01:12",
+          "exptime": 2.62,
+          "files": [
+            "dark/darkflat/2021-09-07_07-01-00__Dark_2.62s_120_0000.fits",
+            "dark/darkflat/2021-09-07_07-01-03__Dark_2.62s_120_0001.fits",
+            "dark/darkflat/2021-09-07_07-01-06__Dark_2.62s_120_0002.fits",
+            "dark/darkflat/2021-09-07_07-01-09__Dark_2.62s_120_0003.fits",
+            "dark/darkflat/2021-09-07_07-01-12__Dark_2.62s_120_0004.fits"
+          ],
+          "filter": null,
+          "folders": [
+            "dark/darkflat"
+          ],
+          "id": "DARKFLAT-2.62s-20210907",
+          "kind": "DARKFLAT",
+          "mean_ccd_temp": -12.0,
+          "n": 5,
+          "sensor_key": {
+            "gain": 120.0,
+            "instrument": "ASI Camera (1) (ASCO",
+            "naxis1": 96,
+            "naxis2": 64,
+            "offset": null,
+            "xbin": 2,
+            "ybin": 2
+          },
+          "start_utc": "2021-09-07T07:01:00"
+        }
+      ],
+      "FLAT": [
+        {
+          "end_utc": "2021-09-07T06:00:08",
+          "exptime": 1.13,
+          "files": [
+            "flat/SESSION_s1/2021-09-07_06-00-00_NGC 1499_H_1.13s_120_0000.fits",
+            "flat/SESSION_s1/2021-09-07_06-00-02_NGC 1499_H_1.13s_120_0001.fits",
+            "flat/SESSION_s1/2021-09-07_06-00-04_NGC 1499_H_1.13s_120_0002.fits",
+            "flat/SESSION_s1/2021-09-07_06-00-06_NGC 1499_H_1.13s_120_0003.fits",
+            "dark/oops/2021-09-07_06-00-08_NGC 1499_H_1.13s_120_0000.fits"
+          ],
+          "filter": "H",
+          "folders": [
+            "dark/oops",
+            "flat/SESSION_s1"
+          ],
+          "id": "FLAT-H-1.13s-20210907",
+          "kind": "FLAT",
+          "mean_ccd_temp": -12.0,
+          "n": 5,
+          "sensor_key": {
+            "gain": 120.0,
+            "instrument": "ASI Camera (1) (ASCO",
+            "naxis1": 96,
+            "naxis2": 64,
+            "offset": null,
+            "xbin": 2,
+            "ybin": 2
+          },
+          "start_utc": "2021-09-07T06:00:00"
+        },
+        {
+          "end_utc": "2021-09-07T06:05:12",
+          "exptime": 2.62,
+          "files": [
+            "flat/SESSION_s1/2021-09-07_06-05-00_NGC 1499_S_2.62s_120_0000.fits",
+            "flat/SESSION_s1/2021-09-07_06-05-03_NGC 1499_S_2.62s_120_0001.fits",
+            "flat/SESSION_s1/2021-09-07_06-05-06_NGC 1499_S_2.62s_120_0002.fits",
+            "flat/SESSION_s1/2021-09-07_06-05-09_NGC 1499_S_2.62s_120_0003.fits",
+            "flat/SESSION_s1/2021-09-07_06-05-12_NGC 1499_S_2.62s_120_0004.fits"
+          ],
+          "filter": "S",
+          "folders": [
+            "flat/SESSION_s1"
+          ],
+          "id": "FLAT-S-2.62s-20210907",
+          "kind": "FLAT",
+          "mean_ccd_temp": -12.0,
+          "n": 5,
+          "sensor_key": {
+            "gain": 120.0,
+            "instrument": "ASI Camera (1) (ASCO",
+            "naxis1": 96,
+            "naxis2": 64,
+            "offset": null,
+            "xbin": 2,
+            "ybin": 2
+          },
+          "start_utc": "2021-09-07T06:05:00"
+        },
+        {
+          "end_utc": "2021-09-10T06:00:08",
+          "exptime": 1.13,
+          "files": [
+            "flat/SESSION_s2/2021-09-10_06-00-00_NGC 1499_H_1.13s_120_0000.fits",
+            "flat/SESSION_s2/2021-09-10_06-00-02_NGC 1499_H_1.13s_120_0001.fits",
+            "flat/SESSION_s2/2021-09-10_06-00-04_NGC 1499_H_1.13s_120_0002.fits",
+            "flat/SESSION_s2/2021-09-10_06-00-06_NGC 1499_H_1.13s_120_0003.fits",
+            "flat/SESSION_s2/2021-09-10_06-00-08_NGC 1499_H_1.13s_120_0004.fits"
+          ],
+          "filter": "H",
+          "folders": [
+            "flat/SESSION_s2"
+          ],
+          "id": "FLAT-H-1.13s-20210910",
+          "kind": "FLAT",
+          "mean_ccd_temp": -12.0,
+          "n": 5,
+          "sensor_key": {
+            "gain": 120.0,
+            "instrument": "ASI Camera (1) (ASCO",
+            "naxis1": 96,
+            "naxis2": 64,
+            "offset": null,
+            "xbin": 2,
+            "ybin": 2
+          },
+          "start_utc": "2021-09-10T06:00:00"
+        }
+      ]
+    },
+    "counts": {
+      "DARK": 18,
+      "DARKFLAT": 10,
+      "FLAT": 15,
+      "LIGHT": 12
+    },
+    "darks_todo": [],
+    "empty_dirs": [],
+    "ignored_dirs": [],
+    "levels": [
+      {
+        "filter": "H",
+        "label": "2021-09-06 (s1)",
+        "level": "A",
+        "session": "2021-09-06"
+      },
+      {
+        "filter": "S",
+        "label": "2021-09-06 (s1)",
+        "level": "A",
+        "session": "2021-09-06"
+      },
+      {
+        "filter": "H",
+        "label": "2021-09-09 (s2)",
+        "level": "B",
+        "session": "2021-09-09"
+      },
+      {
+        "filter": "S",
+        "label": "2021-09-20 (s3)",
+        "level": "C",
+        "session": "2021-09-20"
+      }
+    ],
+    "light_groups": [
+      {
+        "dark": {
+          "level": "A",
+          "n_frames": 8,
+          "reasons": [],
+          "sets": [
+            "DARK-300s-20210907"
+          ]
+        },
+        "darkflat": {
+          "level": "A",
+          "n_frames": 5,
+          "reasons": [],
+          "sets": [
+            "DARKFLAT-1.13s-20210907"
+          ]
+        },
+        "end_utc": "2021-09-06T23:13:20",
+        "exptime": 300.0,
+        "files": [
+          "light/H/SESSION_s1/2021-09-06_23-00-00_NGC 1499_H_300.00s_120_0000.fits",
+          "light/H/SESSION_s1/2021-09-06_23-06-40_NGC 1499_H_300.00s_120_0001.fits",
+          "light/H/SESSION_s1/2021-09-06_23-13-20_NGC 1499_H_300.00s_120_0002.fits"
+        ],
+        "filter": "H",
+        "flat": {
+          "level": "A",
+          "n_frames": 5,
+          "reasons": [],
+          "sets": [
+            "FLAT-H-1.13s-20210907"
+          ]
+        },
+        "label": "s1",
+        "level": "A",
+        "mean_ccd_temp": -12.0,
+        "n": 3,
+        "sensor_key": {
+          "gain": 120.0,
+          "instrument": "ASI Camera (1) (ASCO",
+          "naxis1": 96,
+          "naxis2": 64,
+          "offset": null,
+          "xbin": 2,
+          "ybin": 2
+        },
+        "session": "2021-09-06",
+        "start_utc": "2021-09-06T23:00:00"
+      },
+      {
+        "dark": {
+          "level": "A",
+          "n_frames": 8,
+          "reasons": [],
+          "sets": [
+            "DARK-300s-20210907"
+          ]
+        },
+        "darkflat": {
+          "level": "A",
+          "n_frames": 5,
+          "reasons": [],
+          "sets": [
+            "DARKFLAT-2.62s-20210907"
+          ]
+        },
+        "end_utc": "2021-09-07T00:43:20",
+        "exptime": 300.0,
+        "files": [
+          "light/S/SESSION_s1/2021-09-07_00-30-00_NGC 1499_S_300.00s_120_0000.fits",
+          "light/S/SESSION_s1/2021-09-07_00-36-40_NGC 1499_S_300.00s_120_0001.fits",
+          "light/S/SESSION_s1/2021-09-07_00-43-20_NGC 1499_S_300.00s_120_0002.fits"
+        ],
+        "filter": "S",
+        "flat": {
+          "level": "A",
+          "n_frames": 5,
+          "reasons": [],
+          "sets": [
+            "FLAT-S-2.62s-20210907"
+          ]
+        },
+        "label": "s1",
+        "level": "A",
+        "mean_ccd_temp": -12.0,
+        "n": 3,
+        "sensor_key": {
+          "gain": 120.0,
+          "instrument": "ASI Camera (1) (ASCO",
+          "naxis1": 96,
+          "naxis2": 64,
+          "offset": null,
+          "xbin": 2,
+          "ybin": 2
+        },
+        "session": "2021-09-06",
+        "start_utc": "2021-09-07T00:30:00"
+      },
+      {
+        "dark": {
+          "level": "B",
+          "n_frames": 8,
+          "reasons": [
+            "pas de dark de 300s pris la même nuit : darks de la nuit du 06/09 (écart 2.8 j) — offset non vérifiable, contrôlé après calibration"
+          ],
+          "sets": [
+            "DARK-300s-20210907"
+          ]
+        },
+        "darkflat": {
+          "level": "A",
+          "n_frames": 5,
+          "reasons": [],
+          "sets": [
+            "DARKFLAT-1.13s-20210907"
+          ]
+        },
+        "end_utc": "2021-09-09T23:13:20",
+        "exptime": 300.0,
+        "files": [
+          "light/H/SESSION_s2/2021-09-09_23-00-00_NGC 1499_H_300.00s_120_0000.fits",
+          "light/H/SESSION_s2/2021-09-09_23-06-40_NGC 1499_H_300.00s_120_0001.fits",
+          "light/H/SESSION_s2/2021-09-09_23-13-20_NGC 1499_H_300.00s_120_0002.fits"
+        ],
+        "filter": "H",
+        "flat": {
+          "level": "A",
+          "n_frames": 5,
+          "reasons": [],
+          "sets": [
+            "FLAT-H-1.13s-20210910"
+          ]
+        },
+        "label": "s2",
+        "level": "B",
+        "mean_ccd_temp": -12.0,
+        "n": 3,
+        "sensor_key": {
+          "gain": 120.0,
+          "instrument": "ASI Camera (1) (ASCO",
+          "naxis1": 96,
+          "naxis2": 64,
+          "offset": null,
+          "xbin": 2,
+          "ybin": 2
+        },
+        "session": "2021-09-09",
+        "start_utc": "2021-09-09T23:00:00"
+      },
+      {
+        "dark": {
+          "level": "A",
+          "n_frames": 5,
+          "reasons": [],
+          "sets": [
+            "DARK-300s-20210921"
+          ]
+        },
+        "darkflat": null,
+        "end_utc": "2021-09-20T23:13:20",
+        "exptime": 300.0,
+        "files": [
+          "light/S/SESSION_s3/2021-09-20_23-00-00_NGC 1499_S_300.00s_120_0000.fits",
+          "light/S/SESSION_s3/2021-09-20_23-06-40_NGC 1499_S_300.00s_120_0001.fits",
+          "light/S/SESSION_s3/2021-09-20_23-13-20_NGC 1499_S_300.00s_120_0002.fits"
+        ],
+        "filter": "S",
+        "flat": {
+          "level": "C",
+          "n_frames": 0,
+          "reasons": [
+            "aucun flat S à moins de 7 j → courbes valables intra-session uniquement"
+          ],
+          "sets": []
+        },
+        "label": "s3",
+        "level": "C",
+        "mean_ccd_temp": -12.0,
+        "n": 3,
+        "sensor_key": {
+          "gain": 120.0,
+          "instrument": "ASI Camera (1) (ASCO",
+          "naxis1": 96,
+          "naxis2": 64,
+          "offset": null,
+          "xbin": 2,
+          "ybin": 2
+        },
+        "session": "2021-09-20",
+        "start_utc": "2021-09-20T23:00:00"
+      }
+    ],
+    "other_extensions": {},
+    "root": "<RAW>",
+    "sensors": [
+      {
+        "adu_scale": 4,
+        "adu_scale_source": "light/H/SESSION_s1/2021-09-06_23-00-00_NGC 1499_H_300.00s_120_0000.fits",
+        "effective_gain_e_per_adu": 0.25056,
+        "egain_header": 1.00224268436432,
+        "focallen_mm": 274.0,
+        "label": "ASI Camera (1) (ASCO | gain 120 | offset ? | bin 2x2 | 96x64",
+        "n_frames": 55,
+        "pixel_scale_arcsec": 3.485,
+        "saturation_adu": 65532,
+        "sensor_key": {
+          "gain": 120.0,
+          "instrument": "ASI Camera (1) (ASCO",
+          "naxis1": 96,
+          "naxis2": 64,
+          "offset": null,
+          "xbin": 2,
+          "ybin": 2
+        },
+        "xpixsz_um": 4.63
+      }
+    ]
+  },
+  "inventory.md": [
+    "# Inventaire varstar",
+    "",
+    "- Dossier source : `<RAW>`",
+    "- Généré le : <NOW>",
+    "- Fichiers FITS retenus : 55 — LIGHT 12, DARK 18, FLAT 15, DARKFLAT 10, BIAS 0",
+    "",
+    "Les fichiers sont classés **d'après leurs en-têtes FITS** ; les noms de dossiers servent seulement d'étiquettes. Session = nuit d'observation (DATE-OBS UTC − 12 h).",
+    "",
+    "## Contrôles qualité (en-têtes)",
+    "",
+    "_0 erreur(s), 2 avertissement(s), 7 info(s) — détail et méthode : `qa/qa.md`, docs/QA_CHECKS.md._",
+    "",
+    "- **H1 — avertissement** : 1 fichier(s) rangé(s) dans un dossier qui contredit l'en-tête (l'en-tête fait foi)",
+    "  - Impact : aucun (le pipeline classe par en-tête)",
+    "  - Conseil pour la prochaine séance : ranger les fichiers selon le type, la pose et le filtre réels",
+    "  - Fichiers : `2021-09-07_06-00-08_NGC 1499_H_1.13s_120_0000.fits`",
+    "- **H2 — avertissement** : OFFSET absent de tous les en-têtes : impossible de vérifier que darks et lights ont le même offset (seul le contrôle P1 sur les pixels peut le voir)",
+    "  - Impact : un dark d'offset différent décale tout le fond calibré (retiré en grande partie par le fond local, mais fausse la mise à l'échelle des darks)",
+    "  - Conseil pour la prochaine séance : utiliser un pilote qui écrit OFFSET (pilote natif ZWO dans N.I.N.A. plutôt qu'ASCOM) et fixer l'offset dans le profil de la caméra",
+    "- **H9 — info** : s1 / H : 8 darks seulement (< 15) pour le master",
+    "  - Impact : master dark plus bruité, rejet des cosmiques moins robuste",
+    "  - Conseil pour la prochaine séance : faire au moins 15 darks par pose et par nuit",
+    "- **H9 — info** : s1 / H : 5 flats seulement (< 15)",
+    "  - Impact : flat plus bruité",
+    "  - Conseil pour la prochaine séance : faire au moins 15 flats par filtre",
+    "- **H9 — info** : s1 / S : 8 darks seulement (< 15) pour le master",
+    "  - Impact : master dark plus bruité, rejet des cosmiques moins robuste",
+    "  - Conseil pour la prochaine séance : faire au moins 15 darks par pose et par nuit",
+    "- **H9 — info** : s1 / S : 5 flats seulement (< 15)",
+    "  - Impact : flat plus bruité",
+    "  - Conseil pour la prochaine séance : faire au moins 15 flats par filtre",
+    "- **H9 — info** : s2 / H : 8 darks seulement (< 15) pour le master",
+    "  - Impact : master dark plus bruité, rejet des cosmiques moins robuste",
+    "  - Conseil pour la prochaine séance : faire au moins 15 darks par pose et par nuit",
+    "- **H9 — info** : s2 / H : 5 flats seulement (< 15)",
+    "  - Impact : flat plus bruité",
+    "  - Conseil pour la prochaine séance : faire au moins 15 flats par filtre",
+    "- **H9 — info** : s3 / S : 5 darks seulement (< 15) pour le master",
+    "  - Impact : master dark plus bruité, rejet des cosmiques moins robuste",
+    "  - Conseil pour la prochaine séance : faire au moins 15 darks par pose et par nuit",
+    "",
+    "## Niveaux de calibration par session et filtre",
+    "",
+    "| Session | H | S |",
+    "|---|---|---|",
+    "| 2021-09-06 (s1) | A | A |",
+    "| 2021-09-09 (s2) | B | · |",
+    "| 2021-09-20 (s3) | · | C |",
+    "",
+    "A : calibration complète · B : repli journalisé · C : calibration partielle (sans flats → courbes valables intra-session uniquement)",
+    "",
+    "## Détail des groupes de lights",
+    "",
+    "| Session | Filtre | Lights | UTC | T moy. °C | Darks | Flats | Darks de flat | Niveau | Remarques |",
+    "|---|---|---|---|---|---|---|---|---|---|",
+    "| 2021-09-06 (s1) | H | 3 × 300 s | 06/09 23:00–23:13 | -12.0 | **A** 8 × 300 s (07/09) | **A** 5 × 1.13 s (07/09) | **A** 5 × 1.13 s (07/09) | **A** | — |",
+    "| 2021-09-06 (s1) | S | 3 × 300 s | 07/09 00:30–00:43 | -12.0 | **A** 8 × 300 s (07/09) | **A** 5 × 2.62 s (07/09) | **A** 5 × 2.62 s (07/09) | **A** | — |",
+    "| 2021-09-09 (s2) | H | 3 × 300 s | 09/09 23:00–23:13 | -12.0 | **B** 8 × 300 s (07/09) | **A** 5 × 1.13 s (10/09) | **A** 5 × 1.13 s (07/09) | **B** | pas de dark de 300s pris la même nuit : darks de la nuit du 06/09 (écart 2.8 j) — offset non vérifiable, contrôlé après calibration |",
+    "| 2021-09-20 (s3) | S | 3 × 300 s | 20/09 23:00–23:13 | -12.0 | **A** 5 × 300 s (21/09) | **C** aucun | — | **C** | aucun flat S à moins de 7 j → courbes valables intra-session uniquement |",
+    "",
+    "## Capteur et unités",
+    "",
+    "| Configuration capteur | Fichiers | EGAIN (en-tête) | Facteur ADU détecté | Gain effectif e⁻/ADU | Saturation ADU | Échelle ″/px |",
+    "|---|---|---|---|---|---|---|",
+    "| ASI Camera (1) (ASCO \\| gain 120 \\| offset ? \\| bin 2x2 \\| 96x64 | 55 | 1.0022 | ×4 | 0.2506 | 65532 | 3.49 |",
+    "",
+    "Facteur ADU détecté sur les pixels d'une image (valeurs toutes multiples du facteur). Échelle calculée avec XPIXSZ tel qu'écrit par N.I.N.A. (déjà multiplié par le binning).",
+    "",
+    "## Séries de calibration",
+    "",
+    "### Darks",
+    "",
+    "| Série | Filtre | Pose | N | UTC | T moy. °C | Dossiers | Utilisée par |",
+    "|---|---|---|---|---|---|---|---|",
+    "| DARK-300s-20210907 | — | 300 s | 8 | 07/09 02:00–07/09 02:36 | -12.0 | dark/darklight/300s | s1/H, s1/S, s2/H |",
+    "| DARK-300s-20210910 | — | 300 s | 5 | 10/09 02:00–10/09 02:20 | -5.0 | dark/darklight/300s | — |",
+    "| DARK-300s-20210921 | — | 300 s | 5 | 21/09 02:00–21/09 02:20 | -12.0 | dark/darklight/300s | s3/S |",
+    "",
+    "### Flats",
+    "",
+    "| Série | Filtre | Pose | N | UTC | T moy. °C | Dossiers | Utilisée par |",
+    "|---|---|---|---|---|---|---|---|",
+    "| FLAT-H-1.13s-20210907 | H | 1.13 s | 5 | 07/09 06:00–07/09 06:00 | -12.0 | dark/oops<br>flat/SESSION_s1 | s1/H |",
+    "| FLAT-S-2.62s-20210907 | S | 2.62 s | 5 | 07/09 06:05–07/09 06:05 | -12.0 | flat/SESSION_s1 | s1/S |",
+    "| FLAT-H-1.13s-20210910 | H | 1.13 s | 5 | 10/09 06:00–10/09 06:00 | -12.0 | flat/SESSION_s2 | s2/H |",
+    "",
+    "### Darks de flat",
+    "",
+    "| Série | Filtre | Pose | N | UTC | T moy. °C | Dossiers | Utilisée par |",
+    "|---|---|---|---|---|---|---|---|",
+    "| DARKFLAT-1.13s-20210907 | — | 1.13 s | 5 | 07/09 07:00–07/09 07:00 | -12.0 | dark/darkflat | s1/H, s2/H |",
+    "| DARKFLAT-2.62s-20210907 | — | 2.62 s | 5 | 07/09 07:01–07/09 07:01 | -12.0 | dark/darkflat | s1/S |",
+    "",
+    "## Anomalies",
+    "",
+    "- **Avertissement** — dark/oops : 1 fichier(s), type FLAT dans un dossier « dark » → classé selon l'en-tête",
+    "  - `dark/oops/2021-09-07_06-00-08_NGC 1499_H_1.13s_120_0000.fits`",
+    "- **Avertissement** — OFFSET absent de tous les en-têtes → offset considéré constant",
+    "- **Info** — 1 série(s) de calibration non utilisée(s) : DARK-300s-20210910",
+    "",
+    "## Darks à refaire",
+    "",
+    "Aucun dark manquant : toutes les sessions ont des darks et darks de flat de niveau A."
+  ],
+  "stdout": [
+    "Fichiers retenus : DARK 18, DARKFLAT 10, FLAT 15, LIGHT 12",
+    "Niveaux de calibration (session / filtre) :",
+    "  2021-09-06 (s1)          H    A",
+    "  2021-09-06 (s1)          S    A",
+    "  2021-09-09 (s2)          H    B",
+    "  2021-09-20 (s3)          S    C",
+    "Anomalies : 2 avertissement(s)/erreur(s), 1 info(s)",
+    "Darks à refaire : 0",
+    "Rapport : <TMP>/work_inventory/inventory.md"
+  ]
+}

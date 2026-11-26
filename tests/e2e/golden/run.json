@@ -1,0 +1,841 @@
+{
+  "calibrated": {
+    "s1/H/2021-09-06_23-00-00_NGC_1499_H_300.00s_120_0000.fits": {
+      "dtype": ">f4",
+      "median": 984.8956909179688,
+      "n_nonfinite": 0,
+      "nonzero": 6144,
+      "robust_sigma": 7.902464318847656,
+      "shape": [
+        64,
+        96
+      ]
+    },
+    "s1/H/2021-09-06_23-06-40_NGC_1499_H_300.00s_120_0001.fits": {
+      "dtype": ">f4",
+      "median": 984.5203857421875,
+      "n_nonfinite": 0,
+      "nonzero": 6144,
+      "robust_sigma": 7.730441455078124,
+      "shape": [
+        64,
+        96
+      ]
+    },
+    "s1/H/2021-09-06_23-13-20_NGC_1499_H_300.00s_120_0002.fits": {
+      "dtype": ">f4",
+      "median": 984.6510009765625,
+      "n_nonfinite": 0,
+      "nonzero": 6144,
+      "robust_sigma": 7.669722180175781,
+      "shape": [
+        64,
+        96
+      ]
+    },
+    "s1/S/2021-09-07_00-30-00_NGC_1499_S_300.00s_120_0000.fits": {
+      "dtype": ">f4",
+      "median": 985.012939453125,
+      "n_nonfinite": 0,
+      "nonzero": 6144,
+      "robust_sigma": 7.776048779296874,
+      "shape": [
+        64,
+        96
+      ]
+    },
+    "s1/S/2021-09-07_00-36-40_NGC_1499_S_300.00s_120_0001.fits": {
+      "dtype": ">f4",
+      "median": 985.0770263671875,
+      "n_nonfinite": 0,
+      "nonzero": 6144,
+      "robust_sigma": 8.005307025146484,
+      "shape": [
+        64,
+        96
+      ]
+    },
+    "s1/S/2021-09-07_00-43-20_NGC_1499_S_300.00s_120_0002.fits": {
+      "dtype": ">f4",
+      "median": 985.05517578125,
+      "n_nonfinite": 0,
+      "nonzero": 6144,
+      "robust_sigma": 7.643977569580078,
+      "shape": [
+        64,
+        96
+      ]
+    },
+    "s2/H/2021-09-09_23-00-00_NGC_1499_H_300.00s_120_0000.fits": {
+      "dtype": ">f4",
+      "median": 984.7688598632812,
+      "n_nonfinite": 0,
+      "nonzero": 6144,
+      "robust_sigma": 7.726324127197265,
+      "shape": [
+        64,
+        96
+      ]
+    },
+    "s2/H/2021-09-09_23-06-40_NGC_1499_H_300.00s_120_0001.fits": {
+      "dtype": ">f4",
+      "median": 984.38037109375,
+      "n_nonfinite": 0,
+      "nonzero": 6144,
+      "robust_sigma": 7.795232812499999,
+      "shape": [
+        64,
+        96
+      ]
+    },
+    "s2/H/2021-09-09_23-13-20_NGC_1499_H_300.00s_120_0002.fits": {
+      "dtype": ">f4",
+      "median": 984.6480712890625,
+      "n_nonfinite": 0,
+      "nonzero": 6144,
+      "robust_sigma": 7.750032696533203,
+      "shape": [
+        64,
+        96
+      ]
+    },
+    "s3/S/2021-09-20_23-00-00_NGC_1499_S_300.00s_120_0000.fits": {
+      "dtype": ">f4",
+      "median": 876.0,
+      "n_nonfinite": 0,
+      "nonzero": 6144,
+      "robust_sigma": 96.07255239257812,
+      "shape": [
+        64,
+        96
+      ]
+    },
+    "s3/S/2021-09-20_23-06-40_NGC_1499_S_300.00s_120_0001.fits": {
+      "dtype": ">f4",
+      "median": 876.7999877929688,
+      "n_nonfinite": 0,
+      "nonzero": 6144,
+      "robust_sigma": 97.25852380371093,
+      "shape": [
+        64,
+        96
+      ]
+    },
+    "s3/S/2021-09-20_23-13-20_NGC_1499_S_300.00s_120_0002.fits": {
+      "dtype": ">f4",
+      "median": 876.0,
+      "n_nonfinite": 0,
+      "nonzero": 6144,
+      "robust_sigma": 97.25861429443358,
+      "shape": [
+        64,
+        96
+      ]
+    }
+  },
+  "exit_code": 0,
+  "masters.md": [
+    "# Masters et masques",
+    "",
+    "- Bibliothèque : `<TMP>/lib`",
+    "- Siril 1.4.5 — généré le <NOW>",
+    "",
+    "## Contrôles qualité",
+    "",
+    "_0 erreur(s), 3 avertissement(s), 7 info(s) — détail et méthode : `qa/qa.md`, docs/QA_CHECKS.md._",
+    "",
+    "- **H1 — avertissement** : 1 fichier(s) rangé(s) dans un dossier qui contredit l'en-tête (l'en-tête fait foi)",
+    "  - Impact : aucun (le pipeline classe par en-tête)",
+    "  - Conseil pour la prochaine séance : ranger les fichiers selon le type, la pose et le filtre réels",
+    "  - Fichiers : `2021-09-07_06-00-08_NGC 1499_H_1.13s_120_0000.fits`",
+    "- **H2 — avertissement** : OFFSET absent de tous les en-têtes : impossible de vérifier que darks et lights ont le même offset (seul le contrôle P1 sur les pixels peut le voir)",
+    "  - Impact : un dark d'offset différent décale tout le fond calibré (retiré en grande partie par le fond local, mais fausse la mise à l'échelle des darks)",
+    "  - Conseil pour la prochaine séance : utiliser un pilote qui écrit OFFSET (pilote natif ZWO dans N.I.N.A. plutôt qu'ASCOM) et fixer l'offset dans le profil de la caméra",
+    "- **P2 — avertissement** : darks 300 s, nuit(s) du 09/09 (s2) : +12.5 ADU par rapport aux autres nuits (506.0 ADU), bruit 9.18 contre 5.97 ADU, excès non uniforme jusqu'à 4.6 ADU dans les coins → fuite de lumière probable",
+    "  - Impact : dark trop haut → fond calibré trop bas, flux des étoiles faibles biaisés",
+    "  - Conseil pour la prochaine séance : couvercle opaque, caméra recouverte, darks dans le noir complet",
+    "  - Fichiers : `2021-09-10_02-00-00__Dark_300.00s_120_0000.fits`, `2021-09-10_02-05-10__Dark_300.00s_120_0001.fits`, `2021-09-10_02-10-20__Dark_300.00s_120_0002.fits` (+2)",
+    "- **H9 — info** : s1 / H : 8 darks seulement (< 15) pour le master",
+    "  - Impact : master dark plus bruité, rejet des cosmiques moins robuste",
+    "  - Conseil pour la prochaine séance : faire au moins 15 darks par pose et par nuit",
+    "- **H9 — info** : s1 / H : 5 flats seulement (< 15)",
+    "  - Impact : flat plus bruité",
+    "  - Conseil pour la prochaine séance : faire au moins 15 flats par filtre",
+    "- **H9 — info** : s1 / S : 8 darks seulement (< 15) pour le master",
+    "  - Impact : master dark plus bruité, rejet des cosmiques moins robuste",
+    "  - Conseil pour la prochaine séance : faire au moins 15 darks par pose et par nuit",
+    "- **H9 — info** : s1 / S : 5 flats seulement (< 15)",
+    "  - Impact : flat plus bruité",
+    "  - Conseil pour la prochaine séance : faire au moins 15 flats par filtre",
+    "- **H9 — info** : s2 / H : 8 darks seulement (< 15) pour le master",
+    "  - Impact : master dark plus bruité, rejet des cosmiques moins robuste",
+    "  - Conseil pour la prochaine séance : faire au moins 15 darks par pose et par nuit",
+    "- **H9 — info** : s2 / H : 5 flats seulement (< 15)",
+    "  - Impact : flat plus bruité",
+    "  - Conseil pour la prochaine séance : faire au moins 15 flats par filtre",
+    "- **H9 — info** : s3 / S : 5 darks seulement (< 15) pour le master",
+    "  - Impact : master dark plus bruité, rejet des cosmiques moins robuste",
+    "  - Conseil pour la prochaine séance : faire au moins 15 darks par pose et par nuit",
+    "",
+    "## Masters",
+    "",
+    "| Type | Master | N | Rejet | Médiane ADU | σ 1 pose ADU | Pixels instables | Niveau flats (% dyn.) |",
+    "|---|---|---|---|---|---|---|---|",
+    "| dark | `DARK_g120_ox_b2_300s_T-12` (<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>) | 8 | sigma clipping | 506.5 | 4.19 | 0 | — |",
+    "| dark | `DARK_g120_ox_b2_300s_T-12` (<DARK_g120_ox_b2_300s_T-12@2021-09-21T02:00>) | 5 | rejet par percentile | 505.6 | 4.19 | 0 | — |",
+    "| dark de flat | `DARKFLAT_g120_ox_b2_1.13s_T-12` (<DARKFLAT_g120_ox_b2_1.13s_T-12@2021-09-07T07:00>) | 5 | rejet par percentile | 500.0 | — | — | — |",
+    "| dark de flat | `DARKFLAT_g120_ox_b2_2.62s_T-12` (<DARKFLAT_g120_ox_b2_2.62s_T-12@2021-09-07T07:01>) | 5 | rejet par percentile | 500.0 | — | — | — |",
+    "| flat | `FLAT_g120_ox_b2_1.13s_H_20210907` (<FLAT_g120_ox_b2_1.13s_H_20210907@2021-09-07T06:00>) | 5 | rejet par percentile | 21893.1 | — | — | 34–34 |",
+    "| flat | `FLAT_g120_ox_b2_1.13s_H_20210910` (<FLAT_g120_ox_b2_1.13s_H_20210910@2021-09-10T06:00>) | 5 | rejet par percentile | 21841.0 | — | — | 34–34 |",
+    "| flat | `FLAT_g120_ox_b2_2.62s_S_20210907` (<FLAT_g120_ox_b2_2.62s_S_20210907@2021-09-07T06:05>) | 5 | rejet par percentile | 21869.8 | — | — | 34–34 |",
+    "",
+    "## Groupes de lights",
+    "",
+    "| Groupe | Niveau | Dark | Flat | Dark de flat | Masque BPM | Amp glow |",
+    "|---|---|---|---|---|---|---|",
+    "| s1 / H (300 s) | **A** | 8 × 300 s | 5 flats | 1.13 s | tièdes 257, très chauds 1, morts (flat) 1 | 4.2 % du champ (excès max 30 ADU) |",
+    "| s1 / S (300 s) | **A** | 8 × 300 s | 5 flats | 2.62 s | tièdes 257, très chauds 1, morts (flat) 1 | 4.2 % du champ (excès max 30 ADU) |",
+    "| s2 / H (300 s) | **B** | 8 × 300 s | 5 flats | 1.13 s | tièdes 257, très chauds 1, morts (flat) 1 | 4.2 % du champ (excès max 30 ADU) |",
+    "| s3 / S (300 s) | **C** | 5 × 300 s | aucun | — | tièdes 257, très chauds 1 | 4.2 % du champ (excès max 30 ADU) |",
+    "",
+    "Masque BPM : *tièdes* = excès de dark > k·σ d'une pose (bien corrigés par le dark, information seulement) ; *très chauds*, *instables*, *froids*, *morts*, *saturés* = pixels dont la correction est douteuse. Les pixels ne sont jamais modifiés : les mesures touchées seront marquées (jalon M4).",
+    "",
+    "## Validation croisée avec les masters PixInsight",
+    "",
+    "Aucun master PixInsight correspondant trouvé.",
+    "",
+    "## Cohérence des darks par dossier (question Q2)",
+    ""
+  ],
+  "plan.json": {
+    "groups": {
+      "2021-09-06_H_300s": {
+        "ampglow": "<TMP>/work_run/masks/ampglow_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>_372d1e34.fits",
+        "bpm": "<TMP>/work_run/masks/bpm_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>_<FLAT_g120_ox_b2_1.13s_H_20210907@2021-09-07T06:00>_372d1e34.fits",
+        "dark": {
+          "exptime": 300.0,
+          "id": "<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>",
+          "mode": "direct",
+          "n": 8,
+          "path": "<TMP>/lib/darks/DARK_g120_ox_b2_300s_T-12_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>/master.fits"
+        },
+        "darkflat": {
+          "exptime": 1.13,
+          "id": "<DARKFLAT_g120_ox_b2_1.13s_T-12@2021-09-07T07:00>",
+          "path": "<TMP>/lib/darks/DARKFLAT_g120_ox_b2_1.13s_T-12_<DARKFLAT_g120_ox_b2_1.13s_T-12@2021-09-07T07:00>/master.fits"
+        },
+        "exptime": 300.0,
+        "files": [
+          "<RAW>/light/H/SESSION_s1/2021-09-06_23-00-00_NGC 1499_H_300.00s_120_0000.fits",
+          "<RAW>/light/H/SESSION_s1/2021-09-06_23-06-40_NGC 1499_H_300.00s_120_0001.fits",
+          "<RAW>/light/H/SESSION_s1/2021-09-06_23-13-20_NGC 1499_H_300.00s_120_0002.fits"
+        ],
+        "filter": "H",
+        "flat": {
+          "id": "<FLAT_g120_ox_b2_1.13s_H_20210907@2021-09-07T06:00>",
+          "n": 5,
+          "path": "<TMP>/lib/flats/FLAT_g120_ox_b2_1.13s_H_20210907_<FLAT_g120_ox_b2_1.13s_H_20210907@2021-09-07T06:00>/master.fits"
+        },
+        "key": "2021-09-06_H_300s",
+        "label": "s1",
+        "level": "A",
+        "reasons": [],
+        "session": "2021-09-06"
+      },
+      "2021-09-06_S_300s": {
+        "ampglow": "<TMP>/work_run/masks/ampglow_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>_372d1e34.fits",
+        "bpm": "<TMP>/work_run/masks/bpm_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>_<FLAT_g120_ox_b2_2.62s_S_20210907@2021-09-07T06:05>_372d1e34.fits",
+        "dark": {
+          "exptime": 300.0,
+          "id": "<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>",
+          "mode": "direct",
+          "n": 8,
+          "path": "<TMP>/lib/darks/DARK_g120_ox_b2_300s_T-12_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>/master.fits"
+        },
+        "darkflat": {
+          "exptime": 2.62,
+          "id": "<DARKFLAT_g120_ox_b2_2.62s_T-12@2021-09-07T07:01>",
+          "path": "<TMP>/lib/darks/DARKFLAT_g120_ox_b2_2.62s_T-12_<DARKFLAT_g120_ox_b2_2.62s_T-12@2021-09-07T07:01>/master.fits"
+        },
+        "exptime": 300.0,
+        "files": [
+          "<RAW>/light/S/SESSION_s1/2021-09-07_00-30-00_NGC 1499_S_300.00s_120_0000.fits",
+          "<RAW>/light/S/SESSION_s1/2021-09-07_00-36-40_NGC 1499_S_300.00s_120_0001.fits",
+          "<RAW>/light/S/SESSION_s1/2021-09-07_00-43-20_NGC 1499_S_300.00s_120_0002.fits"
+        ],
+        "filter": "S",
+        "flat": {
+          "id": "<FLAT_g120_ox_b2_2.62s_S_20210907@2021-09-07T06:05>",
+          "n": 5,
+          "path": "<TMP>/lib/flats/FLAT_g120_ox_b2_2.62s_S_20210907_<FLAT_g120_ox_b2_2.62s_S_20210907@2021-09-07T06:05>/master.fits"
+        },
+        "key": "2021-09-06_S_300s",
+        "label": "s1",
+        "level": "A",
+        "reasons": [],
+        "session": "2021-09-06"
+      },
+      "2021-09-09_H_300s": {
+        "ampglow": "<TMP>/work_run/masks/ampglow_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>_372d1e34.fits",
+        "bpm": "<TMP>/work_run/masks/bpm_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>_<FLAT_g120_ox_b2_1.13s_H_20210910@2021-09-10T06:00>_372d1e34.fits",
+        "dark": {
+          "exptime": 300.0,
+          "id": "<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>",
+          "mode": "direct",
+          "n": 8,
+          "path": "<TMP>/lib/darks/DARK_g120_ox_b2_300s_T-12_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>/master.fits"
+        },
+        "darkflat": {
+          "exptime": 1.13,
+          "id": "<DARKFLAT_g120_ox_b2_1.13s_T-12@2021-09-07T07:00>",
+          "path": "<TMP>/lib/darks/DARKFLAT_g120_ox_b2_1.13s_T-12_<DARKFLAT_g120_ox_b2_1.13s_T-12@2021-09-07T07:00>/master.fits"
+        },
+        "exptime": 300.0,
+        "files": [
+          "<RAW>/light/H/SESSION_s2/2021-09-09_23-00-00_NGC 1499_H_300.00s_120_0000.fits",
+          "<RAW>/light/H/SESSION_s2/2021-09-09_23-06-40_NGC 1499_H_300.00s_120_0001.fits",
+          "<RAW>/light/H/SESSION_s2/2021-09-09_23-13-20_NGC 1499_H_300.00s_120_0002.fits"
+        ],
+        "filter": "H",
+        "flat": {
+          "id": "<FLAT_g120_ox_b2_1.13s_H_20210910@2021-09-10T06:00>",
+          "n": 5,
+          "path": "<TMP>/lib/flats/FLAT_g120_ox_b2_1.13s_H_20210910_<FLAT_g120_ox_b2_1.13s_H_20210910@2021-09-10T06:00>/master.fits"
+        },
+        "key": "2021-09-09_H_300s",
+        "label": "s2",
+        "level": "B",
+        "reasons": [
+          "pas de dark de 300s pris la même nuit : darks de la nuit du 06/09 (écart 2.8 j) — offset non vérifiable, contrôlé après calibration"
+        ],
+        "session": "2021-09-09"
+      },
+      "2021-09-20_S_300s": {
+        "ampglow": "<TMP>/work_run/masks/ampglow_<DARK_g120_ox_b2_300s_T-12@2021-09-21T02:00>_372d1e34.fits",
+        "bpm": "<TMP>/work_run/masks/bpm_<DARK_g120_ox_b2_300s_T-12@2021-09-21T02:00>_noflat_372d1e34.fits",
+        "dark": {
+          "exptime": 300.0,
+          "id": "<DARK_g120_ox_b2_300s_T-12@2021-09-21T02:00>",
+          "mode": "direct",
+          "n": 5,
+          "path": "<TMP>/lib/darks/DARK_g120_ox_b2_300s_T-12_<DARK_g120_ox_b2_300s_T-12@2021-09-21T02:00>/master.fits"
+        },
+        "darkflat": null,
+        "exptime": 300.0,
+        "files": [
+          "<RAW>/light/S/SESSION_s3/2021-09-20_23-00-00_NGC 1499_S_300.00s_120_0000.fits",
+          "<RAW>/light/S/SESSION_s3/2021-09-20_23-06-40_NGC 1499_S_300.00s_120_0001.fits",
+          "<RAW>/light/S/SESSION_s3/2021-09-20_23-13-20_NGC 1499_S_300.00s_120_0002.fits"
+        ],
+        "filter": "S",
+        "flat": null,
+        "key": "2021-09-20_S_300s",
+        "label": "s3",
+        "level": "C",
+        "reasons": [
+          "aucun flat S à moins de 7 j → courbes valables intra-session uniquement"
+        ],
+        "session": "2021-09-20"
+      }
+    },
+    "library": "<TMP>/lib",
+    "masters": {
+      "<DARKFLAT_g120_ox_b2_1.13s_T-12@2021-09-07T07:00>": {
+        "dir": "<TMP>/lib/darks/DARKFLAT_g120_ox_b2_1.13s_T-12_<DARKFLAT_g120_ox_b2_1.13s_T-12@2021-09-07T07:00>",
+        "exptime": 1.13,
+        "filter": null,
+        "kind": "darkflat",
+        "label": "DARKFLAT_g120_ox_b2_1.13s_T-12",
+        "level_max_frac": null,
+        "level_min_frac": null,
+        "median_adu": 500.0,
+        "n": 5,
+        "n_unstable": null,
+        "rejection": "rejet par percentile",
+        "sigma_single_frame_adu": null
+      },
+      "<DARKFLAT_g120_ox_b2_2.62s_T-12@2021-09-07T07:01>": {
+        "dir": "<TMP>/lib/darks/DARKFLAT_g120_ox_b2_2.62s_T-12_<DARKFLAT_g120_ox_b2_2.62s_T-12@2021-09-07T07:01>",
+        "exptime": 2.62,
+        "filter": null,
+        "kind": "darkflat",
+        "label": "DARKFLAT_g120_ox_b2_2.62s_T-12",
+        "level_max_frac": null,
+        "level_min_frac": null,
+        "median_adu": 500.0,
+        "n": 5,
+        "n_unstable": null,
+        "rejection": "rejet par percentile",
+        "sigma_single_frame_adu": null
+      },
+      "<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>": {
+        "consistency": [
+          {
+            "corner_excess_adu": {
+              "bas_droit": -1.75,
+              "bas_gauche": -2.5,
+              "haut_droit": 28.0,
+              "haut_gauche": -1.5
+            },
+            "folder": "dark/darklight/300s",
+            "mean_ccd_temp": -12.0,
+            "median_adu": 508.0,
+            "n": 8,
+            "robust_sigma_adu": 5.9303998947143555
+          }
+        ],
+        "dir": "<TMP>/lib/darks/DARK_g120_ox_b2_300s_T-12_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>",
+        "exptime": 300.0,
+        "filter": null,
+        "kind": "dark",
+        "label": "DARK_g120_ox_b2_300s_T-12",
+        "level_max_frac": null,
+        "level_min_frac": null,
+        "median_adu": 506.5,
+        "n": 8,
+        "n_unstable": 0,
+        "rejection": "sigma clipping",
+        "sigma_single_frame_adu": 4.193425980700508
+      },
+      "<DARK_g120_ox_b2_300s_T-12@2021-09-21T02:00>": {
+        "consistency": [
+          {
+            "corner_excess_adu": {
+              "bas_droit": 1.6,
+              "bas_gauche": -0.8,
+              "haut_droit": 30.4,
+              "haut_gauche": 0.8
+            },
+            "folder": "dark/darklight/300s",
+            "mean_ccd_temp": -12.0,
+            "median_adu": 505.6,
+            "n": 5,
+            "robust_sigma_adu": 5.9303998947143555
+          }
+        ],
+        "dir": "<TMP>/lib/darks/DARK_g120_ox_b2_300s_T-12_<DARK_g120_ox_b2_300s_T-12@2021-09-21T02:00>",
+        "exptime": 300.0,
+        "filter": null,
+        "kind": "dark",
+        "label": "DARK_g120_ox_b2_300s_T-12",
+        "level_max_frac": null,
+        "level_min_frac": null,
+        "median_adu": 505.6000061035156,
+        "n": 5,
+        "n_unstable": 0,
+        "rejection": "rejet par percentile",
+        "sigma_single_frame_adu": 4.193425980700508
+      },
+      "<FLAT_g120_ox_b2_1.13s_H_20210907@2021-09-07T06:00>": {
+        "dir": "<TMP>/lib/flats/FLAT_g120_ox_b2_1.13s_H_20210907_<FLAT_g120_ox_b2_1.13s_H_20210907@2021-09-07T06:00>",
+        "exptime": 1.13,
+        "filter": "H",
+        "kind": "flat",
+        "label": "FLAT_g120_ox_b2_1.13s_H_20210907",
+        "level_max_frac": 0.34178721845815785,
+        "level_min_frac": 0.34108527131782945,
+        "median_adu": 21893.076171875,
+        "n": 5,
+        "n_unstable": null,
+        "rejection": "rejet par percentile",
+        "sigma_single_frame_adu": null
+      },
+      "<FLAT_g120_ox_b2_1.13s_H_20210910@2021-09-10T06:00>": {
+        "dir": "<TMP>/lib/flats/FLAT_g120_ox_b2_1.13s_H_20210910_<FLAT_g120_ox_b2_1.13s_H_20210910@2021-09-10T06:00>",
+        "exptime": 1.13,
+        "filter": "H",
+        "kind": "flat",
+        "label": "FLAT_g120_ox_b2_1.13s_H_20210910",
+        "level_max_frac": 0.3412683879631325,
+        "level_min_frac": 0.3399255325642434,
+        "median_adu": 21841.00390625,
+        "n": 5,
+        "n_unstable": null,
+        "rejection": "rejet par percentile",
+        "sigma_single_frame_adu": null
+      },
+      "<FLAT_g120_ox_b2_2.62s_S_20210907@2021-09-07T06:05>": {
+        "dir": "<TMP>/lib/flats/FLAT_g120_ox_b2_2.62s_S_20210907_<FLAT_g120_ox_b2_2.62s_S_20210907@2021-09-07T06:05>",
+        "exptime": 2.62,
+        "filter": "S",
+        "kind": "flat",
+        "label": "FLAT_g120_ox_b2_2.62s_S_20210907",
+        "level_max_frac": 0.3413294268449002,
+        "level_min_frac": 0.34056644082280413,
+        "median_adu": 21869.80859375,
+        "n": 5,
+        "n_unstable": null,
+        "rejection": "rejet par percentile",
+        "sigma_single_frame_adu": null
+      }
+    },
+    "warnings": []
+  },
+  "qa.json": {
+    "calibrated": [
+      {
+        "advice": "",
+        "check": "C1",
+        "data": {
+          "group": "2021-09-20_S_300s",
+          "residuals_adu": [
+            -152.0
+          ],
+          "zone": 1
+        },
+        "files": [],
+        "impact": "",
+        "message": "zone d'amp glow n° 1 : écart au fond voisin s3 / S -152.0 ADU (un seul filtre : impossible de séparer dark et ciel)",
+        "severity": "info"
+      }
+    ],
+    "header": [
+      {
+        "advice": "ranger les fichiers selon le type, la pose et le filtre réels",
+        "check": "H1",
+        "data": {
+          "details": [
+            "dark/oops : 1 fichier(s), type FLAT dans un dossier « dark » → classé selon l'en-tête"
+          ]
+        },
+        "files": [
+          "dark/oops/2021-09-07_06-00-08_NGC 1499_H_1.13s_120_0000.fits"
+        ],
+        "impact": "aucun (le pipeline classe par en-tête)",
+        "message": "1 fichier(s) rangé(s) dans un dossier qui contredit l'en-tête (l'en-tête fait foi)",
+        "severity": "warning"
+      },
+      {
+        "advice": "utiliser un pilote qui écrit OFFSET (pilote natif ZWO dans N.I.N.A. plutôt qu'ASCOM) et fixer l'offset dans le profil de la caméra",
+        "check": "H2",
+        "data": {},
+        "files": [],
+        "impact": "un dark d'offset différent décale tout le fond calibré (retiré en grande partie par le fond local, mais fausse la mise à l'échelle des darks)",
+        "message": "OFFSET absent de tous les en-têtes : impossible de vérifier que darks et lights ont le même offset (seul le contrôle P1 sur les pixels peut le voir)",
+        "severity": "warning"
+      },
+      {
+        "advice": "faire au moins 15 darks par pose et par nuit",
+        "check": "H9",
+        "data": {},
+        "files": [],
+        "impact": "master dark plus bruité, rejet des cosmiques moins robuste",
+        "message": "s1 / H : 8 darks seulement (< 15) pour le master",
+        "severity": "info"
+      },
+      {
+        "advice": "faire au moins 15 flats par filtre",
+        "check": "H9",
+        "data": {},
+        "files": [],
+        "impact": "flat plus bruité",
+        "message": "s1 / H : 5 flats seulement (< 15)",
+        "severity": "info"
+      },
+      {
+        "advice": "faire au moins 15 darks par pose et par nuit",
+        "check": "H9",
+        "data": {},
+        "files": [],
+        "impact": "master dark plus bruité, rejet des cosmiques moins robuste",
+        "message": "s1 / S : 8 darks seulement (< 15) pour le master",
+        "severity": "info"
+      },
+      {
+        "advice": "faire au moins 15 flats par filtre",
+        "check": "H9",
+        "data": {},
+        "files": [],
+        "impact": "flat plus bruité",
+        "message": "s1 / S : 5 flats seulement (< 15)",
+        "severity": "info"
+      },
+      {
+        "advice": "faire au moins 15 darks par pose et par nuit",
+        "check": "H9",
+        "data": {},
+        "files": [],
+        "impact": "master dark plus bruité, rejet des cosmiques moins robuste",
+        "message": "s2 / H : 8 darks seulement (< 15) pour le master",
+        "severity": "info"
+      },
+      {
+        "advice": "faire au moins 15 flats par filtre",
+        "check": "H9",
+        "data": {},
+        "files": [],
+        "impact": "flat plus bruité",
+        "message": "s2 / H : 5 flats seulement (< 15)",
+        "severity": "info"
+      },
+      {
+        "advice": "faire au moins 15 darks par pose et par nuit",
+        "check": "H9",
+        "data": {},
+        "files": [],
+        "impact": "master dark plus bruité, rejet des cosmiques moins robuste",
+        "message": "s3 / S : 5 darks seulement (< 15) pour le master",
+        "severity": "info"
+      }
+    ],
+    "raw": [
+      {
+        "advice": "couvercle opaque, caméra recouverte, darks dans le noir complet",
+        "check": "P2",
+        "data": {
+          "classification": "lumière",
+          "corner_diff_adu": 4.58,
+          "delta_adu": 12.53,
+          "exptime": 300.0,
+          "reference_sets": [
+            "DARK-300s-20210921",
+            "DARK-300s-20210907"
+          ],
+          "sets": [
+            "DARK-300s-20210910"
+          ],
+          "sigma_adu": 9.18,
+          "sigma_ref_adu": 5.97
+        },
+        "files": [
+          "dark/darklight/300s/2021-09-10_02-00-00__Dark_300.00s_120_0000.fits",
+          "dark/darklight/300s/2021-09-10_02-05-10__Dark_300.00s_120_0001.fits",
+          "dark/darklight/300s/2021-09-10_02-10-20__Dark_300.00s_120_0002.fits",
+          "dark/darklight/300s/2021-09-10_02-15-30__Dark_300.00s_120_0003.fits",
+          "dark/darklight/300s/2021-09-10_02-20-40__Dark_300.00s_120_0004.fits"
+        ],
+        "impact": "dark trop haut → fond calibré trop bas, flux des étoiles faibles biaisés",
+        "message": "darks 300 s, nuit(s) du 09/09 (s2) : +12.5 ADU par rapport aux autres nuits (506.0 ADU), bruit 9.18 contre 5.97 ADU, excès non uniforme jusqu'à 4.6 ADU dans les coins → fuite de lumière probable",
+        "severity": "warning"
+      }
+    ],
+    "tables": {
+      "calibrated": [
+        {
+          "ampglow_excess_median_adu": 0.66,
+          "ampglow_zone_resid_adu": [
+            0.66
+          ],
+          "background_median_adu": 984.32,
+          "background_min_adu": 983.87,
+          "dark_id": "<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>",
+          "frac_nan_max": 0.0,
+          "frac_zero_max": 0.0,
+          "group": "2021-09-06_H_300s",
+          "label": "s1 / H",
+          "n": 3,
+          "session": "2021-09-06",
+          "sigma_median_adu": 8.63
+        },
+        {
+          "ampglow_excess_median_adu": 1.11,
+          "ampglow_zone_resid_adu": [
+            1.11
+          ],
+          "background_median_adu": 985.02,
+          "background_min_adu": 984.73,
+          "dark_id": "<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>",
+          "frac_nan_max": 0.0,
+          "frac_zero_max": 0.0,
+          "group": "2021-09-06_S_300s",
+          "label": "s1 / S",
+          "n": 3,
+          "session": "2021-09-06",
+          "sigma_median_adu": 7.78
+        },
+        {
+          "ampglow_excess_median_adu": -2.43,
+          "ampglow_zone_resid_adu": [
+            -2.43
+          ],
+          "background_median_adu": 984.42,
+          "background_min_adu": 984.32,
+          "dark_id": "<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>",
+          "frac_nan_max": 0.0,
+          "frac_zero_max": 0.0,
+          "group": "2021-09-09_H_300s",
+          "label": "s2 / H",
+          "n": 3,
+          "session": "2021-09-09",
+          "sigma_median_adu": 7.68
+        },
+        {
+          "ampglow_excess_median_adu": -152.0,
+          "ampglow_zone_resid_adu": [
+            -152.0
+          ],
+          "background_median_adu": 878.4,
+          "background_min_adu": 876.8,
+          "dark_id": "<DARK_g120_ox_b2_300s_T-12@2021-09-21T02:00>",
+          "frac_nan_max": 0.0,
+          "frac_zero_max": 0.0,
+          "group": "2021-09-20_S_300s",
+          "label": "s3 / S",
+          "n": 3,
+          "session": "2021-09-20",
+          "sigma_median_adu": 97.26
+        }
+      ],
+      "dark_levels": [
+        {
+          "exptime": 300.0,
+          "folders": [
+            "dark/darklight/300s"
+          ],
+          "kind": "DARK",
+          "level_adu": 506.4,
+          "mean_ccd_temp": -12.0,
+          "n": 8,
+          "night": "2021-09-06",
+          "set": "DARK-300s-20210907",
+          "sigma_adu": 6.05
+        },
+        {
+          "exptime": 300.0,
+          "folders": [
+            "dark/darklight/300s"
+          ],
+          "kind": "DARK",
+          "level_adu": 518.5,
+          "mean_ccd_temp": -5.0,
+          "n": 5,
+          "night": "2021-09-09",
+          "set": "DARK-300s-20210910",
+          "sigma_adu": 9.18
+        },
+        {
+          "exptime": 300.0,
+          "folders": [
+            "dark/darklight/300s"
+          ],
+          "kind": "DARK",
+          "level_adu": 505.6,
+          "mean_ccd_temp": -12.0,
+          "n": 5,
+          "night": "2021-09-20",
+          "set": "DARK-300s-20210921",
+          "sigma_adu": 5.88
+        },
+        {
+          "exptime": 1.13,
+          "folders": [
+            "dark/darkflat"
+          ],
+          "kind": "DARKFLAT",
+          "level_adu": 500.0,
+          "mean_ccd_temp": -12.0,
+          "n": 5,
+          "night": "2021-09-06",
+          "set": "DARKFLAT-1.13s-20210907",
+          "sigma_adu": 3.22
+        },
+        {
+          "exptime": 2.62,
+          "folders": [
+            "dark/darkflat"
+          ],
+          "kind": "DARKFLAT",
+          "level_adu": 499.9,
+          "mean_ccd_temp": -12.0,
+          "n": 5,
+          "night": "2021-09-06",
+          "set": "DARKFLAT-2.62s-20210907",
+          "sigma_adu": 3.26
+        }
+      ],
+      "flat_levels": [
+        {
+          "filter": "H",
+          "level_max_frac": 0.36,
+          "level_min_frac": 0.36,
+          "max_frac_saturated": 0.0,
+          "n": 5,
+          "set": "FLAT-H-1.13s-20210907"
+        },
+        {
+          "filter": "S",
+          "level_max_frac": 0.36,
+          "level_min_frac": 0.36,
+          "max_frac_saturated": 0.0,
+          "n": 5,
+          "set": "FLAT-S-2.62s-20210907"
+        },
+        {
+          "filter": "H",
+          "level_max_frac": 0.36,
+          "level_min_frac": 0.36,
+          "max_frac_saturated": 0.0,
+          "n": 5,
+          "set": "FLAT-H-1.13s-20210910"
+        }
+      ],
+      "flat_pairs": [
+        {
+          "a": "FLAT-H-1.13s-20210907",
+          "a_labels": [
+            "s1"
+          ],
+          "b": "FLAT-H-1.13s-20210910",
+          "b_labels": [
+            "s2"
+          ],
+          "dust_pct": 0.214,
+          "filter": "H",
+          "noise_pct": 0.175,
+          "shape_pct": 0.041,
+          "verdict": "identiques"
+        }
+      ],
+      "raw_sky": [
+        {
+          "dark_level": "A",
+          "dark_level_adu": 506.4,
+          "group": "s1 / H",
+          "light_median_adu": 1433.8,
+          "raw_sky_adu": 927.4
+        },
+        {
+          "dark_level": "A",
+          "dark_level_adu": 506.4,
+          "group": "s1 / S",
+          "light_median_adu": 1434.4,
+          "raw_sky_adu": 928.0
+        },
+        {
+          "dark_level": "B",
+          "dark_level_adu": 506.4,
+          "group": "s2 / H",
+          "light_median_adu": 1433.5,
+          "raw_sky_adu": 927.2
+        },
+        {
+          "dark_level": "A",
+          "dark_level_adu": 505.6,
+          "group": "s3 / S",
+          "light_median_adu": 1433.9,
+          "raw_sky_adu": 928.3
+        }
+      ]
+    }
+  },
+  "stdout": [
+    "Dossier de travail : <TMP>/work_run",
+    "  contrôles : statistiques rapides de 55 image(s) brute(s) …",
+    "  contrôles : comparaison des flats H (2 séries) …",
+    "  masters pour s1 / H …",
+    "  masters pour s1 / S …",
+    "  masters pour s2 / H …",
+    "  masters pour s3 / S …",
+    "  calibration s1 / H (3 images) …",
+    "  calibration s1 / S (3 images) …",
+    "  calibration s2 / H (3 images) …",
+    "  calibration s3 / S (3 images) …",
+    "Masters : 7 — rapport <TMP>/work_run/masters/masters.md",
+    "Images calibrées : 12 (0 groupe(s) déjà à jour) → <TMP>/work_run/calibrated",
+    "  Contrôle H1 : 1 fichier(s) rangé(s) dans un dossier qui contredit l'en-tête (l'en-tête fait foi)",
+    "  Contrôle H2 : OFFSET absent de tous les en-têtes : impossible de vérifier que darks et lights ont le même offset (seul le contrôle P1 sur les pixels peut le voir)",
+    "  Contrôle P2 : darks 300 s, nuit(s) du 09/09 (s2) : +12.5 ADU par rapport aux autres nuits (506.0 ADU), bruit 9.18 contre 5.97 ADU, excès non uniforme jusqu'à 4.6 ADU dans les coins → fuite de lumière probable",
+    "Contrôles qualité : <TMP>/work_run/qa/qa.md",
+    "Étapes suivantes pas encore disponibles : astrometry, quality, catalog, photometry, differential, detect, report"
+  ]
+}

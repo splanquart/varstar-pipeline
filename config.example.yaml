@@ -8,6 +8,13 @@ paths:
   astap_cli: null               # ex. /Applications/ASTAP.app/Contents/MacOS/astap
   pixinsight_masters: auto      # validation croisée : auto = <source>/output/master ; null pour désactiver
 
+siril:
+  # Contournement de free-astro/siril#2021 (macOS) : sans lui, chaque appel de siril-cli peut
+  # laisser un Python orphelin que macOS tue (fenêtre « Python a quitté de manière imprévue »).
+  # auto = macOS et Siril >= 1.4.1 ; on = toujours ; off = jamais (à mettre quand Siril sera corrigé).
+  # https://github.com/splanquart/varstar-pipeline/issues/1
+  python_init_guard: auto       # auto | on | off
+
 inventory:
   ignore_dirs: [removed, output, "*.pxiproject"]
   include_removed: false
