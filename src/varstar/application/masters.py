@@ -73,8 +73,13 @@ class MasterFactory:
 
 
 def _masks(g: GroupPlan, dark_rec: MasterRecord | None, flat_rec: MasterRecord | None, inv: Inventory,
-           cfg: Settings, masks_hash: str, store: ArtifactStore, repo: MasterRepository) -> None:
-    """Bad pixel map of the dark/flat pair and amp glow mask of the dark (built once, in masks/)."""
+           cfg: Settings, masks_hash: str, store: ArtifactStore, repo: MasterRepository,
+           warnings: list[str]) -> None:
+    """Bad pixel map of the dark/flat pair and amp glow mask of the dark (built once, in masks/).
+
+    Block sizes reduced for a small image are reported in ``warnings``, also when the mask is reused
+    (https://github.com/splanquart/varstar-pipeline/issues/4).
+    """
     bpm_name, ag_name = mask_ids(dark_rec.id if dark_rec else None, flat_rec.id if flat_rec else None, masks_hash)
     bpm_rel = f"masks/{bpm_name}"
     dark_adu = repo.load_adu(dark_rec) if dark_rec is not None else None
@@ -88,6 +93,7 @@ def _masks(g: GroupPlan, dark_rec: MasterRecord | None, flat_rec: MasterRecord |
         store.write_mask(bpm_rel, res.mask, header)
         store.write_json(bpm_rel[:-5] + ".json", {"counts": res.counts, "info": res.info})
     g.bpm = str(store.root / bpm_rel)
+    _mask_notes(store, bpm_rel, warnings)
     if dark_rec is not None and cfg.masks.amp_glow_detect:
         ag_rel = f"masks/{ag_name}"
         if not store.exists(ag_rel):
@@ -95,6 +101,15 @@ def _masks(g: GroupPlan, dark_rec: MasterRecord | None, flat_rec: MasterRecord |
             store.write_mask(ag_rel, res.mask)
             store.write_json(ag_rel[:-5] + ".json", {"counts": res.counts, "info": res.info})
         g.ampglow = str(store.root / ag_rel)
+        _mask_notes(store, ag_rel, warnings)
+
+
+def _mask_notes(store: ArtifactStore, mask_rel: str, warnings: list[str]) -> None:
+    """Notes of a mask (block sizes reduced), once: they depend on the image size, not on the group."""
+    meta = store.read_json(mask_rel[:-5] + ".json") or {}
+    for note in meta.get("info", {}).get("notes", []):
+        if note not in warnings:
+            warnings.append(note)
 
 
 def plan_group(g: LightGroup, inv: Inventory, cfg: Settings, factory: MasterFactory, pixels: PixelStats,
@@ -157,7 +172,7 @@ def run_masters(inv: Inventory, groups: list[LightGroup], cfg: Settings, *, sour
         entry, dark_rec, flat_rec = plan_group(g, inv, cfg, factory, pixels, masters, flat_labels, plan.warnings,
                                                progress)
         if dark_rec is not None or flat_rec is not None:
-            _masks(entry, dark_rec, flat_rec, inv, cfg, masks_hash, store, repo)
+            _masks(entry, dark_rec, flat_rec, inv, cfg, masks_hash, store, repo, plan.warnings)
         plan.groups[entry.key] = entry
 
     # Cross-validation with PixInsight masters + Q2 dark consistency.

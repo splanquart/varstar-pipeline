@@ -16,6 +16,7 @@ from typing import Any
 
 import numpy as np
 
+from .blocks import block_note, fit_block
 from .settings import MasksSettings
 
 HOT, VERY_HOT, UNSTABLE, COLD, DEAD, SATURATED = 1, 2, 4, 8, 16, 32
@@ -72,7 +73,12 @@ def build_bpm(dark_adu: np.ndarray | None, sigma_single: float | None, unstable:
     if unstable is not None:
         bpm[unstable.astype(bool)] |= UNSTABLE
     if flat_adu is not None:
-        block = m.flat_local_block_px
+        block = fit_block(flat_adu.shape, m.flat_local_block_px)
+        info["flat_local_block_px"] = block
+        note = block_note("masque BPM, niveau local du flat", "masks.flat_local_block_px",
+                          m.flat_local_block_px, block, flat_adu.shape)
+        if note:
+            info.setdefault("notes", []).append(note)
         local = upsample_nearest(block_median(flat_adu, block), block, flat_adu.shape)
         with np.errstate(divide="ignore", invalid="ignore"):
             rel = np.where(local > 0, flat_adu / local, 0.0)
@@ -84,7 +90,8 @@ def build_bpm(dark_adu: np.ndarray | None, sigma_single: float | None, unstable:
 
 def build_amp_glow(dark_adu: np.ndarray, m: MasksSettings) -> MaskResult:
     """Zones where the smoothed master dark rises above its typical level (amp glow corners/edges)."""
-    block = m.amp_glow_block_px
+    block = fit_block(dark_adu.shape, m.amp_glow_block_px)
+    note = block_note("masque d'amp glow", "masks.amp_glow_block_px", m.amp_glow_block_px, block, dark_adu.shape)
     k = m.amp_glow_sigma
     bm = block_median(dark_adu, block)
     level = float(np.median(bm))
@@ -94,6 +101,9 @@ def build_amp_glow(dark_adu: np.ndarray, m: MasksSettings) -> MaskResult:
     small = (bm > threshold).astype(np.uint8)
     mask = upsample_nearest(small, block, dark_adu.shape).astype(np.uint8)
     frac = float(mask.mean())
-    return MaskResult(mask, {"pixels": int(mask.sum())}, {
+    info: dict[str, Any] = {
         "block_px": block, "level_adu": level, "block_sigma_adu": spread, "threshold_adu": threshold,
-        "fraction": frac, "max_excess_adu": float(bm.max() - level)})
+        "fraction": frac, "max_excess_adu": float(bm.max() - level)}
+    if note:
+        info["notes"] = [note]
+    return MaskResult(mask, {"pixels": int(mask.sum())}, info)

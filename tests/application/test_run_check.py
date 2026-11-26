@@ -1,11 +1,12 @@
 """Use case « contrôles qualité » with in-memory fakes (no file, no FITS)."""
 
+import dataclasses
 import datetime as dt
 
 import numpy as np
 import pytest
 
-from builders import inventory_of, make_frame_stats, make_settings, sept06_frames, series_frames, two_nights_frames
+from builders import SENSOR, inventory_of, make_frame_stats, make_settings, sept06_frames, series_frames, two_nights_frames
 from fakes import FakePixelStats, InMemoryArtifactStore, RecordingQAReport
 from varstar.application.check import (calibrated_checks, load_report, raw_checks, record_calibrated_checks,
                                        run_checks, save_report)
@@ -114,6 +115,22 @@ def test_a_failing_flat_comparison_becomes_an_error_item(ports):
     items, _ = raw_checks(inv, inv.config, store=ports["store"], pixels=ports["pixels"])
     (p4,) = [i for i in items if i.check == "P4"]
     assert p4.severity == "error" and "OSError : fichier illisible" in p4.message
+
+
+def test_flats_of_a_small_sensor_are_binned_less_and_said_so(ports):
+    # https://github.com/splanquart/varstar-pipeline/issues/4
+    small = SENSOR._replace(naxis1=96, naxis2=64)
+    frames = sept06_frames() + series_frames("flat/SESSION_sept10", FLAT, 1.13, "2021-09-10T13:00:00", 3,
+                                             step_s=2, filter="H")
+    inv = inventory_of([dataclasses.replace(f, naxis1=96, naxis2=64) for f in frames])
+    assert {s.sensor_key for s in inv.calibration_sets[FLAT]} == {small}
+    ports["pixels"].flats = {s.id: np.ones((64, 96), np.float32) for s in inv.calibration_sets[FLAT]}
+    items, tables = raw_checks(inv, inv.config, store=ports["store"], pixels=ports["pixels"])
+    assert {c[2] for c in ports["pixels"].flat_calls} == {1}
+    (note,) = [i for i in items if i.check == "P4"]
+    assert note.severity == "info" and "binning ×1 au lieu de ×8 (qa.flat_compare_bin)" in note.message
+    assert note.data == {"filter": "H", "bin_px_requested": 8, "bin_px": 1, "shape": [64, 96]}
+    assert tables["flat_pairs"][0]["bin_px"] == 1
 
 
 def test_flat_comparison_can_be_disabled(ports):

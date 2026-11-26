@@ -142,7 +142,7 @@
     "",
     "## Contrôles qualité",
     "",
-    "_0 erreur(s), 3 avertissement(s), 7 info(s) — détail et méthode : `qa/qa.md`, docs/QA_CHECKS.md._",
+    "_0 erreur(s), 3 avertissement(s), 8 info(s) — détail et méthode : `qa/qa.md`, docs/QA_CHECKS.md._",
     "",
     "- **H1 — avertissement** : 1 fichier(s) rangé(s) dans un dossier qui contredit l'en-tête (l'en-tête fait foi)",
     "  - Impact : aucun (le pipeline classe par en-tête)",
@@ -176,6 +176,9 @@
     "- **H9 — info** : s3 / S : 5 darks seulement (< 15) pour le master",
     "  - Impact : master dark plus bruité, rejet des cosmiques moins robuste",
     "  - Conseil pour la prochaine séance : faire au moins 15 darks par pose et par nuit",
+    "- **P4 — info** : flats H : binning ×1 au lieu de ×8 (qa.flat_compare_bin) pour garder au moins 4 blocs de 16 px par côté sur une image de 96×64 px",
+    "  - Impact : aucun : comparaison plus lente, mêmes critères",
+    "  - Conseil pour la prochaine séance : rien à faire ; fixer qa.flat_compare_bin pour ce capteur fait disparaître ce message",
     "",
     "## Masters",
     "",
@@ -205,13 +208,17 @@
     "Aucun master PixInsight correspondant trouvé.",
     "",
     "## Cohérence des darks par dossier (question Q2)",
-    ""
+    "",
+    "## Avertissements",
+    "",
+    "- masque BPM, niveau local du flat : blocs de 16 px au lieu de 32 px (masks.flat_local_block_px) pour garder au moins 4 blocs par côté sur une image de 96×64 px",
+    "- masque d'amp glow : blocs de 16 px au lieu de 64 px (masks.amp_glow_block_px) pour garder au moins 4 blocs par côté sur une image de 96×64 px"
   ],
   "plan.json": {
     "groups": {
       "2021-09-06_H_300s": {
-        "ampglow": "<TMP>/work_run/masks/ampglow_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>_372d1e34.fits",
-        "bpm": "<TMP>/work_run/masks/bpm_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>_<FLAT_g120_ox_b2_1.13s_H_20210907@2021-09-07T06:00>_372d1e34.fits",
+        "ampglow": "<TMP>/work_run/masks/ampglow_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>_f0be929e.fits",
+        "bpm": "<TMP>/work_run/masks/bpm_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>_<FLAT_g120_ox_b2_1.13s_H_20210907@2021-09-07T06:00>_f0be929e.fits",
         "dark": {
           "exptime": 300.0,
           "id": "<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>",
@@ -243,8 +250,8 @@
         "session": "2021-09-06"
       },
       "2021-09-06_S_300s": {
-        "ampglow": "<TMP>/work_run/masks/ampglow_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>_372d1e34.fits",
-        "bpm": "<TMP>/work_run/masks/bpm_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>_<FLAT_g120_ox_b2_2.62s_S_20210907@2021-09-07T06:05>_372d1e34.fits",
+        "ampglow": "<TMP>/work_run/masks/ampglow_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>_f0be929e.fits",
+        "bpm": "<TMP>/work_run/masks/bpm_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>_<FLAT_g120_ox_b2_2.62s_S_20210907@2021-09-07T06:05>_f0be929e.fits",
         "dark": {
           "exptime": 300.0,
           "id": "<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>",
@@ -276,8 +283,8 @@
         "session": "2021-09-06"
       },
       "2021-09-09_H_300s": {
-        "ampglow": "<TMP>/work_run/masks/ampglow_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>_372d1e34.fits",
-        "bpm": "<TMP>/work_run/masks/bpm_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>_<FLAT_g120_ox_b2_1.13s_H_20210910@2021-09-10T06:00>_372d1e34.fits",
+        "ampglow": "<TMP>/work_run/masks/ampglow_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>_f0be929e.fits",
+        "bpm": "<TMP>/work_run/masks/bpm_<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>_<FLAT_g120_ox_b2_1.13s_H_20210910@2021-09-10T06:00>_f0be929e.fits",
         "dark": {
           "exptime": 300.0,
           "id": "<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>",
@@ -311,8 +318,8 @@
         "session": "2021-09-09"
       },
       "2021-09-20_S_300s": {
-        "ampglow": "<TMP>/work_run/masks/ampglow_<DARK_g120_ox_b2_300s_T-12@2021-09-21T02:00>_372d1e34.fits",
-        "bpm": "<TMP>/work_run/masks/bpm_<DARK_g120_ox_b2_300s_T-12@2021-09-21T02:00>_noflat_372d1e34.fits",
+        "ampglow": "<TMP>/work_run/masks/ampglow_<DARK_g120_ox_b2_300s_T-12@2021-09-21T02:00>_f0be929e.fits",
+        "bpm": "<TMP>/work_run/masks/bpm_<DARK_g120_ox_b2_300s_T-12@2021-09-21T02:00>_noflat_f0be929e.fits",
         "dark": {
           "exptime": 300.0,
           "id": "<DARK_g120_ox_b2_300s_T-12@2021-09-21T02:00>",
@@ -469,7 +476,10 @@
         "sigma_single_frame_adu": null
       }
     },
-    "warnings": []
+    "warnings": [
+      "masque BPM, niveau local du flat : blocs de 16 px au lieu de 32 px (masks.flat_local_block_px) pour garder au moins 4 blocs par côté sur une image de 96×64 px",
+      "masque d'amp glow : blocs de 16 px au lieu de 64 px (masks.amp_glow_block_px) pour garder au moins 4 blocs par côté sur une image de 96×64 px"
+    ]
   },
   "qa.json": {
     "calibrated": [
@@ -610,6 +620,23 @@
         "impact": "darks inutilisables pour les lights prises à la consigne habituelle ; s'ils étaient utilisés, courant d'obscurité et pixels chauds mal soustraits → résidus dans le fond",
         "message": "darks 300 s, nuit(s) du 09/09 (s2) : capteur à -5.0 °C contre -12.0 °C les autres nuits (ΔT = +7.0 °C) → niveau +12.5 ADU (518.5 contre 506.0 ADU), bruit 9.18 contre 5.97 ADU : courant d'obscurité plus fort (température), pas une fuite de lumière ni un saut d'offset. Ces darks ne sont appariés qu'à des lights à la même température",
         "severity": "warning"
+      },
+      {
+        "advice": "rien à faire ; fixer qa.flat_compare_bin pour ce capteur fait disparaître ce message",
+        "check": "P4",
+        "data": {
+          "bin_px": 1,
+          "bin_px_requested": 8,
+          "filter": "H",
+          "shape": [
+            64,
+            96
+          ]
+        },
+        "files": [],
+        "impact": "aucun : comparaison plus lente, mêmes critères",
+        "message": "flats H : binning ×1 au lieu de ×8 (qa.flat_compare_bin) pour garder au moins 4 blocs de 16 px par côté sur une image de 96×64 px",
+        "severity": "info"
       }
     ],
     "tables": {
@@ -782,11 +809,12 @@
           "b_labels": [
             "s2"
           ],
-          "block_px": 8,
-          "dust_pct": 0.233,
+          "bin_px": 1,
+          "block_px": 16,
+          "dust_pct": 0.558,
           "filter": "H",
-          "noise_pct": 0.173,
-          "shape_pct": 0.117,
+          "noise_pct": 0.351,
+          "shape_pct": 0.1,
           "verdict": "identiques"
         }
       ],
@@ -840,6 +868,8 @@
     "  Contrôle H2 : OFFSET absent de tous les en-têtes : impossible de vérifier que darks et lights ont le même offset (seul le contrôle P1 sur les pixels peut le voir)",
     "  Contrôle P9 : darks 300 s, nuit(s) du 09/09 (s2) : capteur à -5.0 °C contre -12.0 °C les autres nuits (ΔT = +7.0 °C) → niveau +12.5 ADU (518.5 contre 506.0 ADU), bruit 9.18 contre 5.97 ADU : courant d'obscurité plus fort (température), pas une fuite de lumière ni un saut d'offset. Ces darks ne sont appariés qu'à des lights à la même température",
     "Contrôles qualité : <TMP>/work_run/qa/qa.md",
+    "  Avertissement : masque BPM, niveau local du flat : blocs de 16 px au lieu de 32 px (masks.flat_local_block_px) pour garder au moins 4 blocs par côté sur une image de 96×64 px",
+    "  Avertissement : masque d'amp glow : blocs de 16 px au lieu de 64 px (masks.amp_glow_block_px) pour garder au moins 4 blocs par côté sur une image de 96×64 px",
     "Étapes suivantes pas encore disponibles : astrometry, quality, catalog, photometry, differential, detect, report"
   ]
 }
