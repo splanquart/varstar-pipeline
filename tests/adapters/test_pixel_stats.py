@@ -9,7 +9,7 @@ from fitsgen import noise, series, two_nights, write_frame
 from varstar.adapters.pixel_stats import PixelStatsCache, binned_frame, quick_stats, read_image, read_raw
 from varstar.adapters.workspace import Workspace
 from varstar.application.check import raw_checks
-from varstar.inventory import build_inventory
+from varstar.cli.bootstrap import load_inventory as build_inventory
 
 
 @pytest.fixture

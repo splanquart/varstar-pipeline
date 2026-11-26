@@ -20,7 +20,7 @@ from typer.testing import CliRunner
 import minisky as M
 from compare_outputs import image_signature, master_aliases
 from varstar.cli import app
-from varstar.masks import BIT_NAMES
+from varstar.domain.masks import BIT_NAMES
 
 runner = CliRunner()
 BIT = {name: bit for bit, name in BIT_NAMES.items()}

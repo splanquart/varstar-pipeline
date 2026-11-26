@@ -1,7 +1,6 @@
 """Composition root: instantiates the adapters and gives them to the use cases.
 
-Nothing else in the code base builds an adapter (checked by tests/architecture/test_layers.py,
-legacy modules excepted until step 8).
+Nothing else in the code base builds an adapter (checked by tests/architecture/test_layers.py).
 """
 
 from __future__ import annotations

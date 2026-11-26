@@ -10,7 +10,7 @@ import datetime as dt
 from pathlib import Path
 from typing import Any
 
-from varstar.config import load_config
+from varstar.adapters.config_loader import load_settings
 from varstar.domain.model import (DARK, FLAT, LIGHT, Frame, FrameSet, Inventory, LightGroup, Match, SensorInfo,
                                   SensorKey)
 
@@ -21,7 +21,7 @@ NINA_DEFAULTS = {"egain": 1.00224268436432, "xpixsz": 4.63, "focallen": 274.0}
 
 def make_settings(**overrides: Any) -> dict[str, Any]:
     """Default configuration with section overrides, e.g. ``make_settings(matching={...})``."""
-    return load_config(overrides=overrides)
+    return load_settings(overrides=overrides)
 
 
 def make_frame(imagetyp: str = LIGHT, date_obs: dt.datetime = T0, *, exptime: float = 300.0,

@@ -10,7 +10,7 @@ import pytest
 from astropy.io import fits
 from hypothesis import settings
 
-from varstar.config import load_config, load_defaults
+from varstar.adapters.config_loader import load_defaults, load_settings
 
 from fitsgen import series
 
@@ -68,7 +68,7 @@ def snapshot(request):
 
 @pytest.fixture
 def cfg():
-    return load_config()
+    return load_settings()
 
 
 @pytest.fixture

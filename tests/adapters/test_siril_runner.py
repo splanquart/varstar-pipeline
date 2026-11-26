@@ -12,9 +12,9 @@ from pathlib import Path
 
 import pytest
 
-from varstar.config import load_config
+from varstar.adapters.config_loader import load_settings
 from varstar.domain.settings import replace
-from varstar.siril import PYTHON_INIT_GUARD, Siril, SirilError, parse_version
+from varstar.adapters.siril import PYTHON_INIT_GUARD, Siril, SirilError, parse_version
 
 # The fake answers --version with $FAKE_VERSION; with FAKE_PYSCRIPT_FAILS=1 a script containing
 # pyscript fails the way Siril does ("Error in line 2 ('pyscript'): ...", exit 1).
@@ -136,7 +136,7 @@ def test_other_failures_are_not_retried(fake):
 def test_guard_status_and_config(fake, tmp_path):
     assert fake().guard_status() == {"mode": "auto", "active": True, "fallback": None,
                                      "issue": "https://github.com/splanquart/varstar-pipeline/issues/1"}
-    cfg = load_config(overrides={"paths": {"siril_cli": str(fake.tmp / "siril-cli")}})
+    cfg = load_settings(overrides={"paths": {"siril_cli": str(fake.tmp / "siril-cli")}})
     assert cfg.siril.python_init_guard == "auto"
     off = replace(cfg, siril={"python_init_guard": "off"})
     assert Siril.from_config(off, tmp_path / "w").python_init_guard == "off"
@@ -148,4 +148,4 @@ def test_unquoted_yaml_on_off(fake, tmp_path, yaml_value, mode):
     """YAML reads unquoted on/off as booleans: they must still mean on/off."""
     user = tmp_path / "config.yaml"
     user.write_text(f"paths:\n  siril_cli: {fake.tmp / 'siril-cli'}\nsiril:\n  python_init_guard: {yaml_value}\n")
-    assert Siril.from_config(load_config(user), tmp_path / "w").python_init_guard == mode
+    assert Siril.from_config(load_settings(user), tmp_path / "w").python_init_guard == mode

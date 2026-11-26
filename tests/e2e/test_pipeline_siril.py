@@ -7,8 +7,8 @@ import numpy as np
 import pytest
 from astropy.io import fits
 
-from varstar.config import load_config
-from varstar.pipeline import run_pipeline
+from varstar.adapters.config_loader import load_settings
+from varstar.cli.bootstrap import run_pipeline
 
 from fitsgen import series
 
@@ -53,7 +53,7 @@ def make_dataset(root: Path, dark_exp=300.0, dark_current=0.0, n_dark=8):
 
 
 def cfg_for(tmp_path):
-    return load_config(overrides={"paths": {"library": str(tmp_path / "lib")}})
+    return load_settings(overrides={"paths": {"library": str(tmp_path / "lib")}})
 
 
 def test_end_to_end_level_a(tmp_path):
@@ -123,7 +123,7 @@ def test_scaled_dark_level_b(tmp_path):
 
 
 def test_session_selection_and_errors(tmp_path):
-    from varstar.pipeline import PipelineError
+    from varstar.domain.calibration import PipelineError
     root = tmp_path / "raw"
     make_dataset(root)
     with pytest.raises(PipelineError):

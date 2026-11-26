@@ -1,4 +1,4 @@
-"""Architecture rules, checked statically on the imports of src/varstar (docs: plan hexagonal).
+"""Architecture rules, checked statically on the imports of src/varstar (see docs/ARCHITECTURE.md).
 
 Layers (sub-packages of ``varstar``), each may only depend on the layers to its left:
 
@@ -11,17 +11,17 @@ Layers (sub-packages of ``varstar``), each may only depend on the layers to its 
 - ``adapters``: may import ``domain`` and ``application``, never ``cli``.
 - ``cli``: composition root, may import everything.
 
-Modules still at the top of the package (``varstar.qa``, ``varstar.pipeline``…) are the
-legacy flat layout being migrated: the layer rules do not apply to them yet, but nothing in
-a layer may import them except ``cli`` and ``adapters`` (temporary).
+Every module belongs to a layer: only ``varstar/__init__.py`` (version) and ``defaults.yaml``
+live at the top of the package. A top-level module would escape all the rules.
 
 Everywhere: no import of a private name (``_xxx``) from another module.
 
 Composition root: in ``cli``, only ``cli.bootstrap`` instantiates adapters, so it is the only
 ``cli`` module importing ``varstar.adapters`` (pure formatting in ``adapters.reporting`` excepted).
 
-``TOLERATED`` lists the known violations being migrated away. The list must only shrink:
-the test also fails when a tolerated violation has disappeared, so that it gets removed.
+``TOLERATED`` lists known violations being migrated away (empty since the end of the
+hexagonal migration). It must only shrink: the test also fails when a tolerated violation has
+disappeared, so that it gets removed. Adding an entry needs a GitHub issue explaining why.
 """
 
 from __future__ import annotations
@@ -40,12 +40,12 @@ FORBIDDEN = {
     "adapters": ("varstar.cli",),
     "cli": (),
 }
-# Which legacy (flat) modules a layer may still import during the migration.
-MAY_IMPORT_LEGACY = {"domain": False, "application": False, "adapters": True, "cli": True}
+# Whether a layer may import a module outside the layers (never: see test_every_module_belongs_to_a_layer).
+MAY_IMPORT_LEGACY = {"domain": False, "application": False, "adapters": False, "cli": False}
 
 COMPOSITION_ROOTS = {"varstar.cli.bootstrap"}
 
-# (importing module, imported name) — to be emptied by the end of the migration (step 8).
+# (importing module, imported name).
 TOLERATED: set[tuple[str, str]] = set()
 
 
@@ -127,6 +127,12 @@ def test_layer_rules():
         f"  {m} importe {t}" for m, t in sorted(new))
 
 
+def test_every_module_belongs_to_a_layer():
+    stray = sorted(module_name(p) for p in PKG.rglob("*.py") if layer_of(module_name(p)) is None
+                   and module_name(p) != "varstar")
+    assert not stray, "Modules hors des couches (domain, application, adapters, cli) :\n  " + "\n  ".join(stray)
+
+
 def test_tolerated_list_only_shrinks():
     gone = TOLERATED - violations()
     assert not gone, "Exceptions résolues, à retirer de TOLERATED :\n" + "\n".join(
@@ -134,7 +140,7 @@ def test_tolerated_list_only_shrinks():
 
 
 def test_checker_detects_violations(tmp_path, monkeypatch):
-    """The checker itself: a fake domain module importing astropy.io and a legacy module."""
+    """The checker itself: a fake domain module importing astropy.io and a module outside the layers."""
     pkg = tmp_path / "varstar"
     (pkg / "domain").mkdir(parents=True)
     (pkg / "__init__.py").write_text("")

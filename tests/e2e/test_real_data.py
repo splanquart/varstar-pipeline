@@ -4,10 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from varstar.config import load_config
+from varstar.adapters.config_loader import load_settings
+from varstar.cli.bootstrap import load_inventory as build_inventory
+from varstar.domain.inventory import darks_todo
 
-CONFIG = Path(__file__).parent.parent / "config.yaml"
-from varstar.inventory import build_inventory, darks_todo
+CONFIG = Path(__file__).resolve().parents[2] / "config.yaml"
 
 DATA = Path("/Users/steph/Pictures/pixinsight/NGC1499/YEAR_2021")
 
@@ -16,7 +17,7 @@ pytestmark = [pytest.mark.real_data,
 
 
 def test_reference_inventory():
-    inv = build_inventory(DATA, load_config(CONFIG))
+    inv = build_inventory(DATA, load_settings(CONFIG))
     c = inv.counts_by_type()
     assert c["LIGHT"] == 170
     lv = {(inv.session_label(s).split(" ")[1].strip("()"), f): v
