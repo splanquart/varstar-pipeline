@@ -225,10 +225,11 @@
           "b_labels": [
             "s2"
           ],
-          "dust_pct": 0.214,
+          "block_px": 8,
+          "dust_pct": 0.233,
           "filter": "H",
-          "noise_pct": 0.175,
-          "shape_pct": 0.041,
+          "noise_pct": 0.173,
+          "shape_pct": 0.117,
           "verdict": "identiques"
         }
       ],
@@ -335,7 +336,7 @@
     "",
     "| Filtre | Flat 1 | Flat 2 | Structure locale % | Forme % | Bruit % | Verdict |",
     "|---|---|---|---|---|---|---|",
-    "| H | FLAT-H-1.13s-20210907 (s1) | FLAT-H-1.13s-20210910 (s2) | 0.21 | 0.04 | 0.17 | identiques |",
+    "| H | FLAT-H-1.13s-20210907 (s1) | FLAT-H-1.13s-20210910 (s2) | 0.23 | 0.12 | 0.17 | identiques |",
     ""
   ],
   "stdout": [

@@ -97,12 +97,36 @@ def block_median(img: np.ndarray, block: int) -> np.ndarray:
     return np.median(v, axis=2)
 
 
-def flat_ratio_metrics(a: np.ndarray, b: np.ndarray, block: int = 16) -> dict[str, float]:
-    """Compare two normalised (binned) flats.
+FLAT_RATIO_BLOCK = 16       # binned px: scale of the vignetting (large-scale shape of the ratio)
+FLAT_RATIO_MIN_BLOCKS = 4   # blocks per side, at least, for a meaningful large-scale shape
+FLAT_RATIO_MIN_BLOCK = 3    # smaller blocks cannot tell dust shadows (several bins) from the shape
+
+
+def flat_ratio_block(shape: tuple[int, ...], block: int = FLAT_RATIO_BLOCK) -> int:
+    """Block size actually used by ``flat_ratio_metrics`` for binned flats of ``shape``.
+
+    ``block`` shrinks so that each side holds at least ``FLAT_RATIO_MIN_BLOCKS`` blocks; 0 when
+    even blocks of ``FLAT_RATIO_MIN_BLOCK`` do not fit (image too small to compare flats).
+    See https://github.com/splanquart/varstar-pipeline/issues/2
+    """
+    if len(shape) != 2:
+        return 0
+    fitted = min(int(block), shape[0] // FLAT_RATIO_MIN_BLOCKS, shape[1] // FLAT_RATIO_MIN_BLOCKS)
+    return fitted if fitted >= FLAT_RATIO_MIN_BLOCK else 0
+
+
+def flat_ratio_metrics(a: np.ndarray, b: np.ndarray, block: int = FLAT_RATIO_BLOCK) -> dict[str, float] | None:
+    """Compare two normalised (binned) flats; ``None`` when they are too small to be compared.
 
     shape_pct: peak-to-peak of the large-scale ratio (vignetting moved: rotation, refocus, panel);
-    dust_pct: strongest local structure once the large scale is removed (dust shadows moved).
+    dust_pct: strongest local structure once the large scale is removed (dust shadows moved);
+    block_px: block size used (smaller than ``block`` on small images, see ``flat_ratio_block``).
     """
+    if a.shape != b.shape:
+        raise ValueError(f"flats de tailles différentes : {a.shape} et {b.shape}")
+    block = flat_ratio_block(a.shape, block)
+    if not block:
+        return None
     r = a / b
     r = r / np.median(r)
     coarse = block_median(r, block)
@@ -114,7 +138,8 @@ def flat_ratio_metrics(a: np.ndarray, b: np.ndarray, block: int = 16) -> dict[st
     small = block_median(resid, 3)
     noise = 100 * robust_sigma(resid)
     dust = 100 * float(np.max(np.abs(small)))
-    return {"shape_pct": round(shape, 3), "dust_pct": round(dust, 3), "noise_pct": round(noise, 3)}
+    return {"shape_pct": round(shape, 3), "dust_pct": round(dust, 3), "noise_pct": round(noise, 3),
+            "block_px": block}
 
 
 Zone = tuple[np.ndarray, np.ndarray]
