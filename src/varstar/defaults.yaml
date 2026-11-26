@@ -50,9 +50,9 @@ masks:                           # σ = bruit temporel d'une seule pose de dark
   cold_pixel_sigma: 5.0
   unstable_sigma_factor: 5.0     # bruit temporel du pixel > 5 × bruit médian → instable (RTS)
   dead_pixel_flat_frac: 0.5      # pixel < 50 % du flat normalisé local
-  flat_local_block_px: 32
+  flat_local_block_px: 32        # réduit (et signalé) si l'image a moins de 4 blocs par côté
   amp_glow_detect: true
-  amp_glow_block_px: 64          # lissage par médiane de blocs
+  amp_glow_block_px: 64          # lissage par médiane de blocs ; réduit (et signalé) sous 4 blocs par côté
   amp_glow_sigma: 5.0            # bloc > niveau + 5 σ(blocs) → zone d'amp glow
   amp_glow_min_adu: 2.0
   bad_pixel_flags: [very_hot, unstable, cold, dead, saturated]   # bits qui marquent une mesure (M4)
@@ -70,7 +70,7 @@ qa:                              # contrôles qualité précoces (docs/QA_CHECKS
   leak_frame_excess_adu: 3.0     # P2 : excès d'une pose par rapport à sa série
   flat_compare: true             # P4 : comparaison des flats successifs d'un même filtre
   flat_compare_max_frames: 7
-  flat_compare_bin: 8
+  flat_compare_bin: 8            # réduit (et signalé) pour garder 4 blocs de 16 px binés par côté
   flat_dust_pct: 1.0             # P4 : structure locale (poussière) tolérée, en %
   flat_shape_pct: 1.0            # P4 : écart de forme à grande échelle toléré, en %
   dark_above_light_adu: 3.0      # P8 : plancher des lights sous celui des darks → offset différent

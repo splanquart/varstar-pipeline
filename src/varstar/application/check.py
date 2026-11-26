@@ -16,9 +16,10 @@ from ..domain.model import FLAT, Inventory
 from ..domain.qa.calibrated import ampglow_residual_items, calibrated_group_checks
 from ..domain.qa.headers import header_checks
 from ..domain.qa.model import QAItem, sort_items
-from ..domain.qa.pixels import ampglow_zones, calibrated_frame_stats, flat_compare_frames, flat_ratio_metrics
-from ..domain.qa.raw import (flat_compare_failed, flat_comparison_series, flat_dark_level, flat_pair_check,
-                             flat_pair_skipped, frames_to_measure, raw_pixel_checks, saturation_adu)
+from ..domain.qa.pixels import (ampglow_zones, calibrated_frame_stats, flat_compare_bin, flat_compare_frames,
+                                flat_ratio_metrics)
+from ..domain.qa.raw import (flat_bin_adapted, flat_compare_failed, flat_comparison_series, flat_dark_level,
+                             flat_pair_check, flat_pair_skipped, frames_to_measure, raw_pixel_checks, saturation_adu)
 from ..domain.settings import Settings
 from .ports import ArtifactStore, PixelStats, Progress, QAReport
 
@@ -63,10 +64,16 @@ def raw_checks(inv: Inventory, cfg: Settings, *, store: ArtifactStore, pixels: P
     res = raw_pixel_checks(inv, cfg, stats)
     items, tables = list(res.items), dict(res.tables)
     if q.flat_compare and inv.calibration_sets.get(FLAT):
-        bin_px, max_frames = q.flat_compare_bin, q.flat_compare_max_frames
+        max_frames = q.flat_compare_max_frames
         rows = []
         for filt, sets in flat_comparison_series(inv):
             progress(f"  contrôles : comparaison des flats {filt} ({len(sets)} séries) …")
+            # Binning reduced on small images to keep enough blocks, and said so:
+            # https://github.com/splanquart/varstar-pipeline/issues/4
+            shape = (sets[0].frames[0].naxis2, sets[0].frames[0].naxis1)
+            bin_px = flat_compare_bin(shape, q.flat_compare_bin)
+            if bin_px < q.flat_compare_bin:
+                items.append(flat_bin_adapted(filt, q.flat_compare_bin, bin_px, shape))
             # A failing check is reported (P4 error), it does not stop the run (https://github.com/splanquart/varstar-pipeline/issues/2).
             try:
                 flats = {s.id: pixels.quick_flat(s.id, flat_compare_frames(s.frames, max_frames), bin_px,
@@ -88,6 +95,7 @@ def raw_checks(inv: Inventory, cfg: Settings, *, store: ArtifactStore, pixels: P
                 rel = f"qa/flats/ratio_{a.id}_vs_{b.id}.fits"
                 store.write_image(rel, (flats[a.id] / flats[b.id]).astype(np.float32))
                 item, row = flat_pair_check(inv, cfg, filt, a, b, met, str(store.root / rel))
+                row["bin_px"] = bin_px
                 rows.append(row)
                 if item is not None:
                     items.append(item)

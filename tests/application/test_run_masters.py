@@ -76,6 +76,24 @@ def test_masters_are_reused_when_inputs_are_identical(ports):
     assert third.groups["2021-09-06_H_300s"].dark.id != first.groups["2021-09-06_H_300s"].dark.id
 
 
+def test_reduced_mask_blocks_are_warned_once_even_when_masks_are_reused(ports):
+    # https://github.com/splanquart/varstar-pipeline/issues/4: the fake masters are 64x96 px.
+    inv = inventory_of(sept06_frames())
+    plan = run(inv, ports)
+    notes = [w for w in plan.warnings if "au lieu de" in w]
+    assert len(notes) == 2
+    assert any("masque d'amp glow : blocs de 16 px au lieu de 64 px" in w for w in notes)
+    assert any("masque BPM, niveau local du flat : blocs de 16 px au lieu de 32 px" in w for w in notes)
+    again = run(inv, ports)
+    assert [w for w in again.warnings if "au lieu de" in w] == notes
+
+
+def test_no_block_warning_at_the_reference_size(ports):
+    ports["builder"].shape = (512, 768)
+    plan = run(inventory_of(sept06_frames()), ports)
+    assert not [w for w in plan.warnings if "au lieu de" in w]
+
+
 def test_qa_findings_go_into_masters_md(ports):
     ports["store"].write_json("qa/qa.json", {"header": [QAItem("H9", "info", "peu de darks").to_dict()],
                                              "calibrated": [QAItem("C3", "error", "x").to_dict()]})
