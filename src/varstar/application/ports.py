@@ -10,7 +10,9 @@ from typing import Any, Callable, Iterable, Protocol
 
 import numpy as np
 
+from ..domain.calibration import CalibrationSensor, FileStat, MasterRecord, Rejection
 from ..domain.model import Frame, Inventory, SourceScan
+from ..domain.plan import GroupPlan
 
 
 class FrameSource(Protocol):
@@ -21,6 +23,9 @@ class FrameSource(Protocol):
 
     def scan(self, root: Path, cfg: dict[str, Any], exclude: list[Path] | None = None) -> SourceScan:
         """Headers of every FITS file, unreadable files and folder facts."""
+
+    def file_stat(self, path: str | Path) -> FileStat:
+        """Resolved path, size and modification time of a raw file (identity for the caches)."""
 
 
 class PixelReader(Protocol):
@@ -66,6 +71,9 @@ class ArtifactStore(Protocol):
     def write_image(self, rel: str, data: np.ndarray) -> None:
         """FITS image (float32), e.g. the flat ratios of the P4 check."""
 
+    def write_mask(self, rel: str, mask: np.ndarray, header: dict[str, Any] | None = None) -> None:
+        """FITS mask (uint8) with optional header keywords."""
+
 
 class ProvenanceRecorder(Protocol):
     """Fingerprints for idempotence, step manifests and provenance.json."""
@@ -95,3 +103,58 @@ class QAReport(Protocol):
     """qa.md text of a qa.json report."""
 
     def markdown(self, report: dict[str, Any]) -> str: ...
+
+
+class MasterRepository(Protocol):
+    """Library of masters shared between targets, keyed by master id."""
+
+    root: Path
+
+    def find(self, kind: str, master_id: str) -> MasterRecord | None: ...
+
+    def load_adu(self, rec: MasterRecord) -> np.ndarray:
+        """Master image in ADU16 (float32)."""
+
+    def load_unstable(self, rec: MasterRecord) -> np.ndarray | None:
+        """Unstable-pixel mask of a light dark (None when absent)."""
+
+
+class MasterBuilder(Protocol):
+    """Builds masters from raw frames and stores them in the library (Siril)."""
+
+    def version(self) -> str: ...
+
+    def status(self) -> dict[str, Any]:
+        """State of the tool (e.g. Siril workarounds), for provenance.json."""
+
+    def build_dark(self, frames: list[Frame], kind: str, rejection: Rejection, master_id: str, label: str,
+                   sources_root: Path) -> MasterRecord:
+        """Master dark / dark of flat: mean with rejection, no normalisation."""
+
+    def build_flat(self, frames: list[Frame], darkflat: MasterRecord, rejection: Rejection, master_id: str,
+                   label: str, sources_root: Path) -> MasterRecord:
+        """Master flat: each flat minus the dark of flat, multiplicative normalisation, rejection."""
+
+
+class ReferenceMasters(Protocol):
+    """Masters made by another tool (PixInsight), for cross-validation."""
+
+    def find(self, rec: MasterRecord, folder_labels: list[str]) -> str | None: ...
+
+    def load_adu(self, path: str) -> np.ndarray:
+        """Reference master in ADU16; ``ValueError`` when it cannot be read."""
+
+
+class Calibrator(Protocol):
+    """Calibrates the lights of a group: (light − dark) / flat, float32, ADU16, provenance header."""
+
+    def calibrate(self, group: GroupPlan, outputs: dict[str, Path], sensor: CalibrationSensor) -> None:
+        """Write one calibrated image per raw light (``outputs``: raw path → output path)."""
+
+
+class MastersReport(Protocol):
+    """masters.md text."""
+
+    def markdown(self, plan: dict[str, Any], qa_items: list[Any] | None,
+                 masks: dict[str, dict[str, Any]]) -> str:
+        """``masks``: mask path → its counts/info (bad pixel map, amp glow)."""

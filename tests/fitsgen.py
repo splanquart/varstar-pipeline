@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import struct
 from pathlib import Path
 
 import numpy as np
@@ -91,3 +92,21 @@ def two_nights(root: Path, level2: float = 516.0, leak: bool = False, temp: floa
 
     series(root, "dark/b", "DARK", 300, "2021-09-07T02:00:00", 5, step_s=310, prefix="", shape=QA_SHAPE, make=night2)
     return root
+
+
+# --------------------------------------------------------------------------- PixInsight masters
+
+
+def write_xisf(path, data, sample_format="Float32", compression=None):
+    data = data.astype("<f4")
+    h, w = data.shape
+    offset = 4096
+    comp = f' compression="{compression}"' if compression else ""
+    xml = (f'<?xml version="1.0" encoding="UTF-8"?><xisf version="1.0" xmlns="http://www.pixinsight.com/xisf">'
+           f'<Image geometry="{w}:{h}:1" sampleFormat="{sample_format}" bounds="0:1" colorSpace="Gray"{comp} '
+           f'location="attachment:{offset}:{data.nbytes}"/></xisf>').encode()
+    with open(path, "wb") as fh:
+        fh.write(b"XISF0100" + struct.pack("<I", len(xml)) + b"\0" * 4 + xml)
+        fh.write(b"\0" * (offset - fh.tell()))
+        fh.write(data.tobytes())
+    return path

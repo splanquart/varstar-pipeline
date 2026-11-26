@@ -14,7 +14,9 @@ from typing import Any, Callable, Iterable
 
 import numpy as np
 
+from varstar.domain.calibration import CalibrationSensor, FileStat, MasterRecord, Rejection
 from varstar.domain.model import Frame, Inventory, SourceScan
+from varstar.domain.plan import GroupPlan
 
 
 class InMemoryFrameSource:
@@ -29,6 +31,10 @@ class InMemoryFrameSource:
         self.empty_dirs = empty_dirs or []
         self.other_extensions = other_extensions or {}
         self.scans = 0
+        self.mtimes: dict[str, int] = {}      # path → mtime_ns (default 0): "touch" a file in a test
+
+    def file_stat(self, path) -> FileStat:
+        return FileStat(str(path), 1000, self.mtimes.get(str(path), 0))
 
     def _kept(self, cfg: dict[str, Any], exclude: list[Path] | None) -> list[Frame]:
         patterns = [p.lower() for p in cfg.get("inventory", {}).get("ignore_dirs") or []]
@@ -74,10 +80,11 @@ class InMemoryArtifactStore:
         self.root = root
         self.files: dict[str, str] = {}
         self.images: dict[str, np.ndarray] = {}
+        self.headers: dict[str, dict[str, Any]] = {}
         self.writes: list[str] = []
 
     def exists(self, rel: str) -> bool:
-        return rel in self.files
+        return rel in self.files or rel in self.images
 
     def read_json(self, rel: str) -> Any | None:
         return json.loads(self.files[rel]) if rel in self.files else None
@@ -94,6 +101,11 @@ class InMemoryArtifactStore:
 
     def write_image(self, rel: str, data: np.ndarray) -> None:
         self.images[rel] = np.asarray(data, dtype=np.float32).copy()
+        self.writes.append(rel)
+
+    def write_mask(self, rel: str, mask: np.ndarray, header: dict[str, Any] | None = None) -> None:
+        self.images[rel] = np.asarray(mask, dtype=np.uint8).copy()
+        self.headers[rel] = dict(header or {})
         self.writes.append(rel)
 
 
@@ -193,3 +205,125 @@ class RecordingQAReport:
         self.rendered.append(copy.deepcopy(report))
         counts = {s: len(report.get(s, [])) for s in ("header", "raw", "calibrated")}
         return f"# Contrôles qualité\n{counts}\n"
+
+
+# --------------------------------------------------------------------------- masters and calibration
+
+
+class InMemoryMasterRepository:
+    """``MasterRepository`` keeping masters (record + image) in memory."""
+
+    def __init__(self, root: Path = Path("/lib")):
+        self.root = root
+        self.records: dict[tuple[str, str], MasterRecord] = {}
+        self.images: dict[str, np.ndarray] = {}
+        self.unstable: dict[str, np.ndarray] = {}
+
+    def add(self, rec: MasterRecord, image: np.ndarray, unstable: np.ndarray | None = None) -> None:
+        self.records[(rec.kind, rec.id)] = rec
+        self.images[rec.id] = np.asarray(image, dtype=np.float32)
+        if unstable is not None:
+            self.unstable[rec.id] = unstable
+
+    def find(self, kind: str, master_id: str) -> MasterRecord | None:
+        return self.records.get((kind, master_id))
+
+    def load_adu(self, rec: MasterRecord) -> np.ndarray:
+        return self.images[rec.id].copy()
+
+    def load_unstable(self, rec: MasterRecord) -> np.ndarray | None:
+        u = self.unstable.get(rec.id)
+        return None if u is None else u.copy()
+
+
+class FakeMasterBuilder:
+    """``MasterBuilder`` making constant masters (dark: ``level`` ADU, flat: 1) without Siril."""
+
+    def __init__(self, repo: InMemoryMasterRepository, shape: tuple[int, int] = (64, 96), level: float = 500.0,
+                 flat_level_frac: float = 0.5):
+        self.repo = repo
+        self.shape = shape
+        self.level = level
+        self.flat_level_frac = flat_level_frac
+        self.built: list[tuple[str, str, int]] = []      # (kind, label, n frames)
+
+    def version(self) -> str:
+        return "1.4.5"
+
+    def status(self) -> dict[str, Any]:
+        return {"mode": "off", "active": False}
+
+    def _meta(self, kind, frames, rejection, master_id, label, sources_root, **extra):
+        return {"id": master_id, "kind": kind, "label": label, "rejection": rejection.to_dict(),
+                "n_frames": len(frames), "exptime": frames[0].exptime, "sources": [str(f.path) for f in frames],
+                "sources_root": str(sources_root), **extra}
+
+    def build_dark(self, frames: list[Frame], kind: str, rejection: Rejection, master_id: str, label: str,
+                   sources_root: Path) -> MasterRecord:
+        self.built.append((kind, label, len(frames)))
+        level = self.level * frames[0].exptime / 300.0 if kind == "dark" else self.level
+        stats = [{"file": f.rel_path, "ccd_temp": f.ccd_temp, "median": level, "robust_sigma": 12.0,
+                  "corners": {"haut_gauche": 0.0, "haut_droit": 0.0, "bas_gauche": 0.0, "bas_droit": 0.0}}
+                 for f in frames]
+        meta = self._meta(kind, frames, rejection, master_id, label, sources_root, median_adu=level,
+                          sigma_single_frame_adu=12.0 if kind == "dark" else None, frame_stats=stats,
+                          **({"n_unstable": 0} if kind == "dark" else {}))
+        rec = MasterRecord(master_id, kind, self.repo.root / "darks" / f"{label}_{master_id}", meta)
+        image = np.full(self.shape, level, np.float32)
+        unstable = np.zeros(self.shape, np.uint8) if kind == "dark" else None
+        self.repo.add(rec, image, unstable)
+        return rec
+
+    def build_flat(self, frames: list[Frame], darkflat: MasterRecord, rejection: Rejection, master_id: str,
+                   label: str, sources_root: Path) -> MasterRecord:
+        self.built.append(("flat", label, len(frames)))
+        frac = self.flat_level_frac
+        meta = self._meta("flat", frames, rejection, master_id, label, sources_root, filter=frames[0].filter,
+                          darkflat_id=darkflat.id, median_adu=frac * 65532, level_min_frac=frac,
+                          level_max_frac=frac, level_warnings=[] if 0.15 <= frac <= 0.85 else
+                          [f.rel_path for f in frames], frame_stats=[])
+        rec = MasterRecord(master_id, "flat", self.repo.root / "flats" / f"{label}_{master_id}", meta)
+        self.repo.add(rec, np.full(self.shape, frac * 65532, np.float32))
+        return rec
+
+
+class FakeReferenceMasters:
+    """``ReferenceMasters`` with images per master kind (``None``: not found; an exception: unreadable)."""
+
+    def __init__(self, images: dict[str, Any]):
+        self.images = images
+
+    def find(self, rec: MasterRecord, folder_labels: list[str]) -> str | None:
+        return f"/pi/master{rec.kind}_{rec.id}.xisf" if self.images.get(rec.kind) is not None else None
+
+    def load_adu(self, path: str) -> np.ndarray:
+        kind = path.split("/master")[1].split("_")[0]
+        image = self.images[kind]
+        if isinstance(image, Exception):
+            raise image
+        return np.asarray(image, dtype=np.float32)
+
+
+class FakeCalibrator:
+    """``Calibrator`` writing a placeholder per output into an ``InMemoryArtifactStore``."""
+
+    def __init__(self, store: InMemoryArtifactStore, failing: Iterable[str] = ()):
+        self.store = store
+        self.failing = set(failing)
+        self.calls: list[str] = []
+
+    def calibrate(self, group: GroupPlan, outputs: dict[str, Path], sensor: CalibrationSensor) -> None:
+        self.calls.append(group.key)
+        if group.key in self.failing:
+            raise RuntimeError("Siril a échoué")
+        for out in outputs.values():
+            self.store.write_text(str(Path(out).relative_to(self.store.root)), f"calibrated {group.level}")
+
+
+class RecordingMastersReport:
+    def __init__(self):
+        self.calls: list[tuple[dict[str, Any], Any, dict[str, Any]]] = []
+
+    def markdown(self, plan: dict[str, Any], qa_items, masks: dict[str, dict[str, Any]]) -> str:
+        self.calls.append((copy.deepcopy(plan), qa_items, copy.deepcopy(masks)))
+        return f"# Masters\n{len(plan['masters'])} master(s)\n"

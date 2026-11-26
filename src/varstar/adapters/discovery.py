@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from ..domain.calibration import FileStat
 from ..domain.model import SourceScan
 from .fits_io import read_frame
 
@@ -79,3 +80,8 @@ class FilesystemFrameSource:
             except Exception as exc:
                 unreadable.append(f"{path.relative_to(root)} ({exc.__class__.__name__})")
         return SourceScan(root, frames, unreadable, disc.ignored_dirs, disc.empty_dirs, dict(disc.other_extensions))
+
+    def file_stat(self, path: str | Path) -> FileStat:
+        p = Path(path)
+        st = p.stat()
+        return FileStat(str(p.resolve()), st.st_size, st.st_mtime_ns)

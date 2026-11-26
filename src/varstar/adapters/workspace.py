@@ -10,6 +10,8 @@ import numpy as np
 import yaml
 from astropy.io import fits
 
+from . import images
+
 
 class Workspace:
     """``ArtifactStore`` on a local work directory (paths relative to ``root``)."""
@@ -42,3 +44,9 @@ class Workspace:
         p = self.path(rel)
         p.parent.mkdir(parents=True, exist_ok=True)
         fits.writeto(p, np.asarray(data, dtype=np.float32), overwrite=True)
+
+    def write_mask(self, rel: str, mask: np.ndarray, header: dict[str, Any] | None = None) -> None:
+        hdr = fits.Header()
+        for key, value in (header or {}).items():
+            hdr[key] = value
+        images.write_mask(self.path(rel), mask, hdr if header else None)

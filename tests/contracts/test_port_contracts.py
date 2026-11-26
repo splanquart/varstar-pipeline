@@ -10,15 +10,25 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from astropy.io import fits
+
 from builders import make_frame, make_frame_stats, make_settings
-from fakes import FakePixelReader, FakePixelStats, FakeProvenance, InMemoryArtifactStore, InMemoryFrameSource
-from fitsgen import noise, write_frame
+from fakes import (FakeCalibrator, FakeMasterBuilder, FakePixelReader, FakePixelStats, FakeProvenance,
+                   InMemoryArtifactStore, InMemoryFrameSource, InMemoryMasterRepository)
+from fitsgen import noise, series, write_frame
 from varstar.adapters.discovery import FilesystemFrameSource
-from varstar.adapters.fits_io import FitsPixelReader
+from varstar.adapters.fits_io import FitsPixelReader, read_frame
+from varstar.adapters.images import NORM_SCALE
+from varstar.adapters.library import DiskMasterRepository
 from varstar.adapters.pixel_stats import PixelStatsCache
+from varstar.adapters.siril import Siril
+from varstar.adapters.siril_calibrator import SirilCalibrator
+from varstar.adapters.siril_masters import SirilMasterBuilder
 from varstar.adapters.provenance import ProvenanceStore
 from varstar.adapters.workspace import Workspace
+from varstar.domain.calibration import CalibrationSensor, MasterRecord, choose_rejection
 from varstar.domain.headers import folder_label_from_path
+from varstar.domain.plan import DarkRef, GroupPlan
 from varstar.domain.model import DARK, LIGHT
 
 FILES = [  # (relative path, type, filter)
@@ -191,3 +201,118 @@ def test_pixel_stats_read_image(pixel_stats, tmp_path):
     assert img.dtype == np.float32 and img.shape == (8, 8) and np.all(img == 3.5)
     with pytest.raises(FileNotFoundError):
         pixels.read_image(tmp_path / "work" / "absent.fits")
+
+
+# --------------------------------------------------------------------------- FrameSource.file_stat
+
+
+def test_frame_source_file_stat(frame_source):
+    source, root = frame_source
+    path = root / FILES[0][0]
+    st = source.file_stat(path)
+    assert st == source.file_stat(path) and st.resolved.endswith(FILES[0][0]) and st.size > 0
+
+
+def test_artifact_store_writes_masks(store):
+    store.write_mask("masks/bpm_x.fits", np.array([[0, 1], [4, 0]]), {"VSDARK": "d1", "VSBIT1": "hot"})
+    store.write_mask("masks/ampglow_x.fits", np.zeros((2, 2)))
+    assert store.exists("masks/bpm_x.fits") and store.exists("masks/ampglow_x.fits")
+
+
+# --------------------------------------------------------------------------- MasterRepository
+
+MASTER_META = {"id": "abc", "kind": "dark", "label": "DARK_g120", "rejection": {"name": "sigma clipping"},
+               "siril_version": "1.4.5", "created": "2026-11-26T09:00:00", "n_frames": 3, "exptime": 300.0,
+               "median_adu": 500.0}
+
+
+@pytest.fixture(params=["fake", "real"])
+def master_repo(request, tmp_path):
+    image = np.full((4, 6), 500.0, np.float32)
+    if request.param == "fake":
+        repo = InMemoryMasterRepository(tmp_path / "lib")
+        repo.add(MasterRecord("abc", "dark", tmp_path / "lib" / "darks" / "DARK_g120_abc", dict(MASTER_META)), image)
+        return repo
+    repo = DiskMasterRepository(tmp_path / "lib")
+    d = repo.new_dir("dark", "DARK_g120", "abc")
+    repo.publish(d, image / NORM_SCALE, fits.Header(), dict(MASTER_META), [make_frame(DARK, rel_path="d.fits")])
+    return repo
+
+
+def test_master_repository(master_repo):
+    assert master_repo.find("dark", "unknown") is None and master_repo.find("flat", "abc") is None
+    rec = master_repo.find("dark", "abc")
+    assert (rec.id, rec.kind, rec.meta["median_adu"]) == ("abc", "dark", 500.0)
+    adu = master_repo.load_adu(rec)
+    assert adu.dtype == np.float32 and np.allclose(adu, 500.0, atol=1e-3)
+    assert master_repo.load_unstable(rec) is None
+    assert isinstance(master_repo.root, Path)
+
+
+# --------------------------------------------------------------------------- MasterBuilder, Calibrator (Siril)
+
+
+def _raw_darks(tmp_path, n=3, level=500.0, exptime=300.0, kind="DARK"):
+    paths = series(tmp_path / "raw", f"dark/{exptime:g}s", kind, exptime, "2021-09-07T02:00:00", n, step_s=310,
+                   prefix="", shape=(64, 96), make=lambda i: noise(level, 12, 70 + i, shape=(64, 96)))
+    return [read_frame(p, tmp_path / "raw") for p in paths]
+
+
+@pytest.fixture(params=["fake", pytest.param("real", marks=pytest.mark.siril)])
+def master_builder(request, tmp_path):
+    if request.param == "fake":
+        repo = InMemoryMasterRepository(tmp_path / "lib")
+        return FakeMasterBuilder(repo), repo
+    repo = DiskMasterRepository(tmp_path / "lib")
+    siril = Siril.from_config(make_settings(), tmp_path / "work")
+    return SirilMasterBuilder(siril, repo, tmp_path / "work" / "siril", make_settings()), repo
+
+
+def test_master_builder_dark_then_flat(master_builder, tmp_path):
+    builder, repo = master_builder
+    cfg = make_settings()
+    darks = _raw_darks(tmp_path)
+    rej = choose_rejection(len(darks), cfg)
+    dark = builder.build_dark(darks, "dark", rej, "d1", "DARK_g120_ox_b2_300s_T-12", tmp_path / "raw")
+    assert (dark.id, dark.kind) == ("d1", "dark") and repo.find("dark", "d1") is not None
+    for key in ("label", "n_frames", "exptime", "median_adu", "sources", "frame_stats", "sigma_single_frame_adu"):
+        assert key in dark.meta, key
+    assert dark.meta["n_frames"] == 3 and dark.meta["rejection"]["name"] == rej.name
+    assert np.median(repo.load_adu(dark)) == pytest.approx(dark.meta["median_adu"], abs=2)
+    assert abs(dark.meta["median_adu"] - 500) < 5
+    assert isinstance(builder.version(), str) and isinstance(builder.status(), dict)
+
+    darkflats = _raw_darks(tmp_path, exptime=1.13, kind="DARKFLAT")
+    df = builder.build_dark(darkflats, "darkflat", rej, "df1", "DARKFLAT_g120", tmp_path / "raw")
+    flats_paths = series(tmp_path / "raw", "flat", "FLAT", 1.13, "2021-09-07T13:00:00", 3, step_s=2, filt="H",
+                         shape=(64, 96), make=lambda i: noise(30000, 100, 80 + i, shape=(64, 96)))
+    flats = [read_frame(p, tmp_path / "raw") for p in flats_paths]
+    flat = builder.build_flat(flats, df, rej, "f1", "FLAT_H", tmp_path / "raw")
+    assert flat.kind == "flat" and repo.find("flat", "f1") is not None and flat.meta["darkflat_id"] == "df1"
+    for key in ("level_min_frac", "level_max_frac", "level_warnings", "filter"):
+        assert key in flat.meta, key
+
+
+@pytest.fixture(params=["fake", pytest.param("real", marks=pytest.mark.siril)])
+def calibrator(request, tmp_path):
+    if request.param == "fake":
+        store = InMemoryArtifactStore(tmp_path / "work")
+        return FakeCalibrator(store), (lambda p: store.exists(str(Path(p).relative_to(store.root))))
+    siril = Siril.from_config(make_settings(), tmp_path / "work")
+    return SirilCalibrator(siril, tmp_path / "work"), (lambda p: Path(p).exists())
+
+
+def test_calibrator_writes_one_output_per_light(calibrator, tmp_path):
+    calib, exists = calibrator
+    lights = series(tmp_path / "raw", "light/H/SESSION_s1", "LIGHT", 300, "2021-09-06T23:00:00", 2, step_s=600,
+                    filt="H", shape=(64, 96), make=lambda i: noise(800, 12, 90 + i, shape=(64, 96)))
+    dark = tmp_path / "lib" / "dark.fits"
+    dark.parent.mkdir(parents=True)
+    hdu = fits.PrimaryHDU(np.full((64, 96), 500 / NORM_SCALE, np.float32))
+    hdu.header["VSNORM"] = NORM_SCALE
+    hdu.writeto(dark)
+    group = GroupPlan("2021-09-06_H_300s", "2021-09-06", "s1", "H", 300.0, "B", [], [str(p) for p in lights],
+                      DarkRef("d1", str(dark), "direct", 3, 300.0))
+    outputs = {str(p): tmp_path / "work" / "calibrated" / f"{i}.fits" for i, p in enumerate(lights)}
+    calib.calibrate(group, outputs, CalibrationSensor(4, 0.25))
+    assert all(exists(p) for p in outputs.values())
