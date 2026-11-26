@@ -18,6 +18,7 @@ import numpy as np
 
 from .model import DARK, DARKFLAT, Frame, FrameSet, Inventory, LightGroup
 from .qa.pixels import robust_sigma
+from .settings import MastersSettings
 
 MASTER_ALGO_VERSION = 1
 CALIB_VERSION = 1
@@ -57,12 +58,11 @@ class Rejection:
         return {"code": self.code, "low": self.low, "high": self.high, "name": self.name}
 
 
-def choose_rejection(n: int, cfg: Mapping[str, Any]) -> Rejection:
+def choose_rejection(n: int, m: MastersSettings) -> Rejection:
     """SPEC §4.2: rejection algorithm depends on the number of frames."""
-    m = cfg["masters"]
-    lo, hi = float(m["sigma_low"]), float(m["sigma_high"])
+    lo, hi = m.sigma_low, m.sigma_high
     if n < 8:
-        return Rejection("p", float(m.get("percentile_low", 0.2)), float(m.get("percentile_high", 0.1)),
+        return Rejection("p", m.percentile_low, m.percentile_high,
                          "rejet par percentile")
     if n < 15:
         return Rejection("s", lo, hi, "sigma clipping")
@@ -199,9 +199,8 @@ def unstable_mask(pixel_std: np.ndarray, k: float) -> tuple[np.ndarray, float]:
     return (pixel_std > k * med_std).astype(np.uint8), med_std
 
 
-def flat_level_warnings(stats: Sequence[Mapping[str, Any]], cfg: Mapping[str, Any]) -> list[str]:
-    m = cfg["masters"]
-    lo, hi = float(m["flat_level_min_frac"]), float(m["flat_level_max_frac"])
+def flat_level_warnings(stats: Sequence[Mapping[str, Any]], m: MastersSettings) -> list[str]:
+    lo, hi = m.flat_level_min_frac, m.flat_level_max_frac
     return [s["file"] for s in stats if not lo <= s["frac_saturation"] <= hi]
 
 

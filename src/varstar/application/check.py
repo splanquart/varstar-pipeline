@@ -19,6 +19,7 @@ from ..domain.qa.model import QAItem, sort_items
 from ..domain.qa.pixels import ampglow_zones, calibrated_frame_stats, flat_compare_frames, flat_ratio_metrics
 from ..domain.qa.raw import (flat_comparison_series, flat_dark_level, flat_pair_check, frames_to_measure,
                              raw_pixel_checks, saturation_adu)
+from ..domain.settings import Settings
 from .ports import ArtifactStore, PixelStats, Progress, QAReport
 
 log = logging.getLogger("varstar")
@@ -54,15 +55,15 @@ def log_items(items: Iterable[dict[str, Any]] | Iterable[QAItem]) -> None:
             f"[{d['check']}] {d['message']}")
 
 
-def raw_checks(inv: Inventory, cfg: dict[str, Any], *, store: ArtifactStore, pixels: PixelStats,
+def raw_checks(inv: Inventory, cfg: Settings, *, store: ArtifactStore, pixels: PixelStats,
                progress: Progress = _silent) -> tuple[list[QAItem], dict[str, Any]]:
     """P1–P8 on the raw frames; the flat ratios of P4 are written to qa/flats/."""
-    q = cfg["qa"]
+    q = cfg.qa
     stats = pixels.frame_stats(frames_to_measure(inv), saturation_adu(inv), progress="contrôles")
     res = raw_pixel_checks(inv, cfg, stats)
     items, tables = list(res.items), dict(res.tables)
-    if q.get("flat_compare", True) and inv.calibration_sets.get(FLAT):
-        bin_px, max_frames = int(q["flat_compare_bin"]), int(q["flat_compare_max_frames"])
+    if q.flat_compare and inv.calibration_sets.get(FLAT):
+        bin_px, max_frames = q.flat_compare_bin, q.flat_compare_max_frames
         rows = []
         for filt, sets in flat_comparison_series(inv):
             progress(f"  contrôles : comparaison des flats {filt} ({len(sets)} séries) …")
@@ -80,7 +81,7 @@ def raw_checks(inv: Inventory, cfg: dict[str, Any], *, store: ArtifactStore, pix
     return sort_items(items), tables
 
 
-def run_checks(inv: Inventory, cfg: dict[str, Any], *, store: ArtifactStore, pixels: PixelStats,
+def run_checks(inv: Inventory, cfg: Settings, *, store: ArtifactStore, pixels: PixelStats,
                report: QAReport, raw: bool = True, progress: Progress = _silent,
                now: dt.datetime | None = None) -> dict[str, Any]:
     """Header (+ raw pixel) checks; publishes qa/qa.json and qa/qa.md. Calibrated checks are kept."""
@@ -95,7 +96,7 @@ def run_checks(inv: Inventory, cfg: dict[str, Any], *, store: ArtifactStore, pix
     return rep
 
 
-def calibrated_checks(plan: dict[str, Any], results: dict[str, Any], cfg: dict[str, Any], *,
+def calibrated_checks(plan: dict[str, Any], results: dict[str, Any], cfg: Settings, *,
                       pixels: PixelStats, step: int = 4) -> tuple[list[QAItem], list[dict[str, Any]]]:
     """C1 and C3 on the calibrated frames of each group (``results``: group key → calibration result)."""
     items: list[QAItem] = []

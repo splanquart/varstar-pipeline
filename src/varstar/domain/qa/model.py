@@ -7,6 +7,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Any, Iterable, Mapping
 
 from ..model import Inventory, LightGroup
+from ..settings import Settings
 
 SEVERITIES = ("error", "warning", "info")
 STAGES = ("header", "raw", "calibrated")
@@ -70,5 +71,5 @@ def group_label(g: LightGroup) -> str:
     return f"{g.label or g.session.isoformat()} / {g.filter}"
 
 
-def offset_hours(cfg: Mapping[str, Any]) -> float:
-    return float(cfg["inventory"].get("session_day_offset_hours", -12))
+def offset_hours(cfg: Settings) -> float:
+    return cfg.inventory.session_day_offset_hours

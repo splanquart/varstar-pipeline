@@ -22,6 +22,7 @@ from .domain.qa.darks import (classify_excess, consistent_dark_sets, dark_candid
 from .domain.qa.headers import header_checks  # noqa: F401
 from .domain.qa.model import SEVERITIES, STAGES, QAItem, report_items  # noqa: F401
 from .domain.qa.pixels import flat_ratio_metrics  # noqa: F401
+from .domain.settings import Settings
 
 
 _say = ConsoleReporter().progress
@@ -30,22 +31,21 @@ _say = ConsoleReporter().progress
 class StatsCache(PixelStatsCache):
     """Former constructor: ``StatsCache(workdir, cfg, saturation).get(frames)``."""
 
-    def __init__(self, workdir: Path, cfg: dict[str, Any], saturation: float):
-        super().__init__(workdir, step=int(cfg["qa"].get("pixel_step", 4)),
-                         processes=int(cfg.get("runtime", {}).get("processes", 1)))
+    def __init__(self, workdir: Path, cfg: Settings, saturation: float):
+        super().__init__(workdir, step=cfg.qa.pixel_step, processes=cfg.runtime.processes)
         self.saturation = saturation
 
     def get(self, frames: list[Frame], progress: str | None = None) -> dict[str, dict[str, Any]]:
         return self.frame_stats(frames, self.saturation, progress)
 
 
-def raw_checks(inv: Inventory, cfg: dict[str, Any], workdir: Path) -> tuple[list[QAItem], dict[str, Any]]:
+def raw_checks(inv: Inventory, cfg: Settings, workdir: Path) -> tuple[list[QAItem], dict[str, Any]]:
     return _check.raw_checks(inv, cfg, store=Workspace(workdir),
                              pixels=PixelStatsCache.from_config(workdir, cfg, _say),
                              progress=_say)
 
 
-def calibrated_checks(plan: dict[str, Any], results: dict[str, Any], cfg: dict[str, Any],
+def calibrated_checks(plan: dict[str, Any], results: dict[str, Any], cfg: Settings,
                       step: int = 4) -> tuple[list[QAItem], list[dict[str, Any]]]:
     # Only images are read here: the frame statistics cache (never loaded) does not matter.
     return _check.calibrated_checks(plan, results, cfg, pixels=PixelStatsCache(Path(".")), step=step)
@@ -64,7 +64,7 @@ def record_calibrated(workdir: Path, items: list[QAItem], rows: list[dict[str, A
     return _check.record_calibrated_checks(Workspace(workdir), QAReportAdapter(), items, rows, groups)
 
 
-def run_checks(inv: Inventory, cfg: dict[str, Any], workdir: Path, raw: bool = True) -> dict[str, Any]:
+def run_checks(inv: Inventory, cfg: Settings, workdir: Path, raw: bool = True) -> dict[str, Any]:
     return _check.run_checks(inv, cfg, store=Workspace(workdir),
                              pixels=PixelStatsCache.from_config(workdir, cfg, _say),
                              report=QAReportAdapter(), raw=raw, progress=_say)

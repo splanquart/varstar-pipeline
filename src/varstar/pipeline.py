@@ -9,9 +9,10 @@ from typing import Any
 from .adapters.reporting.masters_markdown import masters_markdown  # noqa: F401
 from .application.pipeline import IMPLEMENTED, STEPS  # noqa: F401
 from .domain.calibration import PipelineError, group_key, select_groups  # noqa: F401
+from .domain.settings import Settings
 
 
-def run_pipeline(source: Path, cfg: dict[str, Any], workdir: Path, from_step: str = "inventory",
+def run_pipeline(source: Path, cfg: Settings, workdir: Path, from_step: str = "inventory",
                  sessions: list[str] | None = None, filters: list[str] | None = None,
                  force: bool = False) -> dict[str, Any]:
     from .cli import bootstrap

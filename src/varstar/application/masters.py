@@ -21,6 +21,7 @@ from ..domain.plan import DarkflatRef, DarkRef, FlatRef, GroupPlan, MastersPlan
 from ..domain.qa.darks import dark_candidates, effective_dark_sets
 from ..domain.qa.model import report_items
 from ..domain.qa.raw import saturation_adu
+from ..domain.settings import Settings
 from .check import load_report
 from .ports import (ArtifactStore, FrameSource, MasterBuilder, MasterRepository, MastersReport, PixelStats,
                     Progress, ProvenanceRecorder, ReferenceMasters)
@@ -39,7 +40,7 @@ def _silent(_: str) -> None:
 class MasterFactory:
     """Reuses a master of the library when its inputs are identical, builds it otherwise."""
 
-    cfg: dict[str, Any]
+    cfg: Settings
     source: FrameSource
     builder: MasterBuilder
     repo: MasterRepository
@@ -49,7 +50,7 @@ class MasterFactory:
         return compute_master_id(kind, [self.source.file_stat(f.path) for f in frames], params)
 
     def dark(self, frames: list[Frame], kind: str) -> MasterRecord:
-        rej = choose_rejection(len(frames), self.cfg)
+        rej = choose_rejection(len(frames), self.cfg.masters)
         mid = self._id(kind, frames, dark_params(rej))
         found = self.repo.find(kind, mid)
         if found:
@@ -60,7 +61,7 @@ class MasterFactory:
         return self.builder.build_dark(frames, kind, rej, mid, label, self.sources_root)
 
     def flat(self, frames: list[Frame], darkflat: MasterRecord) -> MasterRecord:
-        rej = choose_rejection(len(frames), self.cfg)
+        rej = choose_rejection(len(frames), self.cfg.masters)
         mid = self._id("flat", frames, flat_params(rej, darkflat.id))
         found = self.repo.find("flat", mid)
         if found:
@@ -72,7 +73,7 @@ class MasterFactory:
 
 
 def _masks(g: GroupPlan, dark_rec: MasterRecord | None, flat_rec: MasterRecord | None, inv: Inventory,
-           cfg: dict[str, Any], masks_hash: str, store: ArtifactStore, repo: MasterRepository) -> None:
+           cfg: Settings, masks_hash: str, store: ArtifactStore, repo: MasterRepository) -> None:
     """Bad pixel map of the dark/flat pair and amp glow mask of the dark (built once, in masks/)."""
     bpm_name, ag_name = mask_ids(dark_rec.id if dark_rec else None, flat_rec.id if flat_rec else None, masks_hash)
     bpm_rel = f"masks/{bpm_name}"
@@ -80,23 +81,23 @@ def _masks(g: GroupPlan, dark_rec: MasterRecord | None, flat_rec: MasterRecord |
     if not store.exists(bpm_rel):
         res = build_bpm(dark_adu, dark_rec.meta.get("sigma_single_frame_adu") if dark_rec else None,
                         repo.load_unstable(dark_rec) if dark_rec is not None else None,
-                        repo.load_adu(flat_rec) if flat_rec is not None else None, cfg,
+                        repo.load_adu(flat_rec) if flat_rec is not None else None, cfg.masks,
                         saturation_adu=int(saturation_adu(inv)))
         header = {"VSDARK": dark_rec.id if dark_rec else "NONE", "VSFLAT": flat_rec.id if flat_rec else "NONE",
                   **{f"VSBIT{bit}": name for bit, name in BIT_NAMES.items()}}
         store.write_mask(bpm_rel, res.mask, header)
         store.write_json(bpm_rel[:-5] + ".json", {"counts": res.counts, "info": res.info})
     g.bpm = str(store.root / bpm_rel)
-    if dark_rec is not None and cfg["masks"].get("amp_glow_detect", True):
+    if dark_rec is not None and cfg.masks.amp_glow_detect:
         ag_rel = f"masks/{ag_name}"
         if not store.exists(ag_rel):
-            res = build_amp_glow(dark_adu, cfg)
+            res = build_amp_glow(dark_adu, cfg.masks)
             store.write_mask(ag_rel, res.mask)
             store.write_json(ag_rel[:-5] + ".json", {"counts": res.counts, "info": res.info})
         g.ampglow = str(store.root / ag_rel)
 
 
-def plan_group(g: LightGroup, inv: Inventory, cfg: dict[str, Any], factory: MasterFactory, pixels: PixelStats,
+def plan_group(g: LightGroup, inv: Inventory, cfg: Settings, factory: MasterFactory, pixels: PixelStats,
                masters: dict[str, MasterRecord], flat_labels: dict[str, list[str]], warnings: list[str],
                progress: Progress) -> tuple[GroupPlan, MasterRecord | None, MasterRecord | None]:
     """Masters of one light group (built or reused); masks are added by the caller."""
@@ -107,7 +108,7 @@ def plan_group(g: LightGroup, inv: Inventory, cfg: dict[str, Any], factory: Mast
     dark_sets = list(g.dark.sets) if g.dark else []
     if dark_sets:
         # Never combine darks of different levels, never borrow an anomalous night (D16, P1).
-        pool = {s.id: s for s in dark_candidates(inv, g, cfg) + dark_sets}
+        pool = {s.id: s for s in dark_candidates(inv, g, cfg.matching) + dark_sets}
         stats = pixels.frame_stats(frames_of(pool.values()), saturation_adu(inv), progress="niveau des darks")
         dark_sets, notes = effective_dark_sets(inv, g, stats, cfg)
         for note in notes:
@@ -116,7 +117,7 @@ def plan_group(g: LightGroup, inv: Inventory, cfg: dict[str, Any], factory: Mast
     if dark_sets:
         dark_rec = factory.dark(frames_of(dark_sets), "dark")
         masters[dark_rec.id] = dark_rec
-        mode = dark_mode(dark_sets, g.exptime, cfg["matching"]["exptime_tolerance_s"])
+        mode = dark_mode(dark_sets, g.exptime, cfg.matching.exptime_tolerance_s)
         entry.dark = DarkRef(dark_rec.id, str(dark_rec.path), mode, dark_rec.meta["n_frames"],
                              dark_rec.meta["exptime"])
         if mode == "scaled":
@@ -140,7 +141,7 @@ def plan_group(g: LightGroup, inv: Inventory, cfg: dict[str, Any], factory: Mast
     return entry, dark_rec, flat_rec
 
 
-def run_masters(inv: Inventory, groups: list[LightGroup], cfg: dict[str, Any], *, source: FrameSource,
+def run_masters(inv: Inventory, groups: list[LightGroup], cfg: Settings, *, source: FrameSource,
                 pixels: PixelStats, builder: MasterBuilder, repo: MasterRepository,
                 references: ReferenceMasters | None, store: ArtifactStore, provenance: ProvenanceRecorder,
                 report: MastersReport, progress: Progress = _silent, now: dt.datetime | None = None) -> MastersPlan:

@@ -13,6 +13,7 @@ from typing import Any
 from ..domain.calibration import (CalibrationSensor, calibrated_name, calibrated_subdir,
                                   calibration_fingerprint)
 from ..domain.plan import GroupPlan, MastersPlan
+from ..domain.settings import Settings
 from .check import calibrated_checks, load_report, record_calibrated_checks
 from .ports import ArtifactStore, Calibrator, FrameSource, PixelStats, Progress, ProvenanceRecorder, QAReport
 
@@ -54,7 +55,7 @@ def calibrate_group(group: GroupPlan, *, calibrator: Calibrator, source: FrameSo
     return {**result, "skipped": False}
 
 
-def run_calibrate(plan: MastersPlan, keys: list[str], cfg: dict[str, Any], sensor: CalibrationSensor, *,
+def run_calibrate(plan: MastersPlan, keys: list[str], cfg: Settings, sensor: CalibrationSensor, *,
                   calibrator: Calibrator, source: FrameSource, store: ArtifactStore, pixels: PixelStats,
                   qa_report: QAReport, provenance: ProvenanceRecorder,
                   progress: Progress = _silent, force: bool = False) -> dict[str, Any]:

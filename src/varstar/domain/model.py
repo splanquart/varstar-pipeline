@@ -251,7 +251,7 @@ class DarkTodo:
 @dataclass
 class Inventory:
     root: Path
-    config: dict[str, Any]
+    config: Any   # Settings (typed configuration used to build it)
     frames: list[Frame]
     light_groups: list[LightGroup]
     calibration_sets: dict[str, list[FrameSet]]

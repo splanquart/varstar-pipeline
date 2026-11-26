@@ -18,6 +18,7 @@ from astropy.io import fits
 
 from ..domain.model import Frame
 from ..domain.qa.pixels import bin_frame, combine_quick_flat, frame_quick_stats
+from ..domain.settings import Settings
 
 STATS_VERSION = 3
 
@@ -85,10 +86,9 @@ class PixelStatsCache:
         return self._data
 
     @classmethod
-    def from_config(cls, workdir: Path, cfg: dict[str, Any],
+    def from_config(cls, workdir: Path, cfg: Settings,
                     say: Callable[[str], None] | None = None) -> "PixelStatsCache":
-        return cls(workdir, step=int(cfg["qa"].get("pixel_step", 4)),
-                   processes=int(cfg.get("runtime", {}).get("processes", 1)), say=say)
+        return cls(workdir, step=cfg.qa.pixel_step, processes=cfg.runtime.processes, say=say)
 
     def frame_stats(self, frames: list[Frame], saturation: float,
                     progress: str | None = None) -> dict[str, dict[str, Any]]:

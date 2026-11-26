@@ -19,7 +19,7 @@ def test_provenance_json_keeps_every_step(tmp_path, cfg):
     store.record("calibrate", cfg, {"errors": {}})
     prov = json.loads((tmp_path / "provenance.json").read_text(encoding="utf-8"))
     assert set(prov["steps"]) == {"masters", "calibrate"} and prov["steps"]["masters"]["n"] == 1
-    assert prov["software"]["varstar"] == software_versions()["varstar"] and prov["config"] == cfg
+    assert prov["software"]["varstar"] == software_versions()["varstar"] and prov["config"] == cfg.raw
     (tmp_path / "manifests").mkdir()
     (tmp_path / "manifests" / "inventory.json").write_text("{broken")
     assert store.read_manifest("inventory") is None

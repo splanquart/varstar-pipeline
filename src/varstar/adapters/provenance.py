@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from .. import __version__
+from ..domain.settings import Settings
 
 _PACKAGES = ("numpy", "astropy", "photutils", "astroquery", "pandas", "matplotlib", "pyyaml", "typer")
 
@@ -49,8 +50,8 @@ def code_fingerprint() -> str:
     return h.hexdigest()
 
 
-def config_fingerprint(cfg: dict[str, Any], sections: Iterable[str]) -> str:
-    sub = {s: cfg.get(s) for s in sections}
+def config_fingerprint(cfg: Settings, sections: Iterable[str]) -> str:
+    sub = {s: cfg.raw.get(s) for s in sections}
     return hashlib.sha256(json.dumps(sub, sort_keys=True, default=str).encode()).hexdigest()
 
 
@@ -70,7 +71,7 @@ def write_manifest(workdir: Path, step: str, data: dict[str, Any]) -> None:
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
 
 
-def update_provenance(workdir: Path, step: str, cfg: dict[str, Any], details: dict[str, Any]) -> None:
+def update_provenance(workdir: Path, step: str, cfg: Settings, details: dict[str, Any]) -> None:
     path = workdir / "provenance.json"
     prov: dict[str, Any] = {}
     if path.exists():
@@ -79,7 +80,7 @@ def update_provenance(workdir: Path, step: str, cfg: dict[str, Any], details: di
         except json.JSONDecodeError:
             prov = {}
     prov["software"] = software_versions()
-    prov["config"] = cfg
+    prov["config"] = dict(cfg.raw)
     prov.setdefault("steps", {})[step] = {"finished": dt.datetime.now().isoformat(timespec="seconds"),
                                           **details}
     path.write_text(json.dumps(prov, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
@@ -95,7 +96,7 @@ class ProvenanceStore:
     def code_fingerprint(self) -> str:
         return code_fingerprint()
 
-    def config_fingerprint(self, cfg: dict[str, Any], sections: Iterable[str]) -> str:
+    def config_fingerprint(self, cfg: Settings, sections: Iterable[str]) -> str:
         return config_fingerprint(cfg, sections)
 
     def read_manifest(self, step: str) -> dict[str, Any] | None:
@@ -104,5 +105,5 @@ class ProvenanceStore:
     def write_manifest(self, step: str, data: dict[str, Any]) -> None:
         write_manifest(self.workdir, step, data)
 
-    def record(self, step: str, cfg: dict[str, Any], details: dict[str, Any]) -> None:
+    def record(self, step: str, cfg: Settings, details: dict[str, Any]) -> None:
         update_provenance(self.workdir, step, cfg, details)

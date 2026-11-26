@@ -23,7 +23,7 @@ STATS = [FileStat(f"/raw/d{i}.fits", 1000 + i, 10 ** 9 * i) for i in range(5)]
 @pytest.mark.parametrize("n,code", [(3, "p"), (7, "p"), (8, "s"), (14, "s"), (15, "w"), (25, "w"), (26, "l"),
                                     (65, "l")])
 def test_choose_rejection(n, code):
-    rej = choose_rejection(n, make_settings())
+    rej = choose_rejection(n, make_settings().masters)
     assert rej.code == code
     assert rej.siril_args().startswith(f"rej {code} ")
     assert rej.to_dict()["name"] == rej.name
@@ -31,19 +31,19 @@ def test_choose_rejection(n, code):
 
 @given(st.permutations(STATS))
 def test_master_id_ignores_the_order_of_the_frames(stats):
-    params = dark_params(choose_rejection(5, make_settings()))
+    params = dark_params(choose_rejection(5, make_settings().masters))
     assert compute_master_id("dark", stats, params) == compute_master_id("dark", STATS, params)
 
 
 def test_master_id_changes_with_any_input():
-    rej = choose_rejection(5, make_settings())
+    rej = choose_rejection(5, make_settings().masters)
     ref = compute_master_id("dark", STATS, dark_params(rej))
     assert len(ref) == 16
     touched = STATS[:4] + [FileStat(STATS[4].resolved, STATS[4].size, STATS[4].mtime_ns + 1)]
     assert compute_master_id("dark", touched, dark_params(rej)) != ref
     assert compute_master_id("darkflat", STATS, dark_params(rej)) != ref
     assert compute_master_id("dark", STATS[:4], dark_params(rej)) != ref
-    assert compute_master_id("dark", STATS, dark_params(choose_rejection(10, make_settings()))) != ref
+    assert compute_master_id("dark", STATS, dark_params(choose_rejection(10, make_settings().masters))) != ref
     assert compute_master_id("flat", STATS, flat_params(rej, "a")) != compute_master_id("flat", STATS,
                                                                                          flat_params(rej, "b"))
 
@@ -150,7 +150,7 @@ def test_temporal_noise_with_few_frames():
 def test_flat_level_warnings():
     stats = [{"file": "a", "frac_saturation": 0.5}, {"file": "b", "frac_saturation": 0.9},
              {"file": "c", "frac_saturation": 0.1}]
-    assert flat_level_warnings(stats, make_settings()) == ["b", "c"]
+    assert flat_level_warnings(stats, make_settings().masters) == ["b", "c"]
 
 
 def test_dark_consistency_by_folder():

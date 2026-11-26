@@ -16,6 +16,8 @@ from typing import Any
 
 import numpy as np
 
+from .settings import MasksSettings
+
 HOT, VERY_HOT, UNSTABLE, COLD, DEAD, SATURATED = 1, 2, 4, 8, 16, 32
 BIT_NAMES = {HOT: "hot", VERY_HOT: "very_hot", UNSTABLE: "unstable", COLD: "cold", DEAD: "dead",
              SATURATED: "saturated"}
@@ -53,8 +55,7 @@ class MaskResult:
 
 
 def build_bpm(dark_adu: np.ndarray | None, sigma_single: float | None, unstable: np.ndarray | None,
-              flat_adu: np.ndarray | None, cfg: dict[str, Any], saturation_adu: float = 65532) -> MaskResult:
-    m = cfg["masks"]
+              flat_adu: np.ndarray | None, m: MasksSettings, saturation_adu: float = 65532) -> MaskResult:
     shape = (dark_adu if dark_adu is not None else flat_adu).shape
     bpm = np.zeros(shape, dtype=np.uint8)
     info: dict[str, Any] = {}
@@ -64,32 +65,31 @@ def build_bpm(dark_adu: np.ndarray | None, sigma_single: float | None, unstable:
         info.update(dark_median_adu=med, noise_sigma_adu=sigma,
                     noise_source="bruit temporel d'une pose" if sigma_single else "dispersion du master")
         excess = dark_adu - med
-        bpm[excess > float(m["hot_pixel_sigma"]) * sigma] |= HOT
-        bpm[excess > float(m.get("hot_pixel_severe_sigma", 50.0)) * sigma] |= VERY_HOT
-        bpm[excess < -float(m.get("cold_pixel_sigma", 5.0)) * sigma] |= COLD
+        bpm[excess > m.hot_pixel_sigma * sigma] |= HOT
+        bpm[excess > m.hot_pixel_severe_sigma * sigma] |= VERY_HOT
+        bpm[excess < -m.cold_pixel_sigma * sigma] |= COLD
         bpm[dark_adu >= 0.98 * saturation_adu] |= SATURATED
     if unstable is not None:
         bpm[unstable.astype(bool)] |= UNSTABLE
     if flat_adu is not None:
-        block = int(m.get("flat_local_block_px", 32))
+        block = m.flat_local_block_px
         local = upsample_nearest(block_median(flat_adu, block), block, flat_adu.shape)
         with np.errstate(divide="ignore", invalid="ignore"):
             rel = np.where(local > 0, flat_adu / local, 0.0)
-        bpm[rel < float(m["dead_pixel_flat_frac"])] |= DEAD
+        bpm[rel < m.dead_pixel_flat_frac] |= DEAD
     counts = {BIT_NAMES[b]: int(np.count_nonzero(bpm & b)) for b in BIT_NAMES}
     counts["total"] = int(np.count_nonzero(bpm))
     return MaskResult(bpm, counts, info)
 
 
-def build_amp_glow(dark_adu: np.ndarray, cfg: dict[str, Any]) -> MaskResult:
+def build_amp_glow(dark_adu: np.ndarray, m: MasksSettings) -> MaskResult:
     """Zones where the smoothed master dark rises above its typical level (amp glow corners/edges)."""
-    m = cfg["masks"]
-    block = int(m.get("amp_glow_block_px", 64))
-    k = float(m.get("amp_glow_sigma", 5.0))
+    block = m.amp_glow_block_px
+    k = m.amp_glow_sigma
     bm = block_median(dark_adu, block)
     level = float(np.median(bm))
     spread = max(robust_sigma(bm), 0.25)
-    min_excess = float(m.get("amp_glow_min_adu", 2.0))
+    min_excess = m.amp_glow_min_adu
     threshold = level + max(k * spread, min_excess)
     small = (bm > threshold).astype(np.uint8)
     mask = upsample_nearest(small, block, dark_adu.shape).astype(np.uint8)

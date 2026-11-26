@@ -11,6 +11,8 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from ..domain.settings import Settings
+
 REQUIRED = "1.2.0"
 
 # Workaround for free-astro/siril#2021 (https://github.com/splanquart/varstar-pipeline/issues/1):
@@ -49,14 +51,11 @@ class Siril:
                              f"(valeurs possibles : {', '.join(GUARD_MODES)})")
 
     @classmethod
-    def from_config(cls, cfg: dict, workdir: Path) -> "Siril":
-        cli = Path(os.path.expanduser(cfg["paths"]["siril_cli"]))
+    def from_config(cls, cfg: Settings, workdir: Path) -> "Siril":
+        cli = Path(os.path.expanduser(cfg.paths.siril_cli))
         if not cli.exists():
             raise SirilError(f"siril-cli introuvable : {cli} (paramètre paths.siril_cli)")
-        guard = (cfg.get("siril") or {}).get("python_init_guard", "auto")
-        if isinstance(guard, bool):  # YAML 1.1 reads unquoted on/off as booleans
-            guard = "on" if guard else "off"
-        guard = str(guard)
+        guard = cfg.siril.python_init_guard   # on/off booleans already normalised by the settings
         return cls(cli, workdir / "siril", workdir / "logs" / "siril", python_init_guard=guard)
 
     @property

@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 
 from varstar.config import load_config
+from varstar.domain.settings import replace
 from varstar.siril import PYTHON_INIT_GUARD, Siril, SirilError, parse_version
 
 # The fake answers --version with $FAKE_VERSION; with FAKE_PYSCRIPT_FAILS=1 a script containing
@@ -136,9 +137,9 @@ def test_guard_status_and_config(fake, tmp_path):
     assert fake().guard_status() == {"mode": "auto", "active": True, "fallback": None,
                                      "issue": "https://github.com/splanquart/varstar-pipeline/issues/1"}
     cfg = load_config(overrides={"paths": {"siril_cli": str(fake.tmp / "siril-cli")}})
-    assert cfg["siril"]["python_init_guard"] == "auto"
-    cfg["siril"]["python_init_guard"] = "off"
-    assert Siril.from_config(cfg, tmp_path / "w").python_init_guard == "off"
+    assert cfg.siril.python_init_guard == "auto"
+    off = replace(cfg, siril={"python_init_guard": "off"})
+    assert Siril.from_config(off, tmp_path / "w").python_init_guard == "off"
     json.dumps(fake().guard_status())  # provenance.json must be able to store it
 
 

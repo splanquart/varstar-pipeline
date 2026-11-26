@@ -15,6 +15,7 @@ import numpy as np
 
 from ..inventory import match_darkflats, set_night
 from ..model import DARK, DARKFLAT, FLAT, Frame, FrameSet, Inventory
+from ..settings import Settings
 from .darks import FrameStats, classify_excess, effective_dark_sets, level_clusters, set_summary
 from .model import QAItem, group_label, night_label, offset_hours
 
@@ -53,9 +54,9 @@ def frames_to_measure(inv: Inventory) -> list[Frame]:
     return [f for s in _dark_sets(inv) + flat_sets for f in s.frames] + sample_lights(inv)
 
 
-def raw_pixel_checks(inv: Inventory, cfg: dict[str, Any], stats: FrameStats) -> RawChecks:
+def raw_pixel_checks(inv: Inventory, cfg: Settings, stats: FrameStats) -> RawChecks:
     """P1, P2, P3, P7 and P8 (unsorted, P4 is added by the caller)."""
-    q = cfg["qa"]
+    q = cfg.qa
     off = offset_hours(cfg)
     sensor = inv.sensors[0] if inv.sensors else None
     saturation = saturation_adu(inv)
@@ -80,7 +81,7 @@ def raw_pixel_checks(inv: Inventory, cfg: dict[str, Any], stats: FrameStats) -> 
     tables["dark_levels"] = rows
 
     # P1 / P2 (set level): same exposure, different nights or series.
-    jump = float(q["offset_jump_adu"])
+    jump = float(q.offset_jump_adu)
     by_exp: dict[tuple, list[FrameSet]] = defaultdict(list)
     for s in dark_sets:
         by_exp[(s.sensor_key, s.exptime)].append(s)
@@ -136,7 +137,7 @@ def raw_pixel_checks(inv: Inventory, cfg: dict[str, Any], stats: FrameStats) -> 
                     "et faire des darks la même nuit que les lights", data))
 
     # P2 (frame level): single darks that deviate from their series.
-    fx = float(q["leak_frame_excess_adu"])
+    fx = float(q.leak_frame_excess_adu)
     for s in dark_sets:
         sm = summaries[s.id]
         lv = np.array([stats[str(f.path)]["median"] for f in s.frames])
@@ -152,7 +153,7 @@ def raw_pixel_checks(inv: Inventory, cfg: dict[str, Any], stats: FrameStats) -> 
                                 {"max_delta_adu": round(dmax, 2)}))
 
     # P3: flat exposure (per set).
-    lo_f, hi_f = float(cfg["masters"]["flat_level_min_frac"]), float(cfg["masters"]["flat_level_max_frac"])
+    lo_f, hi_f = cfg.masters.flat_level_min_frac, cfg.masters.flat_level_max_frac
     flat_rows = []
     for s in flat_sets:
         st = [stats[str(f.path)] for f in s.frames]
@@ -178,12 +179,12 @@ def raw_pixel_checks(inv: Inventory, cfg: dict[str, Any], stats: FrameStats) -> 
                                 "ne pas changer le mode de lecture (bits) de la caméra en cours de projet"))
 
     # P8: lights vs their darks (raw sky estimate = light median − dark level).
-    thr = float(q["dark_above_light_adu"])
+    thr = float(q.dark_above_light_adu)
     sky_rows = []
     for g in inv.light_groups:
         if not g.dark or not g.dark.sets:
             continue
-        if any(abs(s.exptime - g.exptime) > cfg["matching"]["exptime_tolerance_s"] for s in g.dark.sets):
+        if any(abs(s.exptime - g.exptime) > cfg.matching.exptime_tolerance_s for s in g.dark.sets):
             continue
         ls = [stats[str(f.path)]["median"] for f in sample if f in g.frames]
         if not ls:
@@ -221,18 +222,18 @@ def flat_comparison_series(inv: Inventory) -> list[tuple[str | None, list[FrameS
     return out
 
 
-def flat_dark_level(s: FrameSet, inv: Inventory, cfg: dict[str, Any], summaries: dict[str, dict[str, Any]]) -> float:
+def flat_dark_level(s: FrameSet, inv: Inventory, cfg: Settings, summaries: dict[str, dict[str, Any]]) -> float:
     """Level of the darks of flat matched to a flat series (0 when there is none)."""
     m = match_darkflats(s, inv.calibration_sets.get(DARKFLAT, []), inv.calibration_sets.get(DARK, []), cfg)
     return float(np.median([summaries[x.id]["level"] for x in m.sets])) if m.sets else 0.0
 
 
-def flat_pair_check(inv: Inventory, cfg: dict[str, Any], filt: str | None, a: FrameSet, b: FrameSet,
+def flat_pair_check(inv: Inventory, cfg: Settings, filt: str | None, a: FrameSet, b: FrameSet,
                     met: dict[str, float], ratio_file: str) -> tuple[QAItem | None, dict[str, Any]]:
     """Table row and finding (if any) for two successive flats; ``met`` from ``flat_ratio_metrics``."""
-    q = cfg["qa"]
-    moved_dust = met["dust_pct"] > float(q["flat_dust_pct"])
-    moved_shape = met["shape_pct"] > float(q["flat_shape_pct"])
+    q = cfg.qa
+    moved_dust = met["dust_pct"] > float(q.flat_dust_pct)
+    moved_shape = met["shape_pct"] > float(q.flat_shape_pct)
     verdict = ("poussières déplacées" if moved_dust else "") + (
         (" et " if moved_dust else "") + "forme différente (vignetage)" if moved_shape else "")
     row = {"filter": filt, "a": a.id, "b": b.id, "a_labels": a.folder_labels, "b_labels": b.folder_labels,

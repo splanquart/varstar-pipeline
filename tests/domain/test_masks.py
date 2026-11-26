@@ -11,7 +11,7 @@ from varstar.domain.masks import (BIT_NAMES, COLD, DEAD, HOT, SATURATED, UNSTABL
 
 
 def load_config():
-    return make_settings()
+    return make_settings().masks
 
 
 def test_bpm_categories():
@@ -82,7 +82,7 @@ def calibration_inputs(draw):
 def test_bpm_never_modifies_inputs_and_uses_known_bits(inputs, sigma):
     dark, flat, unstable = inputs
     before = [a.copy() for a in inputs]
-    res = build_bpm(dark, sigma, unstable, flat, make_settings(masks={"flat_local_block_px": 4}))
+    res = build_bpm(dark, sigma, unstable, flat, make_settings(masks={"flat_local_block_px": 4}).masks)
     assert all(np.array_equal(a, b) for a, b in zip(inputs, before))
     assert res.mask.shape == dark.shape
     assert not (res.mask.astype(int) & ~ALL_BITS).any()
@@ -91,7 +91,7 @@ def test_bpm_never_modifies_inputs_and_uses_known_bits(inputs, sigma):
 @given(arrays(np.float32, shapes, elements=st.floats(400, 700, width=32)))
 def test_amp_glow_mask_is_binary_and_input_untouched(dark):
     before = dark.copy()
-    res = build_amp_glow(dark, make_settings(masks={"amp_glow_block_px": 4}))
+    res = build_amp_glow(dark, make_settings(masks={"amp_glow_block_px": 4}).masks)
     assert np.array_equal(dark, before)
     assert res.mask.shape == dark.shape and set(np.unique(res.mask)) <= {0, 1}
 

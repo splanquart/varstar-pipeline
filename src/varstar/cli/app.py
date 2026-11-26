@@ -13,9 +13,9 @@ import typer
 
 from ..adapters.reporting.markdown import todo_markdown
 from ..adapters.reporting.qa_markdown import SEVERITY_FR, summary_line
-from ..config import load_config, resolve_workdir
 from ..domain.inventory import darks_todo
 from ..domain.qa.model import report_items
+from ..domain.settings import Settings, SettingsError
 from . import bootstrap
 
 app = typer.Typer(add_completion=False, help="Pipeline de détection d'étoiles variables (N.I.N.A. → rapport).")
@@ -25,13 +25,22 @@ ConfigOpt = typer.Option(None, "--config", "-c", exists=True, dir_okay=False, he
 WorkdirOpt = typer.Option(None, "--workdir", "-w", help="Dossier de travail (sorties)")
 
 
+def settings(config: Optional[Path]) -> Settings:
+    """Checked configuration; an invalid file stops the command with a French message."""
+    try:
+        return bootstrap.load_settings(config)
+    except SettingsError as exc:
+        typer.echo(f"ERREUR : {exc}", err=True)
+        raise typer.Exit(1)
+
+
 @app.command()
 def inventory(source: Path = SourceArg, config: Optional[Path] = ConfigOpt,
               workdir: Optional[Path] = WorkdirOpt,
               force: bool = typer.Option(False, "--force", help="Recalculer même si rien n'a changé")) -> None:
     """Inventaire des fichiers et niveaux de calibration, sans aucun calcul sur les images."""
-    cfg = load_config(config)
-    wd = resolve_workdir(source, cfg, workdir)
+    cfg = settings(config)
+    wd = bootstrap.resolve_workdir(source, cfg, workdir)
     res = bootstrap.run_inventory(source, cfg, wd, force=force)
     data = res.data
     if res.skipped:
@@ -55,8 +64,8 @@ def run(source: Path = SourceArg, config: Optional[Path] = ConfigOpt, workdir: O
         filters: Optional[str] = typer.Option(None, "--filters", help="ex. H,S"),
         force: bool = typer.Option(False, "--force", help="Ignorer les caches de l'espace de travail")) -> None:
     """Pipeline complet (étapes disponibles : inventory, check, masters, calibrate)."""
-    cfg = load_config(config)
-    wd = resolve_workdir(source, cfg, workdir)
+    cfg = settings(config)
+    wd = bootstrap.resolve_workdir(source, cfg, workdir)
     split = lambda s: [x.strip() for x in s.split(",") if x.strip()] if s else None  # noqa: E731
     typer.echo(f"Dossier de travail : {wd}")
     try:
@@ -91,8 +100,8 @@ def run(source: Path = SourceArg, config: Optional[Path] = ConfigOpt, workdir: O
 def check(source: Path = SourceArg, config: Optional[Path] = ConfigOpt, workdir: Optional[Path] = WorkdirOpt,
           headers_only: bool = typer.Option(False, "--headers-only", help="En-têtes seulement (aucun pixel lu)")) -> None:
     """Contrôles qualité précoces (en-têtes + pixels bruts), à lancer dès le lendemain d'une séance."""
-    cfg = load_config(config)
-    wd = resolve_workdir(source, cfg, workdir)
+    cfg = settings(config)
+    wd = bootstrap.resolve_workdir(source, cfg, workdir)
     report = bootstrap.run_checks(source, cfg, wd, raw=not headers_only)
     items = report_items(report, ("header",) if headers_only else ("header", "raw"))
     typer.echo(f"Contrôles qualité : {summary_line(items)}")
@@ -109,7 +118,7 @@ def check(source: Path = SourceArg, config: Optional[Path] = ConfigOpt, workdir:
 @app.command("darks-todo")
 def darks_todo_cmd(source: Path = SourceArg, config: Optional[Path] = ConfigOpt) -> None:
     """Liste des darks (et darks de flat) manquants à refaire."""
-    cfg = load_config(config)
+    cfg = settings(config)
     inv = bootstrap.load_inventory(source, cfg)
     typer.echo("\n".join(todo_markdown(darks_todo(inv))))
 

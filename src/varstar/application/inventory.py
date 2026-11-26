@@ -15,6 +15,7 @@ from .. import __version__
 from ..domain.inventory import adu_scale_samples, build_inventory, usable_frames
 from ..domain.model import AduScaleReading, Inventory, SensorKey
 from ..domain.qa.headers import header_checks
+from ..domain.settings import Settings
 from .ports import ArtifactStore, FrameSource, InventoryReport, PixelReader, ProvenanceRecorder
 
 log = logging.getLogger("varstar")
@@ -30,12 +31,12 @@ class InventoryResult:
     workdir: Path
 
 
-def load_inventory(source: FrameSource, pixels: PixelReader, root: Path, cfg: dict[str, Any],
+def load_inventory(source: FrameSource, pixels: PixelReader, root: Path, cfg: Settings,
                    exclude: list[Path] | None = None, now: dt.datetime | None = None) -> Inventory:
     """Build the inventory of ``root``; the ADU scale is measured on one frame per sensor key."""
     scan = source.scan(root, cfg, exclude)
     readings: dict[SensorKey, AduScaleReading] | None = None
-    if bool(cfg["inventory"].get("read_pixels_for_units", True)):
+    if cfg.inventory.read_pixels_for_units:
         readings = {}
         for key, frame in adu_scale_samples(usable_frames(scan.frames)).items():
             try:
@@ -45,7 +46,7 @@ def load_inventory(source: FrameSource, pixels: PixelReader, root: Path, cfg: di
     return build_inventory(scan, cfg, readings, now or dt.datetime.now().replace(microsecond=0))
 
 
-def run_inventory(root: Path, cfg: dict[str, Any], *, store: ArtifactStore, provenance: ProvenanceRecorder,
+def run_inventory(root: Path, cfg: Settings, *, store: ArtifactStore, provenance: ProvenanceRecorder,
                   source: FrameSource, pixels: PixelReader, report: InventoryReport,
                   force: bool = False) -> InventoryResult:
     """Step « inventory »: skipped when files, configuration and code are unchanged."""
@@ -67,7 +68,7 @@ def run_inventory(root: Path, cfg: dict[str, Any], *, store: ArtifactStore, prov
     data = report.to_dict(inv)
     store.write_json("inventory.json", data)
     store.write_text("inventory.md", report.markdown(inv, header_checks(inv, cfg)))
-    store.write_yaml("config.used.yaml", cfg)
+    store.write_yaml("config.used.yaml", dict(cfg.raw))
     for a in inv.anomalies:
         getattr(log, {"error": "error", "warning": "warning"}.get(a.severity, "info"))(a.message)
     provenance.write_manifest("inventory", {"fingerprint": fingerprint, "n_files": len(files)})

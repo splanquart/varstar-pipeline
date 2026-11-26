@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from ..domain.calibration import CalibrationSensor, PipelineError, group_key, select_groups
+from ..domain.settings import Settings
 from .calibrate import run_calibrate
 from .check import run_checks
 from .inventory import load_inventory, run_inventory
@@ -48,7 +49,7 @@ def check_step(step: str) -> int:
     return STEPS.index(step)
 
 
-def run_pipeline(root: Path, cfg: dict[str, Any], svc: PipelineServices, from_step: str = "inventory",
+def run_pipeline(root: Path, cfg: Settings, svc: PipelineServices, from_step: str = "inventory",
                  sessions: list[str] | None = None, filters: list[str] | None = None,
                  force: bool = False) -> dict[str, Any]:
     start = check_step(from_step)

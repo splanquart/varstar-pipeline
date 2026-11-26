@@ -1,5 +1,6 @@
 """Post-calibration checks (C*) from per-frame statistics in memory."""
 
+from builders import make_settings
 from varstar.domain.qa.calibrated import ampglow_residual_items, calibrated_group_checks
 from varstar.domain.qa.model import QAItem, report_items, severity_counts, sort_items
 
@@ -12,8 +13,8 @@ def frame(bg=50.0, sigma=5.0, nan=0.0, zero=0.0, resid=(), raw="light/a.fits"):
 
 
 def test_clean_group_gives_a_row_and_no_item():
-    items, row = calibrated_group_checks("g1", GROUP, [frame(48, resid=[1.0]), frame(52, resid=[3.0])], {
-        "qa": {"calibrated_background_min_adu": 0.0}})
+    items, row = calibrated_group_checks("g1", GROUP, [frame(48, resid=[1.0]), frame(52, resid=[3.0])],
+                                         make_settings())
     assert items == []
     assert row == {"group": "g1", "label": "sept06 / H", "n": 2, "background_min_adu": 48,
                    "background_median_adu": 50.0, "sigma_median_adu": 5.0, "frac_nan_max": 0.0,
@@ -24,14 +25,14 @@ def test_clean_group_gives_a_row_and_no_item():
 def test_negative_background_and_invalid_pixels_are_c3():
     per = [frame(-4.0, raw="light/a.fits"), frame(20.0, nan=0.001, raw="light/b.fits")]
     items, row = calibrated_group_checks("g1", {**GROUP, "label": None, "dark": None}, per,
-                                         {"qa": {"calibrated_background_min_adu": 0.0}})
+                                         make_settings())
     assert [(i.check, i.severity) for i in items] == [("C3", "error"), ("C3", "warning")]
     assert items[0].files == ["light/a.fits"] and all(i.data["group"] == "g1" for i in items)
     assert row["label"] == "2021-09-06 / H" and row["dark_id"] is None
 
 
 def test_empty_group_has_no_row():
-    assert calibrated_group_checks("g1", GROUP, [], {"qa": {"calibrated_background_min_adu": 0.0}}) == ([], None)
+    assert calibrated_group_checks("g1", GROUP, [], make_settings()) == ([], None)
 
 
 def test_ampglow_residual_needs_all_filters():

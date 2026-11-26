@@ -10,13 +10,14 @@ from typing import Any, Mapping
 
 import numpy as np
 
+from ..settings import Settings
 from .model import QAItem
 
 
 def calibrated_group_checks(key: str, group: Mapping[str, Any], per: list[dict[str, Any]],
-                            cfg: dict[str, Any]) -> tuple[list[QAItem], dict[str, Any] | None]:
+                            cfg: Settings) -> tuple[list[QAItem], dict[str, Any] | None]:
     """C3 findings and the table row of one calibrated group (``group``: its entry of the masters plan)."""
-    bg_min = float(cfg["qa"]["calibrated_background_min_adu"])
+    bg_min = cfg.qa.calibrated_background_min_adu
     items: list[QAItem] = []
     if not per:
         return items, None

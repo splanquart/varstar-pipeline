@@ -13,6 +13,7 @@ import numpy as np
 
 from ..inventory import nearest_night, set_night
 from ..model import DARK, FrameSet, Inventory, LightGroup
+from ..settings import MatchingSettings, Settings
 from .model import offset_hours
 
 FrameStats = Mapping[str, Mapping[str, Any]]
@@ -55,12 +56,12 @@ def classify_excess(delta_adu: float, sigma_ref: float, sigma_new: float, gain_e
     return "indéterminé"
 
 
-def dark_candidates(inv: Inventory, g: LightGroup, cfg: dict[str, Any]) -> list[FrameSet]:
+def dark_candidates(inv: Inventory, g: LightGroup, m: MatchingSettings) -> list[FrameSet]:
     """All dark series compatible with the darks chosen for `g` (same sensor key, exposure, temperature)."""
     if not g.dark or not g.dark.sets:
         return []
     exp = g.dark.sets[0].exptime
-    ttol = float(cfg["matching"]["temp_tolerance_c"])
+    ttol = m.temp_tolerance_c
     gt = g.mean_temp
     return [s for s in inv.calibration_sets.get(DARK, []) if s.sensor_key == g.sensor_key
             and abs(s.exptime - exp) < 1e-6
@@ -68,7 +69,7 @@ def dark_candidates(inv: Inventory, g: LightGroup, cfg: dict[str, Any]) -> list[
 
 
 def usual_level_dark_sets(inv: Inventory, g: LightGroup, stats: FrameStats,
-                          cfg: dict[str, Any]) -> tuple[list[FrameSet], str | None]:
+                          cfg: Settings) -> tuple[list[FrameSet], str | None]:
     """Without same-night darks, do not borrow the darks of a night whose offset is anomalous (P1).
 
     The darks of the nearest night at the usual level (the level shared by most dark frames) are
@@ -80,11 +81,11 @@ def usual_level_dark_sets(inv: Inventory, g: LightGroup, stats: FrameStats,
     chosen = list(g.dark.sets)
     if any(set_night(s, off) == g.session for s in chosen):
         return chosen, None
-    cands = dark_candidates(inv, g, cfg)
+    cands = dark_candidates(inv, g, cfg.matching)
     if len(cands) < 2:
         return chosen, None
     summ = {s.id: set_summary(s, stats) for s in cands}
-    clusters = level_clusters([(s.id, summ[s.id]["level"]) for s in cands], float(cfg["qa"]["offset_jump_adu"]))
+    clusters = level_clusters([(s.id, summ[s.id]["level"]) for s in cands], cfg.qa.offset_jump_adu)
     if len(clusters) < 2:
         return chosen, None
     usual = max(clusters, key=lambda c: sum(s.n for s in cands if s.id in c))
@@ -101,11 +102,11 @@ def usual_level_dark_sets(inv: Inventory, g: LightGroup, stats: FrameStats,
 
 
 def effective_dark_sets(inv: Inventory, g: LightGroup, stats: FrameStats,
-                        cfg: dict[str, Any]) -> tuple[list[FrameSet], list[str]]:
+                        cfg: Settings) -> tuple[list[FrameSet], list[str]]:
     """Darks actually combined for `g`: usual level when borrowed, single level within a night."""
     sets, note = usual_level_dark_sets(inv, g, stats, cfg)
     notes = [note] if note else []
-    sets, note2 = consistent_dark_sets(sets, stats, float(cfg["qa"]["offset_jump_adu"]), g.start)
+    sets, note2 = consistent_dark_sets(sets, stats, cfg.qa.offset_jump_adu, g.start)
     if note2:
         notes.append(note2)
     return sets, notes

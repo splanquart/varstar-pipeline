@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from astropy.io import fits
 
+from builders import make_settings
 from fitsgen import noise, series, two_nights, write_frame
 from varstar.adapters.pixel_stats import PixelStatsCache, binned_frame, quick_stats, read_image, read_raw
 from varstar.adapters.workspace import Workspace
@@ -11,10 +12,10 @@ from varstar.application.check import raw_checks
 from varstar.inventory import build_inventory
 
 
-@pytest.fixture(autouse=True)
-def full_pixels(cfg):
-    cfg["qa"]["pixel_step"] = 1  # small synthetic frames: use every pixel
-    cfg["runtime"]["processes"] = 1
+@pytest.fixture
+def cfg():
+    # small synthetic frames: use every pixel
+    return make_settings(qa={"pixel_step": 1}, runtime={"processes": 1})
 
 
 def checks_of(root, cfg, workdir):

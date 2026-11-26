@@ -8,7 +8,7 @@ from varstar.domain.settings import optical_setup_periods
 
 
 def cfg(periods):
-    return {"matching": {"same_optical_setup": periods}}
+    return periods
 
 
 def test_periods_accept_strings_dates_and_datetimes_and_reorder():
@@ -20,7 +20,6 @@ def test_periods_accept_strings_dates_and_datetimes_and_reorder():
 @pytest.mark.parametrize("raw", [None, []])
 def test_no_period(raw):
     assert optical_setup_periods(cfg(raw)) == []
-    assert optical_setup_periods({}) == []
 
 
 @pytest.mark.parametrize("bad", [["2021-09-02"], "2021-09-02", ["2021-09-02", "2021-09-03", "2021-09-04"]])

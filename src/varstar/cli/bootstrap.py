@@ -9,6 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from ..adapters.config_loader import load_settings, resolve_workdir  # noqa: F401  (used by cli.app)
 from ..adapters.console import ConsoleReporter, StepLog
 from ..adapters.discovery import FilesystemFrameSource
 from ..adapters.fits_io import FitsPixelReader
@@ -30,25 +31,26 @@ from ..application.inventory import InventoryResult
 from ..application.pipeline import PipelineServices
 from ..domain.calibration import PipelineError
 from ..domain.model import Inventory
+from ..domain.settings import Settings
 
 USER_ERRORS = (PipelineError, SirilError)
 """Errors shown to the user as « ERREUR : … » (no traceback)."""
 
 
-def _log_level(cfg: dict[str, Any]) -> str:
-    return cfg.get("runtime", {}).get("log_level", "INFO")
+def _log_level(cfg: Settings) -> str:
+    return cfg.runtime.log_level
 
 
-def step_log(workdir: Path, cfg: dict[str, Any]) -> StepLog:
+def step_log(workdir: Path, cfg: Settings) -> StepLog:
     return StepLog(workdir, _log_level(cfg))
 
 
-def load_inventory(source: Path, cfg: dict[str, Any], exclude: list[Path] | None = None) -> Inventory:
+def load_inventory(source: Path, cfg: Settings, exclude: list[Path] | None = None) -> Inventory:
     """Inventory of a source folder (headers + ADU scale), nothing written."""
     return inventory_use_case.load_inventory(FilesystemFrameSource(), FitsPixelReader(), source, cfg, exclude)
 
 
-def run_inventory(source: Path, cfg: dict[str, Any], workdir: Path, force: bool = False) -> InventoryResult:
+def run_inventory(source: Path, cfg: Settings, workdir: Path, force: bool = False) -> InventoryResult:
     workdir.mkdir(parents=True, exist_ok=True)
     step_log(workdir, cfg).start("inventory")
     return inventory_use_case.run_inventory(
@@ -56,7 +58,7 @@ def run_inventory(source: Path, cfg: dict[str, Any], workdir: Path, force: bool 
         source=FilesystemFrameSource(), pixels=FitsPixelReader(), report=InventoryReportAdapter(), force=force)
 
 
-def run_checks(source: Path, cfg: dict[str, Any], workdir: Path, raw: bool = True) -> dict[str, Any]:
+def run_checks(source: Path, cfg: Settings, workdir: Path, raw: bool = True) -> dict[str, Any]:
     """« varstar check »: header (+ raw pixel) checks, qa/qa.json and qa/qa.md."""
     workdir.mkdir(parents=True, exist_ok=True)
     step_log(workdir, cfg).start("check")
@@ -67,14 +69,14 @@ def run_checks(source: Path, cfg: dict[str, Any], workdir: Path, raw: bool = Tru
                                      report=QAReportAdapter(), raw=raw, progress=reporter.progress)
 
 
-def pipeline_services(source: Path, cfg: dict[str, Any], workdir: Path) -> PipelineServices:
+def pipeline_services(source: Path, cfg: Settings, workdir: Path) -> PipelineServices:
     reporter = ConsoleReporter()
 
     def calibration_tools():
         siril = Siril.from_config(cfg, workdir)   # raises SirilError when siril-cli is missing
         return SirilMasterBuilder(siril, library, workdir / "siril", cfg), SirilCalibrator(siril, workdir)
 
-    library = DiskMasterRepository(Path(cfg["paths"]["library"]).expanduser())
+    library = DiskMasterRepository(Path(cfg.paths.library).expanduser())
     return PipelineServices(
         store=Workspace(workdir), provenance=ProvenanceStore(workdir), source=FilesystemFrameSource(),
         pixel_reader=FitsPixelReader(), pixel_stats=PixelStatsCache.from_config(workdir, cfg, reporter.progress),
@@ -84,7 +86,7 @@ def pipeline_services(source: Path, cfg: dict[str, Any], workdir: Path) -> Pipel
         reporter=reporter, start_log=step_log(workdir, cfg).start)
 
 
-def run_pipeline(source: Path, cfg: dict[str, Any], workdir: Path, from_step: str = "inventory",
+def run_pipeline(source: Path, cfg: Settings, workdir: Path, from_step: str = "inventory",
                  sessions: list[str] | None = None, filters: list[str] | None = None,
                  force: bool = False) -> dict[str, Any]:
     """« varstar run »."""

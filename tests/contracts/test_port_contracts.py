@@ -272,7 +272,7 @@ def test_master_builder_dark_then_flat(master_builder, tmp_path):
     builder, repo = master_builder
     cfg = make_settings()
     darks = _raw_darks(tmp_path)
-    rej = choose_rejection(len(darks), cfg)
+    rej = choose_rejection(len(darks), cfg.masters)
     dark = builder.build_dark(darks, "dark", rej, "d1", "DARK_g120_ox_b2_300s_T-12", tmp_path / "raw")
     assert (dark.id, dark.kind) == ("d1", "dark") and repo.find("dark", "d1") is not None
     for key in ("label", "n_frames", "exptime", "median_adu", "sources", "frame_stats", "sigma_single_frame_adu"):

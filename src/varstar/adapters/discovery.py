@@ -8,10 +8,10 @@ import os
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 from ..domain.calibration import FileStat
 from ..domain.model import SourceScan
+from ..domain.settings import Settings
 from .fits_io import read_frame
 
 
@@ -23,17 +23,17 @@ class DiscoveryResult:
     other_extensions: Counter = field(default_factory=Counter)
 
 
-def _ignore_patterns(cfg: dict[str, Any]) -> list[str]:
-    inv = cfg.get("inventory", {})
-    patterns = list(inv.get("ignore_dirs") or [])
-    if inv.get("include_removed"):
+def _ignore_patterns(cfg: Settings) -> list[str]:
+    inv = cfg.inventory
+    patterns = list(inv.ignore_dirs)
+    if inv.include_removed:
         patterns = [p for p in patterns if p.lower() != "removed"]
     return patterns
 
 
-def discover(root: Path, cfg: dict[str, Any], exclude: list[Path] | None = None) -> DiscoveryResult:
+def discover(root: Path, cfg: Settings, exclude: list[Path] | None = None) -> DiscoveryResult:
     root = root.resolve()
-    exts = {e.lower() for e in cfg.get("inventory", {}).get("extensions", [".fits", ".fit", ".fts"])}
+    exts = {e.lower() for e in cfg.inventory.extensions}
     patterns = _ignore_patterns(cfg)
     excluded = {p.resolve() for p in (exclude or [])}
     result = DiscoveryResult()
@@ -67,10 +67,10 @@ def discover(root: Path, cfg: dict[str, Any], exclude: list[Path] | None = None)
 class FilesystemFrameSource:
     """``FrameSource`` on a local folder: discovery + primary header of every FITS file (read-only)."""
 
-    def files(self, root: Path, cfg: dict[str, Any], exclude: list[Path] | None = None) -> list[Path]:
+    def files(self, root: Path, cfg: Settings, exclude: list[Path] | None = None) -> list[Path]:
         return discover(root, cfg, exclude=exclude).fits_files
 
-    def scan(self, root: Path, cfg: dict[str, Any], exclude: list[Path] | None = None) -> SourceScan:
+    def scan(self, root: Path, cfg: Settings, exclude: list[Path] | None = None) -> SourceScan:
         root = root.resolve()
         disc = discover(root, cfg, exclude=exclude)
         frames, unreadable = [], []

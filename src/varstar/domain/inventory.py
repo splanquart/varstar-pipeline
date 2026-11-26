@@ -11,11 +11,11 @@ import re
 import statistics
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Iterable
 
 from .model import (BIAS, DARK, DARKFLAT, FLAT, LIGHT, UNKNOWN, AduScaleReading, Anomaly, DarkTodo, Frame,
                     FrameSet, Inventory, LightGroup, Match, SensorInfo, SensorKey, SourceScan)
-from .settings import optical_setup_periods
+from .settings import Settings
 
 # --------------------------------------------------------------------------- helpers
 
@@ -102,7 +102,7 @@ def nearest_night(sets: list[FrameSet], t0: dt.datetime, t1: dt.datetime,
     return night, nights[night], gap(nights[night])
 
 
-def match_darks(group: LightGroup, dark_sets: list[FrameSet], cfg: dict[str, Any]) -> Match:
+def match_darks(group: LightGroup, dark_sets: list[FrameSet], cfg: Settings) -> Match:
     """Darks for a light group.
 
     Policy (D16): darks are taken from the same night as the lights only. Darks of different
@@ -110,10 +110,10 @@ def match_darks(group: LightGroup, dark_sets: list[FrameSet], cfg: dict[str, Any
     without any header trace (2021-09-06: +25 ADU). Without same-night darks, the darks of the
     nearest night are used at level B (offset not verifiable, checked after calibration).
     """
-    m = cfg["matching"]
-    tol, ttol = m["exptime_tolerance_s"], m["temp_tolerance_c"]
-    same_night_only = bool(m.get("dark_same_night", True))
-    offset = float(cfg["inventory"].get("session_day_offset_hours", -12))
+    m = cfg.matching
+    tol, ttol = m.exptime_tolerance_s, m.temp_tolerance_c
+    same_night_only = m.dark_same_night
+    offset = cfg.inventory.session_day_offset_hours
     same_key = [s for s in dark_sets if s.sensor_key == group.sensor_key]
     same_exp = [s for s in same_key if abs(s.exptime - group.exptime) <= tol]
     gt = group.mean_temp
@@ -145,7 +145,7 @@ def match_darks(group: LightGroup, dark_sets: list[FrameSet], cfg: dict[str, Any
         best = min(tonight or same_exp, key=lambda s: (dtemp(s), abs((s.mid - group.start).total_seconds())))
         return Match("B", [best], [
             f"darks {_fmt_exp(group.exptime)} : ΔT = {dtemp(best):.1f} °C > {ttol:g} °C (le plus proche retenu)"])
-    if same_key and m.get("allow_dark_scaling", True):
+    if same_key and m.allow_dark_scaling:
         temp_ok = [s for s in same_key if dtemp(s) <= ttol] or same_key
         if same_night_only:
             tonight = [s for s in temp_ok if set_night(s, offset) == group.session]
@@ -167,12 +167,12 @@ def match_darks(group: LightGroup, dark_sets: list[FrameSet], cfg: dict[str, Any
 
 
 def match_flats(group: LightGroup, session_span: tuple[dt.datetime, dt.datetime],
-                flat_sets: list[FrameSet], cfg: dict[str, Any]) -> Match:
-    m = cfg["matching"]
-    same_hours = float(m.get("flat_same_session_hours", 16))
-    max_age = dt.timedelta(days=float(m.get("max_flat_age_days", 7)))
-    periods = optical_setup_periods(cfg)
-    offset = float(cfg["inventory"].get("session_day_offset_hours", -12))
+                flat_sets: list[FrameSet], cfg: Settings) -> Match:
+    m = cfg.matching
+    same_hours = m.flat_same_session_hours
+    max_age = dt.timedelta(days=m.max_flat_age_days)
+    periods = list(m.same_optical_setup)
+    offset = cfg.inventory.session_day_offset_hours
     s0, s1 = session_span
 
     cands = [s for s in flat_sets if s.sensor_key == group.sensor_key and s.filter == group.filter]
@@ -186,7 +186,7 @@ def match_flats(group: LightGroup, session_span: tuple[dt.datetime, dt.datetime]
     if same:
         return Match("A", [min(same, key=gap)], [])
 
-    if m.get("trust_session_folder_flats", True) and group.label:
+    if m.trust_session_folder_flats and group.label:
         labelled = [s for s in cands if group.label in s.folder_labels and gap(s) <= max_age]
         if labelled:
             best = min(labelled, key=gap)
@@ -218,16 +218,16 @@ def match_flats(group: LightGroup, session_span: tuple[dt.datetime, dt.datetime]
 
 
 def match_darkflats(flat_set: FrameSet, darkflat_sets: list[FrameSet], dark_sets: list[FrameSet],
-                    cfg: dict[str, Any]) -> Match:
-    tol = cfg["matching"]["darkflat_exptime_tolerance_s"]
+                    cfg: Settings) -> Match:
+    tol = cfg.matching.darkflat_exptime_tolerance_s
     df = [s for s in darkflat_sets if s.sensor_key == flat_set.sensor_key]
     dk = [s for s in dark_sets if s.sensor_key == flat_set.sensor_key]
     exact = [s for s in df if abs(s.exptime - flat_set.exptime) <= tol]
     if not exact:
         exact = [s for s in dk if abs(s.exptime - flat_set.exptime) <= tol]
     if exact:
-        if cfg["matching"].get("dark_same_night", True):
-            offset = float(cfg["inventory"].get("session_day_offset_hours", -12))
+        if cfg.matching.dark_same_night:
+            offset = cfg.inventory.session_day_offset_hours
             exact = nearest_night(exact, flat_set.start, flat_set.end, offset)[1]
         return Match("A", exact, [])
     pool = df or dk
@@ -330,7 +330,7 @@ def _sensor_infos(frames: list[Frame], readings: dict[SensorKey, AduScaleReading
     return infos
 
 
-def build_inventory(scan: SourceScan, cfg: dict[str, Any],
+def build_inventory(scan: SourceScan, cfg: Settings,
                     adu_readings: dict[SensorKey, AduScaleReading] | None = None,
                     created: dt.datetime | None = None) -> Inventory:
     """Sessions, calibration series, matches and levels from the frames found under a source folder.
@@ -338,9 +338,8 @@ def build_inventory(scan: SourceScan, cfg: dict[str, Any],
     ``adu_readings``: ADU scale measured on the pixels of ``adu_scale_samples`` (None: not measured).
     """
     root = scan.root
-    inv_cfg = cfg["inventory"]
-    offset = float(inv_cfg.get("session_day_offset_hours", -12))
-    gap_hours = float(inv_cfg.get("set_gap_hours", 3))
+    offset = cfg.inventory.session_day_offset_hours
+    gap_hours = cfg.inventory.set_gap_hours
     anomalies: list[Anomaly] = []
 
     frames = scan.frames

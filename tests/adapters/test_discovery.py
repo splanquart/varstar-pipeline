@@ -3,6 +3,7 @@
 from fitsgen import write_frame
 from varstar.adapters.discovery import FilesystemFrameSource, discover
 from varstar.domain.model import LIGHT
+from varstar.domain.settings import replace
 
 
 def test_discovery_ignores(tmp_path, cfg):
@@ -18,8 +19,8 @@ def test_discovery_ignores(tmp_path, cfg):
     assert [p.name for p in res.fits_files] == ["a.fits"]
     assert "bias/SESSION_1" in res.empty_dirs
     assert res.other_extensions[".xisf"] == 1
-    cfg["inventory"]["include_removed"] = True
-    assert sorted(p.name for p in discover(tmp_path, cfg).fits_files) == ["a.fits", "b.fits", "c.fits"]
+    with_removed = replace(cfg, inventory={"include_removed": True})
+    assert sorted(p.name for p in discover(tmp_path, with_removed).fits_files) == ["a.fits", "b.fits", "c.fits"]
 
 
 def test_frame_source_scan(tmp_path, cfg):

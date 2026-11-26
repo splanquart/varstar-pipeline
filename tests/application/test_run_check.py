@@ -103,7 +103,7 @@ def test_calibrated_checks_read_frames_and_ampglow_mask():
                               "ampglow": "/w/m/absent.fits"}}}
     results = {"g1": {"outputs": {"light/a.fits": "/w/cal/a.fit"}},
                "g2": {"outputs": {"light/b.fits": "/w/cal/b.fit"}}}
-    items, rows = calibrated_checks(plan, results, {"qa": {"calibrated_background_min_adu": 0.0}}, pixels=pixels)
+    items, rows = calibrated_checks(plan, results, make_settings(), pixels=pixels)
     assert [r["group"] for r in rows] == ["g1", "g2"]
     assert rows[0]["ampglow_zone_resid_adu"][0] == pytest.approx(-20, abs=3)
     assert rows[1]["ampglow_zone_resid_adu"] == []                   # missing mask: no zone

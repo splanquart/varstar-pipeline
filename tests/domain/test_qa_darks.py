@@ -61,7 +61,7 @@ def test_dark_candidates_share_exposure_and_temperature():
                                                  ccd_temp=-5.0)
     frames += series_frames("dark/180", DARK, 180, "2021-09-04T03:00:00", 5, step_s=190)
     inv = inventory_of(frames, make_settings(matching={"dark_same_night": False}))
-    ids = [s.id for s in dark_candidates(inv, group(inv, "sept06"), inv.config)]
+    ids = [s.id for s in dark_candidates(inv, group(inv, "sept06"), inv.config.matching)]
     assert ids == ["DARK-300s-20210902", "DARK-300s-20210907"]
 
 

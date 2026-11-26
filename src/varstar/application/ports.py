@@ -13,15 +13,16 @@ import numpy as np
 from ..domain.calibration import CalibrationSensor, FileStat, MasterRecord, Rejection
 from ..domain.model import Frame, Inventory, SourceScan
 from ..domain.plan import GroupPlan
+from ..domain.settings import Settings
 
 
 class FrameSource(Protocol):
     """Raw frames of a source folder (read-only)."""
 
-    def files(self, root: Path, cfg: dict[str, Any], exclude: list[Path] | None = None) -> list[Path]:
+    def files(self, root: Path, cfg: Settings, exclude: list[Path] | None = None) -> list[Path]:
         """FITS files to consider (no file is opened)."""
 
-    def scan(self, root: Path, cfg: dict[str, Any], exclude: list[Path] | None = None) -> SourceScan:
+    def scan(self, root: Path, cfg: Settings, exclude: list[Path] | None = None) -> SourceScan:
         """Headers of every FITS file, unreadable files and folder facts."""
 
     def file_stat(self, path: str | Path) -> FileStat:
@@ -88,13 +89,13 @@ class ProvenanceRecorder(Protocol):
 
     def code_fingerprint(self) -> str: ...
 
-    def config_fingerprint(self, cfg: dict[str, Any], sections: Iterable[str]) -> str: ...
+    def config_fingerprint(self, cfg: Settings, sections: Iterable[str]) -> str: ...
 
     def read_manifest(self, step: str) -> dict[str, Any] | None: ...
 
     def write_manifest(self, step: str, data: dict[str, Any]) -> None: ...
 
-    def record(self, step: str, cfg: dict[str, Any], details: dict[str, Any]) -> None: ...
+    def record(self, step: str, cfg: Settings, details: dict[str, Any]) -> None: ...
 
 
 class InventoryReport(Protocol):

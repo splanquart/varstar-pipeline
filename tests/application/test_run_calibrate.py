@@ -5,6 +5,7 @@ import pytest
 
 from fakes import (FakeCalibrator, FakePixelStats, FakeProvenance, InMemoryArtifactStore, InMemoryFrameSource,
                    RecordingQAReport)
+from builders import make_settings
 from varstar.application.calibrate import calibrate_group, run_calibrate
 from varstar.domain.calibration import CalibrationSensor
 from varstar.domain.plan import DarkRef, GroupPlan, MastersPlan
@@ -60,7 +61,7 @@ def test_run_calibrate_isolates_failures_and_runs_the_checks(env):
     images = {out: np.full((16, 16), -5.0) for out in
               ("/work/calibrated/2021-09-06_s1/H/a_0.fits", "/work/calibrated/2021-09-06_s1/H/a_1.fits")}
     said, prov = [], FakeProvenance()
-    res = run_calibrate(plan, [g_ok.key, g_bad.key, "absent"], {"qa": {"calibrated_background_min_adu": 0.0}},
+    res = run_calibrate(plan, [g_ok.key, g_bad.key, "absent"], make_settings(),
                         SENSOR, pixels=FakePixelStats(images=images), qa_report=RecordingQAReport(), provenance=prov,
                         progress=said.append, **env)
     assert list(res["results"]) == [g_ok.key]
@@ -77,6 +78,6 @@ def test_run_calibrate_isolates_failures_and_runs_the_checks(env):
 def test_run_calibrate_without_any_result(env):
     plan = MastersPlan("t", "/lib", "1.4.5", {})
     prov = FakeProvenance()
-    res = run_calibrate(plan, ["x"], {}, SENSOR, pixels=FakePixelStats(), qa_report=RecordingQAReport(),
+    res = run_calibrate(plan, ["x"], make_settings(), SENSOR, pixels=FakePixelStats(), qa_report=RecordingQAReport(),
                         provenance=prov, **env)
     assert res["results"] == {} and prov.records["calibrate"]["groups"] == {} and res["qa"] == []

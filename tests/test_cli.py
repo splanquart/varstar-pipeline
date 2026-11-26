@@ -54,3 +54,12 @@ def test_check_command(tmp_path):
     assert "Niveau des darks par nuit" in md and "Conseil pour la prochaine séance" in md
     res = runner.invoke(app, ["check", str(root), "-w", str(tmp_path / "w"), "--headers-only"])
     assert res.exit_code == 0 and "[P1" not in res.output
+
+
+def test_invalid_config_is_explained(complete_session, tmp_path):
+    bad = tmp_path / "config.yaml"
+    bad.write_text("matching:\n  temp_tolerance_c: chaud\n", encoding="utf-8")
+    for cmd in ("inventory", "check", "darks-todo", "run"):
+        res = runner.invoke(app, [cmd, str(complete_session), "-c", str(bad)])
+        assert res.exit_code == 1, cmd
+        assert "ERREUR : Configuration invalide : matching.temp_tolerance_c = 'chaud' (nombre attendu)" in res.output

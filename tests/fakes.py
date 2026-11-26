@@ -37,7 +37,7 @@ class InMemoryFrameSource:
         return FileStat(str(path), 1000, self.mtimes.get(str(path), 0))
 
     def _kept(self, cfg: dict[str, Any], exclude: list[Path] | None) -> list[Frame]:
-        patterns = [p.lower() for p in cfg.get("inventory", {}).get("ignore_dirs") or []]
+        patterns = [p.lower() for p in cfg.inventory.ignore_dirs]
         excluded = [str(p) for p in exclude or []]
         kept = []
         for f in self.frames:
@@ -125,7 +125,7 @@ class FakeProvenance:
         return self.code_value
 
     def config_fingerprint(self, cfg: dict[str, Any], sections: Iterable[str]) -> str:
-        return json.dumps({s: cfg.get(s) for s in sections}, sort_keys=True, default=str)
+        return json.dumps({s: cfg.raw.get(s) for s in sections}, sort_keys=True, default=str)
 
     def read_manifest(self, step: str) -> dict[str, Any] | None:
         return copy.deepcopy(self.manifests.get(step))

@@ -14,6 +14,7 @@ from ..domain.calibration import (MASTER_ALGO_VERSION, MasterRecord, Rejection, 
                                   master_frame_stats, unstable_mask)
 from ..domain.model import Frame
 from ..domain.qa.pixels import robust_sigma
+from ..domain.settings import Settings
 from .images import read_siril_output, write_mask
 from .library import DiskMasterRepository
 from .siril import Siril, link_sequence
@@ -42,7 +43,7 @@ def _read_produced(path: Path) -> tuple[np.ndarray, fits.Header]:
 
 
 class SirilMasterBuilder:
-    def __init__(self, siril: Siril, library: DiskMasterRepository, tmp_root: Path, cfg: dict[str, Any]):
+    def __init__(self, siril: Siril, library: DiskMasterRepository, tmp_root: Path, cfg: Settings):
         self.siril = siril
         self.library = library
         self.tmp_root = Path(tmp_root)
@@ -88,7 +89,7 @@ class SirilMasterBuilder:
             "frame_stats": stats,
         }
         if "pixel_std" in extra:
-            k = float(self.cfg["masks"].get("unstable_sigma_factor", 5.0))
+            k = self.cfg.masks.unstable_sigma_factor
             unstable, med_std = unstable_mask(extra["pixel_std"], k)
             hdr = fits.Header()
             hdr["VSID"] = master_id
@@ -123,7 +124,7 @@ class SirilMasterBuilder:
             "median_adu": float(np.median(master_adu[::4, ::4])),
             "level_min_frac": min(s["frac_saturation"] for s in stats),
             "level_max_frac": max(s["frac_saturation"] for s in stats),
-            "level_warnings": flat_level_warnings(stats, self.cfg),
+            "level_warnings": flat_level_warnings(stats, self.cfg.masters),
             "frame_stats": stats,
         }
         data, header = _read_produced(work / "master.fits")

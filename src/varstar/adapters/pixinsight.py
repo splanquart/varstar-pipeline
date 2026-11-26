@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 
 from ..domain.calibration import MasterRecord
+from ..domain.settings import Settings
 from .images import NORM_SCALE, read_xisf
 
 
@@ -15,9 +16,9 @@ class PixInsightMasters:
         self.dir = Path(directory)
 
     @classmethod
-    def from_config(cls, cfg: dict, source_root: Path) -> "PixInsightMasters | None":
+    def from_config(cls, cfg: Settings, source_root: Path) -> "PixInsightMasters | None":
         """``paths.pixinsight_masters``: auto = <source>/output/master ; null = disabled."""
-        pi_cfg = cfg["paths"].get("pixinsight_masters", "auto")
+        pi_cfg = cfg.paths.pixinsight_masters
         directory = (source_root / "output" / "master") if pi_cfg == "auto" else (Path(pi_cfg) if pi_cfg else None)
         return cls(directory) if directory is not None and directory.exists() else None
 

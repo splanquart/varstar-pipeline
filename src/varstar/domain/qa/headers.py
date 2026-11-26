@@ -6,14 +6,14 @@ import datetime as dt
 import math
 import statistics
 from collections import defaultdict
-from typing import Any
 
 from ..model import DARK, DARKFLAT, FLAT, LIGHT, Frame, Inventory, LightGroup
+from ..settings import Settings
 from .model import QAItem, group_label, night_label, offset_hours, sort_items
 
 
-def header_checks(inv: Inventory, cfg: dict[str, Any]) -> list[QAItem]:
-    q = cfg["qa"]
+def header_checks(inv: Inventory, cfg: Settings) -> list[QAItem]:
+    q = cfg.qa
     items: list[QAItem] = []
     off = offset_hours(cfg)
 
@@ -35,7 +35,7 @@ def header_checks(inv: Inventory, cfg: dict[str, Any]) -> list[QAItem]:
                             "et fixer l'offset dans le profil de la caméra"))
 
     # H3: cooling.
-    tol = float(q["ccd_temp_delta_c"])
+    tol = float(q.ccd_temp_delta_c)
     by_series: dict[tuple[str, dt.date], list[Frame]] = defaultdict(list)
     for f in inv.frames:
         if f.date_obs is not None:
@@ -88,7 +88,7 @@ def header_checks(inv: Inventory, cfg: dict[str, Any]) -> list[QAItem]:
                             "réglages de caméra éventuellement différents (offset)", ""))
 
     # H5: focus position of the flats vs the lights.
-    ftol = float(q["focpos_tolerance_steps"])
+    ftol = float(q.focpos_tolerance_steps)
     for g in inv.light_groups:
         if not g.flat or not g.flat.sets:
             continue
@@ -127,7 +127,7 @@ def header_checks(inv: Inventory, cfg: dict[str, Any]) -> list[QAItem]:
             de0 = statistics.median(p[1] for p in pos)
             sk = groups[0].sensor_key
             field_arcmin = min(sk.naxis1, sk.naxis2) * scale / 60
-            limit = float(q["pointing_max_field_frac"]) * field_arcmin
+            limit = float(q.pointing_max_field_frac) * field_arcmin
             for g in groups:
                 far = []
                 for f in g.frames:
@@ -148,7 +148,7 @@ def header_checks(inv: Inventory, cfg: dict[str, Any]) -> list[QAItem]:
                         "cible et après un retournement", {"max_arcmin": round(dmax, 1)}))
 
     # H7: weather (lights only).
-    cmax, margin = float(q["cloud_cover_max"]), float(q["dew_margin_c"])
+    cmax, margin = float(q.cloud_cover_max), float(q.dew_margin_c)
     sessions: dict[dt.date, list[Frame]] = defaultdict(list)
     for g in inv.light_groups:
         sessions[g.session].extend(g.frames)
@@ -181,13 +181,13 @@ def header_checks(inv: Inventory, cfg: dict[str, Any]) -> list[QAItem]:
 
     # H9: number of calibration frames actually combined.
     for g in inv.light_groups:
-        if g.dark and g.dark.sets and g.dark.n_frames < int(q["min_darks"]):
+        if g.dark and g.dark.sets and g.dark.n_frames < int(q.min_darks):
             items.append(QAItem("H9", "info", f"{group_label(g)} : {g.dark.n_frames} darks seulement "
-                                f"(< {q['min_darks']}) pour le master", [],
+                                f"(< {q.min_darks}) pour le master", [],
                                 "master dark plus bruité, rejet des cosmiques moins robuste",
-                                f"faire au moins {q['min_darks']} darks par pose et par nuit"))
-        if g.flat and g.flat.sets and g.flat.n_frames < int(q["min_flats"]):
+                                f"faire au moins {q.min_darks} darks par pose et par nuit"))
+        if g.flat and g.flat.sets and g.flat.n_frames < int(q.min_flats):
             items.append(QAItem("H9", "info", f"{group_label(g)} : {g.flat.n_frames} flats seulement "
-                                f"(< {q['min_flats']})", [], "flat plus bruité",
-                                f"faire au moins {q['min_flats']} flats par filtre"))
+                                f"(< {q.min_flats})", [], "flat plus bruité",
+                                f"faire au moins {q.min_flats} flats par filtre"))
     return sort_items(items)
