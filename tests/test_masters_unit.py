@@ -6,7 +6,7 @@ import pytest
 from varstar.config import load_config
 from varstar.imageio import read_siril_output, read_xisf
 from varstar.masters import choose_rejection, frame_stats
-from varstar.fitsinfo import read_frame
+from varstar.adapters.fits_io import read_frame
 
 from fitsgen import write_frame
 

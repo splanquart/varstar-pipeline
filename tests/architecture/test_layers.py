@@ -42,7 +42,7 @@ MAY_IMPORT_LEGACY = {"domain": False, "application": False, "adapters": True, "c
 
 # (importing module, imported name) — to be emptied by the end of the migration (step 8).
 TOLERATED: set[tuple[str, str]] = {
-    ("varstar.qa", "varstar.inventory._nearest_night"),
+    ("varstar.application.inventory", "varstar.qa"),   # header_checks → domain/qa at step 4
 }
 
 

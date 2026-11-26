@@ -27,7 +27,7 @@ from astropy.io import fits
 
 from .domain.units import detect_adu_scale
 from .domain.model import DARK, DARKFLAT, FLAT, LIGHT, Frame, FrameSet, Inventory, LightGroup
-from .inventory import _nearest_night, match_darkflats, set_night
+from .domain.inventory import match_darkflats, nearest_night, set_night
 
 log = logging.getLogger("varstar")
 
@@ -467,7 +467,7 @@ def usual_level_dark_sets(inv: Inventory, g: LightGroup, stats: dict[str, dict[s
     if all(s.id in usual for s in chosen):
         return chosen, None
     pool = [s for s in cands if s.id in usual]
-    night, sets, gap = _nearest_night(pool, g.start, g.end, off)
+    night, sets, gap = nearest_night(pool, g.start, g.end, off)
     old_night = set_night(chosen[0], off)
     note = (f"darks de la nuit du {old_night:%d/%m} écartés (offset anormal, contrôle P1 : "
             f"{np.median([summ[s.id]['level'] for s in chosen]):.1f} ADU) → darks de la nuit du {night:%d/%m} "

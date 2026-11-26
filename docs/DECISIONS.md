@@ -38,6 +38,7 @@ Siril écrit des flottants normalisés sur [0, 1] (= ADU16 / 65535, vérifié su
 
 **D13 — Siril isolé des préférences de l'utilisateur.**
 `siril-cli -i <workdir>/siril/siril.ini` : les réglages imposés (32 bits, extension `.fits`) ne modifient pas la configuration Siril personnelle.
+Sous macOS avec Siril ≥ 1.4.1, chaque script commence par `pyscript /dev/null`, juste après `requires`. Ce contournement de free-astro/siril#2021 force Siril à attendre la fin de sa vérification Python avant de quitter : sinon le Python laissé orphelin est tué par macOS et la fenêtre « Python a quitté de manière imprévue » s'affiche ([#1](https://github.com/splanquart/varstar-pipeline/issues/1)). Le réglage `siril.python_init_guard` vaut `auto`, `on` ou `off`. Si `pyscript` échoue, le script est relancé sans cette ligne, le contournement reste désactivé jusqu'à la fin de l'exécution, avec un avertissement dans le journal. Son état est noté dans `provenance.json`. Coût : environ 0,5 s par appel de Siril. À passer à `off` quand Siril sera corrigé.
 
 **D14 — Masque de pixels défectueux par catégories (bits).**
 Sur l'IMX294 en 300 s, ≈ 1,8 % des pixels dépassent 5 σ (σ = bruit temporel d'une pose) : les marquer tous rendrait la moitié des mesures suspectes. Le BPM distingue donc *tièdes* (information), *très chauds* (> 50 σ), *instables* (bruit temporel > 5 × médiane, rayons cosmiques exclus), *froids*, *morts* (flat) et *saturés* (dark). La photométrie (M4) ne marque une mesure que pour les bits listés dans `masks.bad_pixel_flags`.
