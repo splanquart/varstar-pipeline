@@ -28,6 +28,7 @@ TITLES = {
     "P4": "Comparaison des flats successifs",
     "P7": "Facteur ADU",
     "P8": "Niveau des lights comparé aux darks",
+    "P9": "Darks à une autre température",
     "C1": "Résidu d'amp glow après calibration",
     "C3": "Fond calibré négatif ou pixels invalides",
 }

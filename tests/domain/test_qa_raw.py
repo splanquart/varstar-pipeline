@@ -7,7 +7,7 @@ import pytest
 from builders import inventory_of, make_frame_stats, sept06_frames, series_frames, two_nights_frames
 from varstar.domain.model import DARK, FLAT, LIGHT
 from varstar.domain.qa.raw import (flat_comparison_series, flat_dark_level, flat_pair_check, frames_to_measure,
-                                   raw_pixel_checks, sample_lights, saturation_adu)
+                                   raw_pixel_checks, sample_lights, saturation_adu, temperature_excess)
 
 
 def stats(frames, rule):
@@ -70,6 +70,51 @@ def test_non_uniform_excess_is_a_light_leak_p2():
     _, res = run(two_nights_frames(), by_folder({"dark/a": 516.0, "dark/b": corner}))
     (p2,) = checks(res, "P2")
     assert p2.data["classification"] == "offset" and p2.data["corner_diff_adu"] == 30
+
+
+def warm_darks_frames(temp=-5.0):
+    """Night of 07/09: darks taken with the sensor at ``temp`` instead of −12 °C."""
+    frames = two_nights_frames()
+    for f in frames:
+        if f.rel_path.startswith("dark/b"):
+            f.ccd_temp = f.set_temp = temp
+    return frames
+
+
+def test_warm_darks_are_a_temperature_change_p9_not_a_light_leak():
+    # https://github.com/splanquart/varstar-pipeline/issues/3: stronger dark current looks like light.
+    warm = {"level": 528.5, "sigma": 9.18, "corners": {"haut_gauche": 4.6, "haut_droit": 0.0,
+                                                        "bas_gauche": 0.0, "bas_droit": 0.0}}
+    _, res = run(warm_darks_frames(), by_folder({"dark/a": {"level": 516.0, "sigma": 5.97}, "dark/b": warm}))
+    assert not checks(res, "P1") and not checks(res, "P2")
+    (p9,) = checks(res, "P9")
+    assert p9.severity == "warning" and p9.data["classification"] == "température"
+    assert p9.data["delta_temp_c"] == 7.0 and p9.data["delta_adu"] == 12.5
+    assert "ΔT = +7.0 °C" in p9.message and "pas une fuite de lumière" in p9.message
+    assert "refaire ces darks à -12 °C" in p9.advice and len(p9.files) == 5
+
+
+def test_temperature_does_not_explain_everything():
+    jump = by_folder({"dark/a": 516.0, "dark/b": 541.0})
+    # Within the matching tolerance (1 °C): still an offset jump.
+    _, res = run(warm_darks_frames(-11.5), jump)
+    assert [i.check for i in res.items if i.check in ("P1", "P2", "P9")] == ["P1"]
+    # Colder sensor but higher level: the temperature cannot be the cause.
+    _, res = run(warm_darks_frames(-20.0), jump)
+    assert [i.check for i in res.items if i.check in ("P1", "P2", "P9")] == ["P1"]
+
+
+def test_temperature_excess_rules():
+    inv = inventory_of(warm_darks_frames())
+    a, b = sorted(inv.calibration_sets[DARK], key=lambda s: s.start)
+    assert temperature_excess([a], [b], 12.5, 1.0) == (-12.0, -5.0)
+    assert temperature_excess([b], [a], -12.5, 1.0) == (-5.0, -12.0)      # reference warmer, members colder
+    assert temperature_excess([a], [b], -12.5, 1.0) is None              # warmer but lower level
+    assert temperature_excess([a], [b], 0.0, 1.0) is None
+    assert temperature_excess([a], [b], 12.5, 10.0) is None              # within tolerance
+    for f in b.frames:
+        f.ccd_temp = None
+    assert temperature_excess([a], [b], 12.5, 1.0) is None               # no CCD-TEMP
 
 
 def test_single_odd_dark_in_a_series_is_p2():

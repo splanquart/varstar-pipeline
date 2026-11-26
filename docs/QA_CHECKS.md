@@ -36,6 +36,7 @@ Principes :
 | P5 | Darks : nombre de pixels chauds et amplitude de l'amp glow comparés à la bibliothèque | dérive du capteur, mauvaise température | ⬜ |
 | P6 | Lights : fond de ciel anormal (Lune, aube, nuages), fraction saturée, traînées | images à écarter avant la photométrie | ⬜ (prévu M3/M4 « qualité ») |
 | P8 | Médiane des lights − niveau des darks appariés (fond de ciel brut) | darks plus hauts que les lights → offset différent (inopérant si le fond de ciel est fort : ≈ 600–4000 ADU en 2021) | ✅ |
+| P9 | **Darks à une autre température** : écart de niveau entre séries de même pose, avec une température CCD moyenne différente de plus de `matching.temp_tolerance_c`, dans le même sens que l'écart de température (testé avant P1/P2) | courant d'obscurité plus fort (refroidissement pas tenu), qui ressemble à une fuite de lumière (excès non uniforme, bruit en plus) ; conseil : vérifier le refroidissement, refaire les darks à la bonne température | ✅ ([#3](https://github.com/splanquart/varstar-pipeline/issues/3)) |
 | P7 | Facteur ADU détecté (×4) identique sur toutes les séries | changement de mode de lecture / bits | ✅ (chaque calibration + 3 lights par groupe) |
 
 ## 3. Après calibration (avant la photométrie)

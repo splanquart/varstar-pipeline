@@ -92,13 +92,16 @@
     ],
     "raw": [
       {
-        "advice": "couvercle opaque, caméra recouverte, darks dans le noir complet",
-        "check": "P2",
+        "advice": "vérifier le refroidissement (consigne SET-TEMP tenue, attente de stabilisation avant les darks) et refaire ces darks à -12 °C",
+        "check": "P9",
         "data": {
-          "classification": "lumière",
+          "classification": "température",
           "corner_diff_adu": 4.58,
           "delta_adu": 12.53,
+          "delta_temp_c": 7.0,
           "exptime": 300.0,
+          "mean_ccd_temp_c": -5.0,
+          "reference_ccd_temp_c": -12.0,
           "reference_sets": [
             "DARK-300s-20210921",
             "DARK-300s-20210907"
@@ -116,8 +119,8 @@
           "dark/darklight/300s/2021-09-10_02-15-30__Dark_300.00s_120_0003.fits",
           "dark/darklight/300s/2021-09-10_02-20-40__Dark_300.00s_120_0004.fits"
         ],
-        "impact": "dark trop haut → fond calibré trop bas, flux des étoiles faibles biaisés",
-        "message": "darks 300 s, nuit(s) du 09/09 (s2) : +12.5 ADU par rapport aux autres nuits (506.0 ADU), bruit 9.18 contre 5.97 ADU, excès non uniforme jusqu'à 4.6 ADU dans les coins → fuite de lumière probable",
+        "impact": "darks inutilisables pour les lights prises à la consigne habituelle ; s'ils étaient utilisés, courant d'obscurité et pixels chauds mal soustraits → résidus dans le fond",
+        "message": "darks 300 s, nuit(s) du 09/09 (s2) : capteur à -5.0 °C contre -12.0 °C les autres nuits (ΔT = +7.0 °C) → niveau +12.5 ADU (518.5 contre 506.0 ADU), bruit 9.18 contre 5.97 ADU : courant d'obscurité plus fort (température), pas une fuite de lumière ni un saut d'offset. Ces darks ne sont appariés qu'à des lights à la même température",
         "severity": "warning"
       }
     ],
@@ -304,9 +307,9 @@
     "",
     "## 2. Pixels des images brutes",
     "",
-    "- **P2 — avertissement** : darks 300 s, nuit(s) du 09/09 (s2) : +12.5 ADU par rapport aux autres nuits (506.0 ADU), bruit 9.18 contre 5.97 ADU, excès non uniforme jusqu'à 4.6 ADU dans les coins → fuite de lumière probable",
-    "  - Impact : dark trop haut → fond calibré trop bas, flux des étoiles faibles biaisés",
-    "  - Conseil pour la prochaine séance : couvercle opaque, caméra recouverte, darks dans le noir complet",
+    "- **P9 — avertissement** : darks 300 s, nuit(s) du 09/09 (s2) : capteur à -5.0 °C contre -12.0 °C les autres nuits (ΔT = +7.0 °C) → niveau +12.5 ADU (518.5 contre 506.0 ADU), bruit 9.18 contre 5.97 ADU : courant d'obscurité plus fort (température), pas une fuite de lumière ni un saut d'offset. Ces darks ne sont appariés qu'à des lights à la même température",
+    "  - Impact : darks inutilisables pour les lights prises à la consigne habituelle ; s'ils étaient utilisés, courant d'obscurité et pixels chauds mal soustraits → résidus dans le fond",
+    "  - Conseil pour la prochaine séance : vérifier le refroidissement (consigne SET-TEMP tenue, attente de stabilisation avant les darks) et refaire ces darks à -12 °C",
     "  - Fichiers : `2021-09-10_02-00-00__Dark_300.00s_120_0000.fits`, `2021-09-10_02-05-10__Dark_300.00s_120_0001.fits`, `2021-09-10_02-10-20__Dark_300.00s_120_0002.fits` (+2)",
     "",
     "## Niveau des darks par nuit (contrôle P1)",
@@ -347,8 +350,8 @@
     "      → ranger les fichiers selon le type, la pose et le filtre réels",
     "  [H2 avertissement] OFFSET absent de tous les en-têtes : impossible de vérifier que darks et lights ont le même offset (seul le contrôle P1 sur les pixels peut le voir)",
     "      → utiliser un pilote qui écrit OFFSET (pilote natif ZWO dans N.I.N.A. plutôt qu'ASCOM) et fixer l'offset dans le profil de la caméra",
-    "  [P2 avertissement] darks 300 s, nuit(s) du 09/09 (s2) : +12.5 ADU par rapport aux autres nuits (506.0 ADU), bruit 9.18 contre 5.97 ADU, excès non uniforme jusqu'à 4.6 ADU dans les coins → fuite de lumière probable",
-    "      → couvercle opaque, caméra recouverte, darks dans le noir complet",
+    "  [P9 avertissement] darks 300 s, nuit(s) du 09/09 (s2) : capteur à -5.0 °C contre -12.0 °C les autres nuits (ΔT = +7.0 °C) → niveau +12.5 ADU (518.5 contre 506.0 ADU), bruit 9.18 contre 5.97 ADU : courant d'obscurité plus fort (température), pas une fuite de lumière ni un saut d'offset. Ces darks ne sont appariés qu'à des lights à la même température",
+    "      → vérifier le refroidissement (consigne SET-TEMP tenue, attente de stabilisation avant les darks) et refaire ces darks à -12 °C",
     "Rapport : <TMP>/work_check/qa/qa.md"
   ]
 }
