@@ -9,7 +9,7 @@ from hypothesis.extra.numpy import arrays
 from builders import make_frames
 from varstar.domain.model import FLAT
 from varstar.domain.qa.pixels import (ampglow_zones, bin_frame, calibrated_frame_stats, clipped_mean,
-                                      combine_quick_flat, flat_compare_frames, flat_ratio_block,
+                                      combine_quick_flat, flat_compare_bin, flat_compare_frames, flat_ratio_block,
                                       flat_ratio_metrics,
                                       frame_quick_stats, robust_sigma)
 
@@ -103,6 +103,13 @@ def test_flat_ratio_block_shrinks_on_small_images():
     assert flat_ratio_block((12, 400)) == 3
     assert flat_ratio_block((8, 12)) == 0               # 64x96 binned x8: too small
     assert flat_ratio_block((0, 0)) == 0 and flat_ratio_block((5,)) == 0
+
+
+def test_flat_compare_bin_keeps_16_px_blocks():
+    # https://github.com/splanquart/varstar-pipeline/issues/4
+    assert flat_compare_bin((2822, 4144), 8) == 8
+    assert flat_compare_bin((64, 96), 8) == 1 and flat_compare_bin((300, 400), 8) == 4
+    assert flat_ratio_block(bin_frame(np.ones((64, 96), np.float32), flat_compare_bin((64, 96), 8)).shape) == 16
 
 
 def test_flat_ratio_metrics_on_small_images():

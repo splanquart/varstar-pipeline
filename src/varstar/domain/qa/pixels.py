@@ -10,6 +10,7 @@ from typing import Any, Sequence
 import numpy as np
 from scipy import ndimage
 
+from ..blocks import MIN_BLOCKS, fit_bin, fit_block
 from ..model import Frame
 from ..units import detect_adu_scale
 
@@ -98,7 +99,7 @@ def block_median(img: np.ndarray, block: int) -> np.ndarray:
 
 
 FLAT_RATIO_BLOCK = 16       # binned px: scale of the vignetting (large-scale shape of the ratio)
-FLAT_RATIO_MIN_BLOCKS = 4   # blocks per side, at least, for a meaningful large-scale shape
+FLAT_RATIO_MIN_BLOCKS = MIN_BLOCKS   # blocks per side, at least, for a meaningful large-scale shape
 FLAT_RATIO_MIN_BLOCK = 3    # smaller blocks cannot tell dust shadows (several bins) from the shape
 
 
@@ -111,8 +112,16 @@ def flat_ratio_block(shape: tuple[int, ...], block: int = FLAT_RATIO_BLOCK) -> i
     """
     if len(shape) != 2:
         return 0
-    fitted = min(int(block), shape[0] // FLAT_RATIO_MIN_BLOCKS, shape[1] // FLAT_RATIO_MIN_BLOCKS)
+    fitted = fit_block(shape, block, FLAT_RATIO_MIN_BLOCKS)
     return fitted if fitted >= FLAT_RATIO_MIN_BLOCK else 0
+
+
+def flat_compare_bin(shape: Sequence[int], bin_px: int) -> int:
+    """Binning of the flats for P4: at most ``bin_px``, small enough to keep 16-px blocks (4 per side).
+
+    ``shape``: full-resolution (rows, cols). See https://github.com/splanquart/varstar-pipeline/issues/4
+    """
+    return fit_bin(shape, bin_px, FLAT_RATIO_MIN_BLOCKS * FLAT_RATIO_BLOCK)
 
 
 def flat_ratio_metrics(a: np.ndarray, b: np.ndarray, block: int = FLAT_RATIO_BLOCK) -> dict[str, float] | None:
