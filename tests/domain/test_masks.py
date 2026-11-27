@@ -56,6 +56,29 @@ def test_amp_glow_corner():
     assert 0.03 < res.info["fraction"] < 0.06
 
 
+def test_block_sizes_shrink_on_small_images_and_say_so():
+    # https://github.com/splanquart/varstar-pipeline/issues/4: one 64-px block on 64x96 px found nothing.
+    cfg = load_config()
+    rng = np.random.default_rng(2)
+    dark = (520 + rng.normal(0, 3, (64, 96))).astype(np.float32)
+    dark[:16, 80:] += 30             # glowing corner
+    res = build_amp_glow(dark, cfg)
+    assert res.info["block_px"] == 16 and res.mask[:16, 80:].all() and res.mask[20:, :80].sum() == 0
+    (note,) = res.info["notes"]
+    assert "blocs de 16 px au lieu de 64 px (masks.amp_glow_block_px)" in note and "96×64 px" in note
+    flat = np.full((64, 96), 30000, np.float32)
+    bpm = build_bpm(None, None, None, flat, cfg)
+    assert bpm.info["flat_local_block_px"] == 16
+    assert "blocs de 16 px au lieu de 32 px (masks.flat_local_block_px)" in bpm.info["notes"][0]
+
+
+def test_no_note_at_the_reference_size():
+    cfg = load_config()
+    dark = np.full((512, 768), 520, np.float32)
+    assert "notes" not in build_amp_glow(dark, cfg).info
+    assert "notes" not in build_bpm(None, None, None, dark, cfg).info
+
+
 def test_block_median_edges():
     a = np.arange(10 * 7, dtype=np.float32).reshape(10, 7)
     bm = block_median(a, 4)

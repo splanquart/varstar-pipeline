@@ -13,6 +13,7 @@ from typing import Any
 
 import numpy as np
 
+from ..blocks import shape_text
 from ..inventory import match_darkflats, set_night
 from ..model import DARK, DARKFLAT, FLAT, Frame, FrameSet, Inventory
 from ..settings import Settings
@@ -328,3 +329,17 @@ def flat_compare_failed(filt: str | None, sets: list[FrameSet], error: Exception
         [], "aucun contrôle des poussières et du vignetage entre ces flats",
         "signaler le problème (issue GitHub) avec le journal logs/<étape>.log ; le reste du pipeline continue",
         {"filter": filt, "sets": [s.id for s in sets], "error": f"{type(error).__name__}: {error}"})
+
+
+def flat_bin_adapted(filt: str | None, requested: int, used: int, shape: tuple[int, int]) -> QAItem:
+    """Finding when the flats of P4 are binned less than ``qa.flat_compare_bin`` (small image).
+
+    See https://github.com/splanquart/varstar-pipeline/issues/4
+    """
+    return QAItem(
+        "P4", "info",
+        f"flats {filt} : binning ×{used} au lieu de ×{requested} (qa.flat_compare_bin) pour garder au moins "
+        f"4 blocs de 16 px par côté sur une image de {shape_text(shape)} px",
+        [], "aucun : comparaison plus lente, mêmes critères",
+        "rien à faire ; fixer qa.flat_compare_bin pour ce capteur fait disparaître ce message",
+        {"filter": filt, "bin_px_requested": requested, "bin_px": used, "shape": list(shape)})

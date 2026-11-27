@@ -49,10 +49,9 @@ STAR_SIGMA = 1.5
 LIGHT_EXP = 300.0
 FLAT_EXP = {"H": 1.13, "S": 2.62}
 
-# Configuration adapted to the image size (blocks of 64 px make no sense on 64×96).
+# Block sizes and the P4 binning are not set here: they adapt to the 64×96 px images by themselves
+# (https://github.com/splanquart/varstar-pipeline/issues/4).
 CONFIG = {
-    "masks": {"flat_local_block_px": 16, "amp_glow_block_px": 16},
-    "qa": {"flat_compare_bin": 2},   # binned ×8, 64 px leave 8 px: too small to compare the flats (P4)
     "runtime": {"processes": 1},
     "paths": {"pixinsight_masters": None},
 }
