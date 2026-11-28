@@ -6,8 +6,9 @@ import numpy as np
 import pytest
 
 from builders import make_frame_stats, make_settings, sept06_frames
-from fakes import (FakeCalibrator, FakeMasterBuilder, FakePixelReader, FakePixelStats, FakeProvenance,
-                   InMemoryArtifactStore, InMemoryFrameSource, InMemoryMasterRepository, RecordingInventoryReport,
+from fakes import (FakeCalibrator, FakeMasterBuilder, FakePixelReader, FakePixelStats, FakePlateSolver,
+                   FakeProvenance, FakeStarCatalog, InMemoryArtifactStore, InMemoryFrameSource,
+                   InMemoryMasterRepository, RecordingAstrometryReport, RecordingInventoryReport,
                    RecordingMastersReport, RecordingQAReport, RecordingReporter)
 from varstar.application.pipeline import IMPLEMENTED, STEPS, PipelineServices, check_step, run_pipeline
 from varstar.domain.calibration import PipelineError
@@ -32,22 +33,25 @@ def svc():
                                    default_image=np.full((16, 16), 40.0)),
         inventory_report=RecordingInventoryReport(), qa_report=RecordingQAReport(),
         masters_report=RecordingMastersReport(), repo=repo, references=None, calibration_tools=calibration_tools,
-        reporter=RecordingReporter(), start_log=logs.append)
+        reporter=RecordingReporter(), start_log=logs.append,
+        astrometry_tools=lambda: (FakePlateSolver(), FakeStarCatalog()), astrometry_report=RecordingAstrometryReport())
     s.logs, s.tools = logs, tools
     return s
 
 
 def test_full_run(svc):
     summary = run_pipeline(ROOT, make_settings(), svc)
-    assert summary["steps"] == ["inventory", "check", "masters", "calibrate"]
+    assert summary["steps"] == ["inventory", "check", "masters", "calibrate", "astrometry"]
     assert summary["groups"] == ["2021-09-06_H_300s", "2021-09-06_S_300s"]
-    assert svc.logs == ["inventory", "masters", "calibrate"]
+    assert svc.logs == ["inventory", "masters", "calibrate", "astrometry"]
     assert summary["not_implemented"] == [s for s in STEPS if s not in IMPLEMENTED]
     assert set(summary["calibrate"]["results"]) == set(summary["groups"])
     assert summary["plan"] == svc.store.read_json("masters/plan.json")
     assert {"inventory.json", "qa/qa.json", "masters/plan.json"} <= set(svc.store.files)
     assert svc.reporter.lines[0] == "  masters pour sept06 / H …"
-    assert svc.reporter.lines[-1] == "  calibration sept06 / S (3 images) …"
+    assert "  calibration sept06 / S (3 images) …" in svc.reporter.lines
+    assert svc.reporter.lines[-1].startswith("  astrométrie de 6 image(s)")
+    assert summary["astrometry"]["n_solved"] == 6
     assert svc.source.scans == 1          # the inventory built by the first step is reused
 
 
@@ -55,7 +59,7 @@ def test_resume_from_calibrate_uses_the_saved_plan(svc, cfg):
     run_pipeline(ROOT, cfg, svc)
     svc.logs.clear()
     again = run_pipeline(ROOT, cfg, svc, "calibrate")
-    assert again["steps"] == ["calibrate"] and svc.logs == ["calibrate"]
+    assert again["steps"] == ["calibrate", "astrometry"] and svc.logs == ["calibrate", "astrometry"]
     assert all(r["skipped"] for r in again["calibrate"]["results"].values())
 
 

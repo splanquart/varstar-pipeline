@@ -97,3 +97,15 @@ def test_resolve_workdir(tmp_path):
     assert resolve_workdir(tmp_path / "Y", cfg, tmp_path / "w") == (tmp_path / "w").resolve()
     other = replace(cfg, paths={"workdir": str(tmp_path / "ww")})
     assert resolve_workdir(Path("x"), other) == (tmp_path / "ww").resolve()
+
+
+def test_dates_as_mapping_keys_become_text(tmp_path):
+    """YAML reads « 2021-09-02: true » with a date key: JSON fingerprints need text keys."""
+    import json
+    from varstar.adapters.config_loader import load_settings
+    p = tmp_path / "c.yaml"
+    p.write_text("astrometry:\n  whole_train_rotation_nights:\n    2021-09-02: true\n")
+    cfg = load_settings(p)
+    assert cfg.raw["astrometry"]["whole_train_rotation_nights"] == {"2021-09-02": True}
+    assert cfg.astrometry.whole_train_rotation_nights[0][1] is True
+    json.dumps(cfg.section("astrometry"))

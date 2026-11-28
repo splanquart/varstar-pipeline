@@ -316,3 +316,71 @@ def test_calibrator_writes_one_output_per_light(calibrator, tmp_path):
     outputs = {str(p): tmp_path / "work" / "calibrated" / f"{i}.fits" for i, p in enumerate(lights)}
     calib.calibrate(group, outputs, CalibrationSensor(4, 0.25))
     assert all(exists(p) for p in outputs.values())
+
+
+# --------------------------------------------------------------------------- StarCatalog
+
+
+CATALOG_ROWS = [("1", 60.44, 36.11, 9.5), ("2", 60.50, 36.10, 8.0), ("3", 60.44, 36.60, 10.0),
+                ("4", 60.45, 36.12, 14.5), ("5", 61.40, 36.11, 7.0)]
+
+
+@pytest.fixture(params=["fake", "csv", "gaia-cache"])
+def star_catalog(request, tmp_path):
+    from fakes import FakeStarCatalog
+    from varstar.adapters.star_catalog import CsvStarCatalog, GaiaTapCatalog
+    from varstar.domain.astrometry import CatalogStars
+    text = "source_id,ra,dec,phot_g_mean_mag\n" + "".join(f"{i},{r},{d},{m}\n" for i, r, d, m in CATALOG_ROWS)
+    if request.param == "fake":
+        return FakeStarCatalog(CatalogStars(np.array([r[1] for r in CATALOG_ROWS]), np.array([r[2] for r in CATALOG_ROWS]),
+                                            np.array([r[3] for r in CATALOG_ROWS])))
+    if request.param == "csv":
+        p = tmp_path / "cat.csv"
+        p.write_text(text)
+        return CsvStarCatalog(p)
+    return GaiaTapCatalog(tmp_path / "catalogs", ["https://tap.example/tap"], fetch=lambda url, q: text)
+
+
+def test_star_catalog_contract(star_catalog):
+    st = star_catalog.cone(60.44, 36.11, 0.3, 13.0)
+    # In the cone, brighter than the limit, brightest first.
+    assert list(st.mag) == [8.0, 9.5]
+    assert np.all(np.diff(st.mag) >= 0) and st.source
+    assert star_catalog.describe()
+    assert star_catalog.cone(60.44, 36.11, 0.3, 9.0).n == 1
+
+
+# --------------------------------------------------------------------------- PlateSolver
+
+
+@pytest.fixture(params=["fake", "real"])
+def plate_solver(request, tmp_path):
+    from builders import make_solution, synthetic_sky
+    from fakes import FakePlateSolver
+    from varstar.adapters.plate_solver import InternalPlateSolver
+    from varstar.domain.astrometry import SolveHint, SolveJob
+    shape = (300, 450)
+    truth = make_solution(60.44, 36.11, scale_arcsec=3.4877, width=shape[1], height=shape[0])
+    img, cat = synthetic_sky(truth, shape, n=700)
+    p = tmp_path / "img.fits"
+    fits.writeto(p, img)
+    hint = SolveHint(60.44, 36.11, 3.4877, shape[1], shape[0])
+    jobs = [SolveJob(str(p), hint, "2021-09-06T23:00:00"), SolveJob(str(tmp_path / "nohint.fits"), None, None,
+                                                                    "RA/DEC absents")]
+    solver = FakePlateSolver() if request.param == "fake" else InternalPlateSolver(1)
+    return solver, jobs, cat, truth
+
+
+def test_plate_solver_contract(plate_solver):
+    from varstar.domain.astrometry import SolveSettings
+    solver, jobs, cat, truth = plate_solver
+    out = solver.solve([jobs], cat, SolveSettings(sip_order=0, min_matches=15))
+    assert set(out) == {j.path for j in jobs}
+    ok = out[jobs[0].path]
+    assert ok.ok and ok.rms_arcsec is not None and ok.n_matched > 0
+    x, y = ok.solution.world_to_pixel(*truth.crval)
+    assert abs(x - 224.5) < 0.5 and abs(y - 149.5) < 0.5
+    assert abs(ok.solution.scale_arcsec - 3.4877) < 0.01
+    no = out[jobs[1].path]
+    assert not no.ok and no.reason == "RA/DEC absents" and no.solution is None
+    assert solver.name()

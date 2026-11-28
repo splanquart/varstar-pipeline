@@ -14,7 +14,8 @@ from typing import Any, Callable, Iterable
 
 import numpy as np
 
-from varstar.domain.calibration import CalibrationSensor, FileStat, MasterRecord, Rejection
+from varstar.domain.astrometry import CatalogStars, SolveJob, SolveResult, SolveSettings, WcsSolution
+from varstar.domain.calibration import CalibrationSensor, FileStat, MasterRecord, PipelineError, Rejection
 from varstar.domain.model import Frame, Inventory, SourceScan
 from varstar.domain.plan import GroupPlan
 
@@ -344,3 +345,69 @@ class RecordingReporter:
 
     def progress(self, message: str) -> None:
         self.lines.append(message)
+
+
+class FakeStarCatalog:
+    """``StarCatalog`` answering from fixed stars (filtered like the real adapters), or failing."""
+
+    def __init__(self, stars: CatalogStars | None = None, error: str | None = None):
+        self.stars = stars if stars is not None else CatalogStars(np.array([60.44]), np.array([36.11]),
+                                                                  np.array([8.0]))
+        self.error = error
+        self.calls: list[tuple[float, float, float, float]] = []
+
+    def describe(self) -> str:
+        return "faux catalogue"
+
+    def cone(self, ra: float, dec: float, radius_deg: float, mag_limit: float) -> CatalogStars:
+        from varstar.domain.astrometry import angular_sep_arcsec
+        self.calls.append((ra, dec, radius_deg, mag_limit))
+        if self.error:
+            raise PipelineError(self.error)
+        s = self.stars
+        keep = (angular_sep_arcsec(s.ra, s.dec, ra, dec) / 3600 <= radius_deg) & (s.mag < mag_limit)
+        return CatalogStars(s.ra[keep], s.dec[keep], s.mag[keep], self.describe()).sorted_by_mag()
+
+
+class FakePlateSolver:
+    """``PlateSolver`` answering from the hints: a TAN solution centred on the header RA/DEC.
+
+    ``orientation(path)`` gives the orientation of each image (meridian flips); paths in ``failing``
+    are not solved.
+    """
+
+    def __init__(self, failing: Iterable[str] = (), orientation: Callable[[str], float] | None = None,
+                 rms_arcsec: float = 0.3):
+        self.failing = set(failing)
+        self.orientation = orientation or (lambda path: 0.0)
+        self.rms_arcsec = rms_arcsec
+        self.calls: list[list[str]] = []
+
+    def name(self) -> str:
+        return "faux solveur"
+
+    def solve(self, series: list[list[SolveJob]], catalog: CatalogStars, settings: SolveSettings,
+              progress=None) -> dict[str, SolveResult]:
+        from builders import make_solution
+        out = {}
+        for jobs in series:
+            self.calls.append([j.path for j in jobs])
+            for j in jobs:
+                if j.hint is None:
+                    out[j.path] = SolveResult(False, reason=j.problem)
+                elif any(f in j.path for f in self.failing):
+                    out[j.path] = SolveResult(False, reason="aucune correspondance", n_stars=12)
+                else:
+                    sol = make_solution(j.hint.ra, j.hint.dec, scale_arcsec=j.hint.scale_arcsec, width=j.hint.width,
+                                        height=j.hint.height, orientation_deg=self.orientation(j.path))
+                    out[j.path] = SolveResult(True, sol, None, 300, catalog.n, 290, self.rms_arcsec)
+        return out
+
+
+class RecordingAstrometryReport:
+    def __init__(self):
+        self.calls: list[tuple[dict[str, Any], list[Any]]] = []
+
+    def markdown(self, summary: dict[str, Any], qa_items: list[Any]) -> str:
+        self.calls.append((copy.deepcopy(summary), list(qa_items)))
+        return f"# Astrométrie\n{summary['n_solved']}/{summary['n_images']}\n"

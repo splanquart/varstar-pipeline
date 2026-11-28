@@ -27,6 +27,16 @@ def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]
     return out
 
 
+def _text_keys(value: Any) -> Any:
+    """Mapping keys as text: YAML reads ``2021-09-02:`` as a date, which JSON (fingerprints,
+    provenance.json) cannot use as a key. Values are left alone (dates in lists stay dates)."""
+    if isinstance(value, dict):
+        return {(k.isoformat() if hasattr(k, "isoformat") else k): _text_keys(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_text_keys(v) for v in value]
+    return value
+
+
 def load_raw(path: str | Path | None = None, overrides: dict[str, Any] | None = None) -> dict[str, Any]:
     """The merged configuration as a plain dict (defaults ← file ← overrides)."""
     cfg = load_defaults()
@@ -41,9 +51,9 @@ def load_raw(path: str | Path | None = None, overrides: dict[str, Any] | None = 
         unknown = set(user) - set(cfg)
         if unknown:
             raise SettingsError(f"Sections de configuration inconnues : {sorted(unknown)}")
-        cfg = deep_merge(cfg, user)
+        cfg = deep_merge(cfg, _text_keys(user))
     if overrides:
-        cfg = deep_merge(cfg, overrides)
+        cfg = deep_merge(cfg, _text_keys(overrides))
     return cfg
 
 

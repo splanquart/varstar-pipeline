@@ -76,10 +76,31 @@ qa:                              # contrôles qualité précoces (docs/QA_CHECKS
   dark_above_light_adu: 3.0      # P8 : plancher des lights sous celui des darks → offset différent
   calibrated_background_min_adu: 0.0   # C3 : fond calibré minimal attendu
 
-astrometry:
-  engine: auto                   # auto | siril | astap
-  pixel_scale_arcsec: null       # défaut : calculé depuis FOCALLEN et XPIXSZ
-  search_radius_deg: 5
+astrometry:                      # M3 : une WCS par image calibrée, sans rééchantillonnage (DECISIONS D17)
+  engine: internal               # solveur interne : étoiles détectées ↔ catalogue (seul moteur disponible)
+  catalog: gaia                  # gaia (en ligne, mis en cache dans <library>/catalogs) ou chemin d'un CSV ra,dec,mag
+  catalog_mag_limit: 13.0        # G limite des étoiles de référence pour l'astrométrie
+  tap_urls:                      # services TAP Gaia DR3, essayés dans l'ordre
+    - https://gaia.ari.uni-heidelberg.de/tap
+    - https://gea.esac.esa.int/tap-server/tap
+  pixel_scale_arcsec: null       # défaut : 206,265 × XPIXSZ / FOCALLEN (XPIXSZ de N.I.N.A. inclut le binning)
+  pointing_tolerance_deg: 0.5    # écart toléré entre le RA/DEC de l'en-tête et le vrai centre
+  scale_tolerance: 0.05          # écart toléré à l'échelle attendue
+  rotation_step_deg: 0.5
+  detect_sigma: 5.0
+  max_stars: 300                 # étoiles détectées utilisées (les plus brillantes)
+  match_radius_px: 2.0
+  min_matches: 20
+  max_rms_arcsec: 1.0            # résidus maximaux de la solution
+  sip_order: 3                   # distorsion (0 = aucune) ; 3 nécessaire sur la 61EDPH (résidus 2,1″ → 0,28″)
+  segment_angle_deg: 20.0        # changement d'orientation qui ouvre un nouveau segment (retournement)
+  camera_rotation_tol_deg: 0.5   # A5 : rotation de la caméra entre sessions
+  # A5 : quand une nuit emprunte le flat d'une nuit où la caméra n'a pas le même angle sur le ciel,
+  # le pipeline demande ce qui a tourné. true = tout le train optique (tube + caméra) : flat valable ;
+  # false = la caméra seule (rotateur, démontage) : flat inadapté (erreur) ; null = question posée.
+  whole_train_rotation: null     # réponse par défaut, pour toutes les nuits
+  whole_train_rotation_nights: {}  # réponses nuit par nuit (prioritaires), ex. {2021-09-02: true}
+  scale_check_pct: 1.0           # A2 : écart d'échelle réelle / en-tête signalé
 
 quality:
   fwhm_max_factor: 1.8

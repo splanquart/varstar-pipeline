@@ -2,10 +2,10 @@
   "calibrated": {
     "s1/H/2021-09-06_23-00-00_NGC_1499_H_300.00s_120_0000.fits": {
       "dtype": ">f4",
-      "median": 984.8956909179688,
+      "median": 986.117431640625,
       "n_nonfinite": 0,
       "nonzero": 6144,
-      "robust_sigma": 7.902464318847656,
+      "robust_sigma": 8.94867280883789,
       "shape": [
         64,
         96
@@ -13,10 +13,10 @@
     },
     "s1/H/2021-09-06_23-06-40_NGC_1499_H_300.00s_120_0001.fits": {
       "dtype": ">f4",
-      "median": 984.5203857421875,
+      "median": 985.7810668945312,
       "n_nonfinite": 0,
       "nonzero": 6144,
-      "robust_sigma": 7.730441455078124,
+      "robust_sigma": 8.720500451660156,
       "shape": [
         64,
         96
@@ -24,10 +24,10 @@
     },
     "s1/H/2021-09-06_23-13-20_NGC_1499_H_300.00s_120_0002.fits": {
       "dtype": ">f4",
-      "median": 984.6510009765625,
+      "median": 985.911376953125,
       "n_nonfinite": 0,
       "nonzero": 6144,
-      "robust_sigma": 7.669722180175781,
+      "robust_sigma": 8.780857763671875,
       "shape": [
         64,
         96
@@ -35,10 +35,10 @@
     },
     "s1/S/2021-09-07_00-30-00_NGC_1499_S_300.00s_120_0000.fits": {
       "dtype": ">f4",
-      "median": 985.012939453125,
+      "median": 985.9578247070312,
       "n_nonfinite": 0,
       "nonzero": 6144,
-      "robust_sigma": 7.776048779296874,
+      "robust_sigma": 8.803299462890624,
       "shape": [
         64,
         96
@@ -46,10 +46,10 @@
     },
     "s1/S/2021-09-07_00-36-40_NGC_1499_S_300.00s_120_0001.fits": {
       "dtype": ">f4",
-      "median": 985.0770263671875,
+      "median": 986.025146484375,
       "n_nonfinite": 0,
       "nonzero": 6144,
-      "robust_sigma": 8.005307025146484,
+      "robust_sigma": 8.861032543945312,
       "shape": [
         64,
         96
@@ -57,10 +57,10 @@
     },
     "s1/S/2021-09-07_00-43-20_NGC_1499_S_300.00s_120_0002.fits": {
       "dtype": ">f4",
-      "median": 985.05517578125,
+      "median": 986.103515625,
       "n_nonfinite": 0,
       "nonzero": 6144,
-      "robust_sigma": 7.643977569580078,
+      "robust_sigma": 8.626254364013672,
       "shape": [
         64,
         96
@@ -68,10 +68,10 @@
     },
     "s2/H/2021-09-09_23-00-00_NGC_1499_H_300.00s_120_0000.fits": {
       "dtype": ">f4",
-      "median": 984.7688598632812,
+      "median": 985.788818359375,
       "n_nonfinite": 0,
       "nonzero": 6144,
-      "robust_sigma": 7.726324127197265,
+      "robust_sigma": 8.813615405273437,
       "shape": [
         64,
         96
@@ -79,10 +79,10 @@
     },
     "s2/H/2021-09-09_23-06-40_NGC_1499_H_300.00s_120_0001.fits": {
       "dtype": ">f4",
-      "median": 984.38037109375,
+      "median": 985.5090942382812,
       "n_nonfinite": 0,
       "nonzero": 6144,
-      "robust_sigma": 7.795232812499999,
+      "robust_sigma": 8.996768627929686,
       "shape": [
         64,
         96
@@ -90,10 +90,10 @@
     },
     "s2/H/2021-09-09_23-13-20_NGC_1499_H_300.00s_120_0002.fits": {
       "dtype": ">f4",
-      "median": 984.6480712890625,
+      "median": 985.6936645507812,
       "n_nonfinite": 0,
       "nonzero": 6144,
-      "robust_sigma": 7.750032696533203,
+      "robust_sigma": 8.746742761230468,
       "shape": [
         64,
         96
@@ -101,10 +101,10 @@
     },
     "s3/S/2021-09-20_23-00-00_NGC_1499_S_300.00s_120_0000.fits": {
       "dtype": ">f4",
-      "median": 876.0,
+      "median": 882.4000244140625,
       "n_nonfinite": 0,
       "nonzero": 6144,
-      "robust_sigma": 96.07255239257812,
+      "robust_sigma": 105.56122858886718,
       "shape": [
         64,
         96
@@ -112,10 +112,10 @@
     },
     "s3/S/2021-09-20_23-06-40_NGC_1499_S_300.00s_120_0001.fits": {
       "dtype": ">f4",
-      "median": 876.7999877929688,
+      "median": 883.2000122070312,
       "n_nonfinite": 0,
       "nonzero": 6144,
-      "robust_sigma": 97.25852380371093,
+      "robust_sigma": 105.56113809814453,
       "shape": [
         64,
         96
@@ -123,10 +123,10 @@
     },
     "s3/S/2021-09-20_23-13-20_NGC_1499_S_300.00s_120_0002.fits": {
       "dtype": ">f4",
-      "median": 876.0,
+      "median": 881.60009765625,
       "n_nonfinite": 0,
       "nonzero": 6144,
-      "robust_sigma": 97.25861429443358,
+      "robust_sigma": 105.56131907958984,
       "shape": [
         64,
         96
@@ -482,20 +482,36 @@
     ]
   },
   "qa.json": {
+    "astrometry": [],
     "calibrated": [
+      {
+        "advice": "",
+        "check": "C1",
+        "data": {
+          "group": "2021-09-09_H_300s",
+          "residuals_adu": [
+            -4.27
+          ],
+          "zone": 1
+        },
+        "files": [],
+        "impact": "",
+        "message": "zone d'amp glow n° 1 : écart au fond voisin s2 / H -4.3 ADU (un seul filtre : impossible de séparer dark et ciel)",
+        "severity": "info"
+      },
       {
         "advice": "",
         "check": "C1",
         "data": {
           "group": "2021-09-20_S_300s",
           "residuals_adu": [
-            -152.0
+            -157.6
           ],
           "zone": 1
         },
         "files": [],
         "impact": "",
-        "message": "zone d'amp glow n° 1 : écart au fond voisin s3 / S -152.0 ADU (un seul filtre : impossible de séparer dark et ciel)",
+        "message": "zone d'amp glow n° 1 : écart au fond voisin s3 / S -157.6 ADU (un seul filtre : impossible de séparer dark et ciel)",
         "severity": "info"
       }
     ],
@@ -640,14 +656,64 @@
       }
     ],
     "tables": {
+      "astrometry": [
+        {
+          "group": "2021-09-06_H_300s",
+          "label": "s1 / H",
+          "n": 3,
+          "n_solved": 3,
+          "orientation_median_deg": 180.59717350077543,
+          "rms_median_arcsec": 0.020011690354165897,
+          "scale_median_arcsec": 3.4878049874817316,
+          "segments": [
+            1
+          ]
+        },
+        {
+          "group": "2021-09-06_S_300s",
+          "label": "s1 / S",
+          "n": 3,
+          "n_solved": 3,
+          "orientation_median_deg": 180.59822554429823,
+          "rms_median_arcsec": 0.019273073680207805,
+          "scale_median_arcsec": 3.4876107559926237,
+          "segments": [
+            1
+          ]
+        },
+        {
+          "group": "2021-09-09_H_300s",
+          "label": "s2 / H",
+          "n": 3,
+          "n_solved": 3,
+          "orientation_median_deg": 180.5942364631061,
+          "rms_median_arcsec": 0.020427773771376424,
+          "scale_median_arcsec": 3.487736028366177,
+          "segments": [
+            1
+          ]
+        },
+        {
+          "group": "2021-09-20_S_300s",
+          "label": "s3 / S",
+          "n": 3,
+          "n_solved": 3,
+          "orientation_median_deg": 180.57270496345203,
+          "rms_median_arcsec": 0.15948844626486985,
+          "scale_median_arcsec": 3.4981087118693592,
+          "segments": [
+            1
+          ]
+        }
+      ],
       "calibrated": [
         {
-          "ampglow_excess_median_adu": 0.66,
+          "ampglow_excess_median_adu": -0.7,
           "ampglow_zone_resid_adu": [
-            0.66
+            -0.7
           ],
-          "background_median_adu": 984.32,
-          "background_min_adu": 983.87,
+          "background_median_adu": 984.62,
+          "background_min_adu": 984.36,
           "dark_id": "<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>",
           "frac_nan_max": 0.0,
           "frac_zero_max": 0.0,
@@ -655,15 +721,15 @@
           "label": "s1 / H",
           "n": 3,
           "session": "2021-09-06",
-          "sigma_median_adu": 8.63
+          "sigma_median_adu": 9.6
         },
         {
-          "ampglow_excess_median_adu": 1.11,
+          "ampglow_excess_median_adu": -0.65,
           "ampglow_zone_resid_adu": [
-            1.11
+            -0.65
           ],
-          "background_median_adu": 985.02,
-          "background_min_adu": 984.73,
+          "background_median_adu": 985.67,
+          "background_min_adu": 985.34,
           "dark_id": "<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>",
           "frac_nan_max": 0.0,
           "frac_zero_max": 0.0,
@@ -671,15 +737,15 @@
           "label": "s1 / S",
           "n": 3,
           "session": "2021-09-06",
-          "sigma_median_adu": 7.78
+          "sigma_median_adu": 8.43
         },
         {
-          "ampglow_excess_median_adu": -2.43,
+          "ampglow_excess_median_adu": -4.27,
           "ampglow_zone_resid_adu": [
-            -2.43
+            -4.27
           ],
-          "background_median_adu": 984.42,
-          "background_min_adu": 984.32,
+          "background_median_adu": 984.97,
+          "background_min_adu": 984.57,
           "dark_id": "<DARK_g120_ox_b2_300s_T-12@2021-09-07T02:00>",
           "frac_nan_max": 0.0,
           "frac_zero_max": 0.0,
@@ -687,15 +753,15 @@
           "label": "s2 / H",
           "n": 3,
           "session": "2021-09-09",
-          "sigma_median_adu": 7.68
+          "sigma_median_adu": 8.51
         },
         {
-          "ampglow_excess_median_adu": -152.0,
+          "ampglow_excess_median_adu": -157.6,
           "ampglow_zone_resid_adu": [
-            -152.0
+            -157.6
           ],
           "background_median_adu": 878.4,
-          "background_min_adu": 876.8,
+          "background_min_adu": 878.4,
           "dark_id": "<DARK_g120_ox_b2_300s_T-12@2021-09-21T02:00>",
           "frac_nan_max": 0.0,
           "frac_zero_max": 0.0,
@@ -703,7 +769,7 @@
           "label": "s3 / S",
           "n": 3,
           "session": "2021-09-20",
-          "sigma_median_adu": 97.26
+          "sigma_median_adu": 106.15
         }
       ],
       "dark_levels": [
@@ -823,29 +889,29 @@
           "dark_level": "A",
           "dark_level_adu": 506.4,
           "group": "s1 / H",
-          "light_median_adu": 1433.8,
-          "raw_sky_adu": 927.4
+          "light_median_adu": 1439.4,
+          "raw_sky_adu": 933.1
         },
         {
           "dark_level": "A",
           "dark_level_adu": 506.4,
           "group": "s1 / S",
-          "light_median_adu": 1434.4,
-          "raw_sky_adu": 928.0
+          "light_median_adu": 1440.0,
+          "raw_sky_adu": 933.6
         },
         {
           "dark_level": "B",
           "dark_level_adu": 506.4,
           "group": "s2 / H",
-          "light_median_adu": 1433.5,
-          "raw_sky_adu": 927.2
+          "light_median_adu": 1439.3,
+          "raw_sky_adu": 932.9
         },
         {
           "dark_level": "A",
           "dark_level_adu": 505.6,
           "group": "s3 / S",
-          "light_median_adu": 1433.9,
-          "raw_sky_adu": 928.3
+          "light_median_adu": 1439.7,
+          "raw_sky_adu": 934.1
         }
       ]
     }
@@ -862,14 +928,17 @@
     "  calibration s1 / S (3 images) …",
     "  calibration s2 / H (3 images) …",
     "  calibration s3 / S (3 images) …",
+    "  catalogue : fichier catalog.csv, cône de 0.1° autour de RA 60.443°, Dec +36.108° (G < 13) …",
+    "  astrométrie de 12 image(s) (4 groupe(s), 36 étoiles de référence) …",
     "Masters : 7 — rapport <TMP>/work_run/masters/masters.md",
     "Images calibrées : 12 (0 groupe(s) déjà à jour) → <TMP>/work_run/calibrated",
+    "Astrométrie : 12/12 image(s) résolue(s) (catalogue fichier catalog.csv) — rapport <TMP>/work_run/astrometry/astrometry.md",
     "  Contrôle H1 : 1 fichier(s) rangé(s) dans un dossier qui contredit l'en-tête (l'en-tête fait foi)",
     "  Contrôle H2 : OFFSET absent de tous les en-têtes : impossible de vérifier que darks et lights ont le même offset (seul le contrôle P1 sur les pixels peut le voir)",
     "  Contrôle P9 : darks 300 s, nuit(s) du 09/09 (s2) : capteur à -5.0 °C contre -12.0 °C les autres nuits (ΔT = +7.0 °C) → niveau +12.5 ADU (518.5 contre 506.0 ADU), bruit 9.18 contre 5.97 ADU : courant d'obscurité plus fort (température), pas une fuite de lumière ni un saut d'offset. Ces darks ne sont appariés qu'à des lights à la même température",
     "Contrôles qualité : <TMP>/work_run/qa/qa.md",
     "  Avertissement : masque BPM, niveau local du flat : blocs de 16 px au lieu de 32 px (masks.flat_local_block_px) pour garder au moins 4 blocs par côté sur une image de 96×64 px",
     "  Avertissement : masque d'amp glow : blocs de 16 px au lieu de 64 px (masks.amp_glow_block_px) pour garder au moins 4 blocs par côté sur une image de 96×64 px",
-    "Étapes suivantes pas encore disponibles : astrometry, quality, catalog, photometry, differential, detect, report"
+    "Étapes suivantes pas encore disponibles : quality, catalog, photometry, differential, detect, report"
   ]
 }

@@ -63,7 +63,7 @@ def run(source: Path = SourceArg, config: Optional[Path] = ConfigOpt, workdir: O
         sessions: Optional[str] = typer.Option(None, "--sessions", help="ex. sept06,2021-09-12"),
         filters: Optional[str] = typer.Option(None, "--filters", help="ex. H,S"),
         force: bool = typer.Option(False, "--force", help="Ignorer les caches de l'espace de travail")) -> None:
-    """Pipeline complet (étapes disponibles : inventory, check, masters, calibrate)."""
+    """Pipeline complet (étapes disponibles : inventory, check, masters, calibrate, astrometry)."""
     cfg = settings(config)
     wd = bootstrap.resolve_workdir(source, cfg, workdir)
     split = lambda s: [x.strip() for x in s.split(",") if x.strip()] if s else None  # noqa: E731
@@ -82,11 +82,17 @@ def run(source: Path = SourceArg, config: Optional[Path] = ConfigOpt, workdir: O
         typer.echo(f"Images calibrées : {n} ({skipped} groupe(s) déjà à jour) → {wd / 'calibrated'}")
         for key, err in cal["errors"].items():
             typer.echo(f"  ÉCHEC {key} : {err}", err=True)
+    ast = summary.get("astrometry")
+    if ast:
+        typer.echo(f"Astrométrie : {ast['n_solved']}/{ast['n_images']} image(s) résolue(s) "
+                   f"(catalogue {ast.get('catalog') or '—'}) — rapport {wd / 'astrometry' / 'astrometry.md'}")
+        for key, err in ast["errors"].items():
+            typer.echo(f"  ÉCHEC {key} : {err}", err=True)
     for d in summary.get("qa", {}).get("header", []) + summary.get("qa", {}).get("raw", []) + (
-            cal.get("qa", []) if cal else []):
+            cal.get("qa", []) if cal else []) + (ast.get("qa", []) if ast else []):
         if d["severity"] != "info":
             typer.echo(f"  Contrôle {d['check']} : {d['message']}")
-    if summary.get("qa") or (cal and cal.get("qa")):
+    if summary.get("qa") or (cal and cal.get("qa")) or (ast and ast.get("qa")):
         typer.echo(f"Contrôles qualité : {wd / 'qa' / 'qa.md'}")
     for w in plan.get("warnings", []):
         typer.echo(f"  Avertissement : {w}")

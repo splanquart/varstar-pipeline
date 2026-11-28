@@ -68,6 +68,9 @@ Repères pratiques :
 | `ReferenceMasters` | masters PixInsight (validation croisée) | `PixInsightMasters` | `FakeReferenceMasters` |
 | `InventoryReport`, `QAReport`, `MastersReport` | `inventory.json/md`, `qa.md`, `masters.md` | `adapters/reporting/*` | `Recording*` |
 | `Reporter` | progression affichée à l'utilisateur | `ConsoleReporter` | `RecordingReporter` |
+| `StarCatalog` | étoiles de référence (Gaia DR3 par TAP avec cache disque, ou CSV local) | `GaiaTapCatalog`, `CsvStarCatalog` | `FakeStarCatalog` |
+| `PlateSolver` | WCS des images calibrées (séries en parallèle) | `InternalPlateSolver` | `FakePlateSolver` |
+| `AstrometryReport` | `astrometry.md` | `AstrometryReportAdapter` | `RecordingAstrometryReport` |
 
 Les faux sont dans `tests/fakes.py`. Chacun passe les mêmes **tests de contrat** que l'adaptateur
 réel (`tests/contracts/`), avec le vrai Siril sous le marqueur `siril`. Les tests de cas d'usage
@@ -83,7 +86,7 @@ peuvent donc s'appuyer sur eux.
 
 ## Ajouter un jalon (M3 et suivants) : la marche à suivre
 
-Exemple : l'astrométrie.
+Exemple : l'astrométrie (faite au jalon M3 en suivant ces étapes : `domain/astrometry.py`, `domain/stars.py`, `domain/qa/astrometry.py`, `application/astrometry.py`, `adapters/plate_solver.py`, `adapters/star_catalog.py`).
 1. **Domaine** : les décisions et les calculs purs, comme la validation d'une solution WCS ou l'échelle attendue à partir de `FOCALLEN` et `XPIXSZ`, avec leurs tests dans `tests/domain/` (hypothesis si la règle s'y prête, voir plus bas).
 2. **Port** : `PlateSolver` dans `application/ports.py`, et son faux dans `tests/fakes.py`.
 3. **Cas d'usage** : `application/astrometry.py` (cache, provenance, publication via `ArtifactStore`), testé avec les faux dans `tests/application/`.

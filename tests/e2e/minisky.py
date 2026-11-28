@@ -44,17 +44,61 @@ COSMIC_ADU = 2000.0
 SKY = 1000.0                 # ADU in 300 s at the optical centre
 FLAT_LEVEL = 25000.0         # ≈38 % of the dynamic range
 FLAT_NOISE = 100.0
-STARS = [((32.0, 48.0), 40000.0), ((15.0, 20.0), 20000.0), ((50.0, 80.0), 30000.0)]
+STARS = [((32.0, 48.0), 40000.0), ((15.0, 20.0), 20000.0), ((50.0, 80.0), 30000.0),
+         # M3: enough stars for the plate solver (≥ 14 px apart, away from the planted defects).
+         ((10.0, 45.0), 25000.0), ((12.0, 65.0), 15000.0), ((28.0, 10.0), 18000.0), ((45.0, 25.0), 22000.0),
+         ((55.0, 45.0), 16000.0), ((35.0, 70.0), 28000.0), ((40.0, 88.0), 14000.0)]
 STAR_SIGMA = 1.5
 LIGHT_EXP = 300.0
 FLAT_EXP = {"H": 1.13, "S": 2.62}
+
+# Astrometry: the true WCS of every light (north 180.6° from +y, mirrored like the N.I.N.A. frames of
+# the reference set-up), and a header pointing 10″ off, as a mount would write it.
+TRUE_CENTER = (60.4400, 36.1100)
+TRUE_ORIENTATION_DEG = 180.6
+TRUE_SCALE_ARCSEC = 3.4877
+HEADER_RADEC = (TRUE_CENTER[0] + 10 / 3600 / 0.8077, TRUE_CENTER[1] - 6 / 3600)
+CATALOG_NAME = "catalog.csv"
 
 # Block sizes and the P4 binning are not set here: they adapt to the 64×96 px images by themselves
 # (https://github.com/splanquart/varstar-pipeline/issues/4).
 CONFIG = {
     "runtime": {"processes": 1},
     "paths": {"pixinsight_masters": None},
+    "astrometry": {"min_matches": 6, "pointing_tolerance_deg": 0.02, "sip_order": 0},
 }
+
+
+def true_wcs():
+    """The WCS used to place the stars (``varstar.domain.astrometry.WcsSolution``)."""
+    import math
+
+    from varstar.domain.astrometry import WcsSolution
+    s = TRUE_SCALE_ARCSEC / 3600
+    t = math.radians(TRUE_ORIENTATION_DEG)
+    rot = np.array([[math.cos(t), -math.sin(t)], [math.sin(t), math.cos(t)]])
+    cd = s * np.diag([1.0, 1.0]) @ rot          # parity +1 (mirrored), like the TOP-DOWN N.I.N.A. files
+    h, w = SHAPE
+    return WcsSolution(TRUE_CENTER, ((w + 1) / 2, (h + 1) / 2),
+                       ((float(cd[0, 0]), float(cd[0, 1])), (float(cd[1, 0]), float(cd[1, 1]))))
+
+
+def write_catalog(path: Path) -> Path:
+    """Reference stars: the planted ones (exact positions), plus distractors outside the field and too faint."""
+    wcs = true_wcs()
+    rows = ["source_id,ra,dec,phot_g_mean_mag"]
+    for i, ((yc, xc), flux) in enumerate(STARS):
+        ra, dec = wcs.pixel_to_world(xc, yc)
+        rows.append(f"{1000 + i},{float(ra):.8f},{float(dec):.8f},{20 - 2.5 * np.log10(flux):.3f}")
+    rng = np.random.default_rng(7)
+    for i in range(30):             # around the field, up to 3′ outside
+        x, y = rng.uniform(-60, 156), rng.uniform(-60, 124)
+        if -2 < x < 98 and -2 < y < 66:
+            continue
+        ra, dec = wcs.pixel_to_world(x, y)
+        rows.append(f"{2000 + i},{float(ra):.8f},{float(dec):.8f},{rng.uniform(8.5, 10.5):.3f}")
+    path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    return path
 
 
 def vignetting() -> np.ndarray:
@@ -129,13 +173,14 @@ def make_minisky(root: Path) -> Path:
     """Write the minisky dataset under ``root`` (returned)."""
     rng = np.random.default_rng(20210906)
     kw = {"shape": SHAPE}
+    sky = {"extra": {"RA": HEADER_RADEC[0], "DEC": HEADER_RADEC[1]}}
     cold = {"temp": -5.0, "extra": {"SET-TEMP": -5.0}}
 
     # Night s1 — level A.
     series(root, "light/H/SESSION_s1", "LIGHT", LIGHT_EXP, "2021-09-06T23:00:00", 3, step_s=400, filt="H",
-           make=light_maker(rng, cosmic=True), **kw)
+           make=light_maker(rng, cosmic=True), **kw, **sky)
     series(root, "light/S/SESSION_s1", "LIGHT", LIGHT_EXP, "2021-09-07T00:30:00", 3, step_s=400, filt="S",
-           make=light_maker(rng), **kw)
+           make=light_maker(rng), **kw, **sky)
     series(root, "dark/darklight/300s", "DARK", LIGHT_EXP, "2021-09-07T02:00:00", 8, step_s=310, prefix="",
            make=dark_maker(LIGHT_EXP, rng), **kw)
     series(root, "flat/SESSION_s1", "FLAT", FLAT_EXP["H"], "2021-09-07T06:00:00", 4, step_s=2, filt="H",
@@ -152,7 +197,7 @@ def make_minisky(root: Path) -> Path:
 
     # Night s2 — level B: darks of the night at −5 °C (rejected), s1 darks borrowed.
     series(root, "light/H/SESSION_s2", "LIGHT", LIGHT_EXP, "2021-09-09T23:00:00", 3, step_s=400, filt="H",
-           make=light_maker(rng), **kw)
+           make=light_maker(rng), **kw, **sky)
     series(root, "flat/SESSION_s2", "FLAT", FLAT_EXP["H"], "2021-09-10T06:00:00", 5, step_s=2, filt="H",
            make=flat_maker(FLAT_EXP["H"], rng), **kw)
     series(root, "dark/darklight/300s", "DARK", LIGHT_EXP, "2021-09-10T02:00:00", 5, step_s=310, prefix="",
@@ -160,7 +205,7 @@ def make_minisky(root: Path) -> Path:
 
     # Night s3 — level C: no flat within 7 days.
     series(root, "light/S/SESSION_s3", "LIGHT", LIGHT_EXP, "2021-09-20T23:00:00", 3, step_s=400, filt="S",
-           make=light_maker(rng), **kw)
+           make=light_maker(rng), **kw, **sky)
     series(root, "dark/darklight/300s", "DARK", LIGHT_EXP, "2021-09-21T02:00:00", 5, step_s=310, prefix="",
            make=dark_maker(LIGHT_EXP, rng), **kw)
 
@@ -168,8 +213,10 @@ def make_minisky(root: Path) -> Path:
     return root
 
 
-def write_config(path: Path, library: Path) -> Path:
+def write_config(path: Path, library: Path, catalog: Path | None = None) -> Path:
     cfg = {**CONFIG, "paths": {**CONFIG["paths"], "library": str(library)}}
+    if catalog is not None:
+        cfg["astrometry"] = {**CONFIG["astrometry"], "catalog": str(catalog)}
     path.write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")
     return path
 

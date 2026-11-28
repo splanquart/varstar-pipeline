@@ -2,3 +2,6 @@
 matching:
   same_optical_setup:
     - [2021-09-02, 2021-09-07]   # Q1 confirmée : aucune modification optique entre sept02 et sept06
+astrometry:
+  whole_train_rotation_nights:
+    2021-09-02: true             # D18 : flats du 06/09 ; la rotation de 4,4° est celle de tout le train optique

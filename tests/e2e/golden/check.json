@@ -259,29 +259,29 @@
           "dark_level": "A",
           "dark_level_adu": 506.4,
           "group": "s1 / H",
-          "light_median_adu": 1433.8,
-          "raw_sky_adu": 927.4
+          "light_median_adu": 1439.4,
+          "raw_sky_adu": 933.1
         },
         {
           "dark_level": "A",
           "dark_level_adu": 506.4,
           "group": "s1 / S",
-          "light_median_adu": 1434.4,
-          "raw_sky_adu": 928.0
+          "light_median_adu": 1440.0,
+          "raw_sky_adu": 933.6
         },
         {
           "dark_level": "B",
           "dark_level_adu": 506.4,
           "group": "s2 / H",
-          "light_median_adu": 1433.5,
-          "raw_sky_adu": 927.2
+          "light_median_adu": 1439.3,
+          "raw_sky_adu": 932.9
         },
         {
           "dark_level": "A",
           "dark_level_adu": 505.6,
           "group": "s3 / S",
-          "light_median_adu": 1433.9,
-          "raw_sky_adu": 928.3
+          "light_median_adu": 1439.7,
+          "raw_sky_adu": 934.1
         }
       ]
     }
@@ -349,10 +349,10 @@
     "",
     "| Groupe | Lights ADU | Darks ADU | Fond estimé ADU | Niveau dark |",
     "|---|---|---|---|---|",
-    "| s1 / H | 1433.8 | 506.4 | +927.4 | A |",
-    "| s1 / S | 1434.4 | 506.4 | +928.0 | A |",
-    "| s2 / H | 1433.5 | 506.4 | +927.2 | B |",
-    "| s3 / S | 1433.9 | 505.6 | +928.3 | A |",
+    "| s1 / H | 1439.4 | 506.4 | +933.1 | A |",
+    "| s1 / S | 1440.0 | 506.4 | +933.6 | A |",
+    "| s2 / H | 1439.3 | 506.4 | +932.9 | B |",
+    "| s3 / S | 1439.7 | 505.6 | +934.1 | A |",
     "",
     "## Flats successifs (contrôle P4)",
     "",
