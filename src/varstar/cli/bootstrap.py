@@ -16,12 +16,15 @@ from ..adapters.library import DiskMasterRepository
 from ..adapters.pixel_stats import PixelStatsCache
 from ..adapters.pixinsight import PixInsightMasters
 from ..adapters.provenance import ProvenanceStore
+from ..adapters.plate_solver import InternalPlateSolver
+from ..adapters.reporting.astrometry_markdown import AstrometryReportAdapter
 from ..adapters.reporting.inventory_report import InventoryReportAdapter
 from ..adapters.reporting.masters_markdown import MastersReportAdapter
 from ..adapters.reporting.qa_markdown import QAReportAdapter
 from ..adapters.siril import Siril, SirilError
 from ..adapters.siril_calibrator import SirilCalibrator
 from ..adapters.siril_masters import SirilMasterBuilder
+from ..adapters.star_catalog import CsvStarCatalog, GaiaTapCatalog
 from ..adapters.workspace import Workspace
 from ..application import check as check_use_case
 from ..application import inventory as inventory_use_case
@@ -76,13 +79,21 @@ def pipeline_services(source: Path, cfg: Settings, workdir: Path) -> PipelineSer
         return SirilMasterBuilder(siril, library, workdir / "siril", cfg), SirilCalibrator(siril, workdir)
 
     library = DiskMasterRepository(Path(cfg.paths.library).expanduser())
+
+    def astrometry_tools():
+        a = cfg.astrometry
+        catalog = (GaiaTapCatalog(library.root / "catalogs", a.tap_urls) if a.catalog == "gaia"
+                   else CsvStarCatalog(Path(a.catalog)))
+        return InternalPlateSolver(cfg.runtime.processes), catalog
+
     return PipelineServices(
         store=Workspace(workdir), provenance=ProvenanceStore(workdir), source=FilesystemFrameSource(),
         pixel_reader=FitsPixelReader(), pixel_stats=PixelStatsCache.from_config(workdir, cfg, reporter.progress),
         inventory_report=InventoryReportAdapter(), qa_report=QAReportAdapter(),
         masters_report=MastersReportAdapter(), repo=library,
         references=PixInsightMasters.from_config(cfg, source.resolve()), calibration_tools=calibration_tools,
-        reporter=reporter, start_log=step_log(workdir, cfg).start)
+        reporter=reporter, start_log=step_log(workdir, cfg).start, astrometry_tools=astrometry_tools,
+        astrometry_report=AstrometryReportAdapter())
 
 
 def run_pipeline(source: Path, cfg: Settings, workdir: Path, from_step: str = "inventory",

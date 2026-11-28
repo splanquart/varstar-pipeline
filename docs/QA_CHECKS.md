@@ -48,11 +48,21 @@ Principes :
 | C3 | Pixels à 0, NaN, valeurs négatives en masse | dark saturé, erreur de calibration | ✅ |
 | C4 | Comparaison statistique avec les masters PixInsight | erreur de calibration | ✅ |
 
+## 4. Astrométrie (étape `astrometry`, jalon M3)
+
+| # | Contrôle | Détecte | État |
+|---|---|---|---|
+| A1 | Images non résolues, avec la raison (peu d'étoiles, pas de correspondance, résidus, échelle) | nuages, buée, mise au point, RA/DEC ou focale absents de l'en-tête | ✅ |
+| A2 | Échelle réelle comparée à `FOCALLEN`/`XPIXSZ` (> 1 %) | focale du profil N.I.N.A. fausse (réducteur, correcteur) | ✅ (info) |
+| A3 | Centre réel d'un groupe loin du cadrage habituel | recentrage raté, autre cadrage → autres étoiles de comparaison | ✅ |
+| A4 | Plusieurs orientations dans une nuit | retournement au méridien : segments séparés pour la photométrie | ✅ (info) |
+| A5 | Angle de la caméra **sur le ciel** (orientation modulo 180°) par nuit ; nuit qui emprunte le flat d'une nuit à un autre angle | l'astrométrie ne sait pas ce qui a tourné : **question posée** (tout le train optique → flat valable ; caméra seule → flat inadapté, erreur). Réponse dans `astrometry.whole_train_rotation[_nights]` (D18) ; la forme du flat reste contrôlée par P4 | ✅ |
+
 ## Mise en œuvre
 
-- Module `src/varstar/qa.py` ; paramètres dans la section `qa:` de la configuration.
+- Règles dans `src/varstar/domain/qa/` (`headers`, `raw`, `calibrated`, `astrometry`) ; paramètres dans la section `qa:` de la configuration (`astrometry:` pour A2 et A5).
 - `varstar check <dossier>` : en-têtes + pixels bruts (statistiques sous-échantillonnées mises en cache par fichier dans `qa/frame_stats.json`, ≈ 20 s pour 740 images la première fois). `--headers-only` ne lit aucun pixel. Code de sortie 3 s'il y a une erreur.
-- `varstar run` : étape `check` entre `inventory` et `masters` ; contrôles C1/C3 après `calibrate`.
+- `varstar run` : étape `check` entre `inventory` et `masters` ; contrôles C1/C3 après `calibrate` ; A1–A5 après `astrometry` (aussi dans `astrometry/astrometry.md`).
 - Rapports : `qa/qa.md` (détail + tableaux : niveau des darks par nuit, fond brut, flats successifs, images calibrées) ; sections « Contrôles qualité » en tête de `inventory.md` (en-têtes) et `masters.md` (en-têtes + bruts).
 - Les niveaux sont des moyennes écrêtées (5 σ) et non des médianes : les valeurs brutes sont des multiples de 4 ADU, ce qui quantifie les médianes.
 

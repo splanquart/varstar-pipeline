@@ -10,13 +10,15 @@ import datetime as dt
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 from varstar.adapters.config_loader import load_settings
 from varstar.domain.model import (DARK, FLAT, LIGHT, Frame, FrameSet, Inventory, LightGroup, Match, SensorInfo,
                                   SensorKey)
 
 T0 = dt.datetime(2021, 9, 6, 23, 0, 0)
 SENSOR = SensorKey("ASI Camera (1) (ASCO", 120.0, None, 2, 2, 4144, 2822)
-NINA_DEFAULTS = {"egain": 1.00224268436432, "xpixsz": 4.63, "focallen": 274.0}
+NINA_DEFAULTS = {"egain": 1.00224268436432, "xpixsz": 4.63, "focallen": 274.0, "ra": 60.44, "dec": 36.11}
 
 
 def make_settings(**overrides: Any) -> dict[str, Any]:
@@ -154,3 +156,44 @@ def two_nights_frames(*, light_temp: float = -12.0) -> list[Frame]:
         *series_frames("dark/a", DARK, 300, "2021-09-02T20:00:00", 5, step_s=310),
         *series_frames("dark/b", DARK, 300, "2021-09-07T02:00:00", 5, step_s=310),
     ]
+
+
+def make_solution(ra: float = 60.44, dec: float = 36.11, *, scale_arcsec: float = 3.4877, width: int = 4144,
+                  height: int = 2822, orientation_deg: float = 0.0, parity: int = -1):
+    """A TAN solution centred on (ra, dec) with north at ``orientation_deg`` on the pixel grid."""
+    import math
+    from varstar.domain.astrometry import WcsSolution
+    s = scale_arcsec / 3600
+    t = math.radians(orientation_deg)
+    # CD = s·diag(parity, 1)·R(t): CD maps the north direction (sin t, cos t) to (0, 1), det CD has the parity sign.
+    rot = np.array([[math.cos(t), -math.sin(t)], [math.sin(t), math.cos(t)]])
+    cd = s * np.diag([float(parity), 1.0]) @ rot
+    return WcsSolution((ra, dec), ((width + 1) / 2, (height + 1) / 2), ((float(cd[0, 0]), float(cd[0, 1])),
+                                                                       (float(cd[1, 0]), float(cd[1, 1]))))
+
+
+def synthetic_sky(truth, shape: tuple[int, int], *, n: int = 900, seed: int = 1, noise: float = 8.0,
+                  sky: float = 1000.0):
+    """(image, catalogue): random stars around ``truth``'s field, imaged through ``truth`` (Gaussian PSF).
+
+    The catalogue magnitudes are scattered by 0.3 mag (another band than the image).
+    """
+    import math
+    from varstar.domain.astrometry import CatalogStars
+    h, w = shape
+    rng = np.random.default_rng(seed)
+    ra0, dec0 = truth.crval
+    half = 0.6 * max(w, h) * truth.scale_arcsec / 3600 + 0.05
+    ra = ra0 + rng.uniform(-1.5 * half, 1.5 * half, n) / math.cos(math.radians(dec0))
+    dec = dec0 + rng.uniform(-half, half, n)
+    mag = rng.uniform(7, 13, n)
+    x, y = truth.world_to_pixel(ra, dec)
+    img = rng.normal(sky, noise, (h, w)).astype(np.float32)
+    yy, xx = np.mgrid[0:h, 0:w]
+    for xi, yi, m in zip(x, y, mag):
+        if -6 < xi < w + 6 and -6 < yi < h + 6:
+            x0, y0 = int(round(xi)), int(round(yi))
+            sl = (slice(max(0, y0 - 7), y0 + 8), slice(max(0, x0 - 7), x0 + 8))
+            img[sl] += 10 ** (-0.4 * (m - 17)) / (2 * math.pi * 1.4 ** 2) * np.exp(
+                -((xx[sl] - xi) ** 2 + (yy[sl] - yi) ** 2) / (2 * 1.4 ** 2))
+    return img, CatalogStars(ra, dec, mag + rng.normal(0, 0.3, n), "synthétique")

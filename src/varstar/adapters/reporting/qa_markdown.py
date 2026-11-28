@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Iterable
 
-from ...domain.qa.model import QAItem, severity_counts
+from ...domain.qa.model import STAGES, QAItem, severity_counts
 
 SEVERITY_FR = {"error": "erreur", "warning": "avertissement", "info": "info"}
 
@@ -38,9 +38,10 @@ def items_markdown(items: list[QAItem], title: str = "## Contrôles qualité") -
 
 
 def qa_markdown(report: dict[str, Any]) -> str:
-    items = [QAItem(**d) for stage in ("header", "raw", "calibrated") for d in report.get(stage, [])]
+    items = [QAItem(**d) for stage in STAGES for d in report.get(stage, [])]
     L = ["# Contrôles qualité", "", f"- Généré le {report.get('updated')}", f"- Bilan : {summary_line(items)}", ""]
-    stages = {"header": "1. En-têtes", "raw": "2. Pixels des images brutes", "calibrated": "3. Après calibration"}
+    stages = {"header": "1. En-têtes", "raw": "2. Pixels des images brutes", "calibrated": "3. Après calibration",
+              "astrometry": "4. Astrométrie"}
     for stage, title in stages.items():
         if stage not in report:
             continue
@@ -87,6 +88,16 @@ def qa_markdown(report: dict[str, Any]) -> str:
             L.append(f"| {r['label']} | {r['n']} | {r['background_min_adu']:.1f} | {r['background_median_adu']:.1f} | "
                      f"{r['sigma_median_adu']:.2f} | {ag} | {100 * r['frac_nan_max']:.3f} % | "
                      f"{100 * r['frac_zero_max']:.3f} % |")
+        L.append("")
+    if t.get("astrometry"):
+        L += ["## Astrométrie (contrôles A*)", "", "| Groupe | Images | Résolues | Résidus médians ″ | Échelle ″/px | "
+              "Orientation ° | Segments |", "|---|---|---|---|---|---|---|"]
+        for r in t["astrometry"]:
+            rms = "—" if r["rms_median_arcsec"] is None else f"{r['rms_median_arcsec']:.2f}"
+            scale = "—" if r["scale_median_arcsec"] is None else f"{r['scale_median_arcsec']:.4f}"
+            orient = "—" if r["orientation_median_deg"] is None else f"{r['orientation_median_deg']:.1f}"
+            L.append(f"| {r['label']} | {r['n']} | {r['n_solved']} | {rms} | {scale} | {orient} | "
+                     f"{', '.join(str(x) for x in r['segments']) or '—'} |")
         L.append("")
     return "\n".join(L) + "\n"
 

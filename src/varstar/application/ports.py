@@ -10,6 +10,7 @@ from typing import Any, Callable, Iterable, Protocol
 
 import numpy as np
 
+from ..domain.astrometry import CatalogStars, SolveJob, SolveResult, SolveSettings
 from ..domain.calibration import CalibrationSensor, FileStat, MasterRecord, Rejection
 from ..domain.model import Frame, Inventory, SourceScan
 from ..domain.plan import GroupPlan
@@ -168,3 +169,32 @@ class MastersReport(Protocol):
     def markdown(self, plan: dict[str, Any], qa_items: list[Any] | None,
                  masks: dict[str, dict[str, Any]]) -> str:
         """``masks``: mask path → its counts/info (bad pixel map, amp glow)."""
+
+
+class StarCatalog(Protocol):
+    """Reference stars for the astrometry (Gaia DR3 online with a disk cache, or a local file)."""
+
+    def describe(self) -> str:
+        """Short French description for the reports, e.g. « Gaia DR3 (ARI Heidelberg) »."""
+
+    def cone(self, ra: float, dec: float, radius_deg: float, mag_limit: float) -> CatalogStars:
+        """Stars within ``radius_deg`` of (ra, dec), brighter than ``mag_limit``, brightest first.
+
+        Raises ``PipelineError`` (French message) when no source can answer.
+        """
+
+
+class PlateSolver(Protocol):
+    """Finds the WCS of calibrated images (never modifies them)."""
+
+    def name(self) -> str: ...
+
+    def solve(self, series: list[list[SolveJob]], catalog: CatalogStars, settings: SolveSettings,
+              progress: Progress | None = None) -> dict[str, SolveResult]:
+        """Each inner list is one time-ordered series (a light group); result per ``SolveJob.path``."""
+
+
+class AstrometryReport(Protocol):
+    """astrometry/astrometry.md text."""
+
+    def markdown(self, summary: dict[str, Any], qa_items: list[Any]) -> str: ...

@@ -1,4 +1,4 @@
-"""Use case « run » : the steps in order, resumable with ``--from`` (steps after M2 are not implemented).
+"""Use case « run » : the steps in order, resumable with ``--from`` (steps after M3 are not implemented).
 
 The adapters are given by the composition root (``varstar.cli.bootstrap``) as ``PipelineServices``.
 """
@@ -11,17 +11,18 @@ from typing import Any, Callable
 
 from ..domain.calibration import CalibrationSensor, PipelineError, group_key, select_groups
 from ..domain.settings import Settings
+from .astrometry import run_astrometry
 from .calibrate import run_calibrate
 from .check import run_checks
 from .inventory import load_inventory, run_inventory
 from .masters import load_plan, run_masters
-from .ports import (ArtifactStore, Calibrator, FrameSource, InventoryReport, MasterBuilder, MasterRepository,
-                    MastersReport, PixelReader, PixelStats, ProvenanceRecorder, QAReport, ReferenceMasters,
-                    Reporter)
+from .ports import (ArtifactStore, AstrometryReport, Calibrator, FrameSource, InventoryReport, MasterBuilder,
+                    MasterRepository, MastersReport, PixelReader, PixelStats, PlateSolver, ProvenanceRecorder,
+                    QAReport, ReferenceMasters, Reporter, StarCatalog)
 
 STEPS = ["inventory", "check", "masters", "calibrate", "astrometry", "quality", "catalog", "photometry",
          "differential", "detect", "report"]
-IMPLEMENTED = ["inventory", "check", "masters", "calibrate"]
+IMPLEMENTED = ["inventory", "check", "masters", "calibrate", "astrometry"]
 
 
 @dataclass
@@ -41,6 +42,8 @@ class PipelineServices:
     calibration_tools: Callable[[], tuple[MasterBuilder, Calibrator]]
     reporter: Reporter
     start_log: Callable[[str], None]   # one log file per step
+    astrometry_tools: Callable[[], tuple[PlateSolver, StarCatalog]] | None = None
+    astrometry_report: AstrometryReport | None = None
 
 
 def check_step(step: str) -> int:
@@ -96,6 +99,21 @@ def run_pipeline(root: Path, cfg: Settings, svc: PipelineServices, from_step: st
                                              provenance=svc.provenance, progress=say, force=force)
         summary["steps"].append("calibrate")
 
-    summary["not_implemented"] = [s for s in STEPS[max(start, STEPS.index("calibrate") + 1):]
+    if start <= STEPS.index("astrometry"):
+        if svc.astrometry_tools is None or svc.astrometry_report is None:
+            raise PipelineError("astrométrie non configurée")
+        failed_keys = set(summary.get("calibrate", {}).get("errors", {}))
+        keys = [k for k in summary["groups"] if k not in failed_keys]
+        svc.start_log("astrometry")
+        solver, catalog = svc.astrometry_tools()
+        sensor = inv.sensors[0] if inv.sensors else None
+        saturation = 0.9 * sensor.saturation_adu if sensor and sensor.saturation_adu else None
+        summary["astrometry"] = run_astrometry(plan, keys, cfg, inv, solver=solver, catalog=catalog,
+                                               store=svc.store, provenance=svc.provenance,
+                                               qa_report=svc.qa_report, report=svc.astrometry_report,
+                                               saturation_adu=saturation, progress=say, force=force)
+        summary["steps"].append("astrometry")
+
+    summary["not_implemented"] = [s for s in STEPS[max(start, STEPS.index("astrometry") + 1):]
                                   if s not in IMPLEMENTED]
     return summary

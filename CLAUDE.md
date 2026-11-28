@@ -42,7 +42,7 @@ Construire par jalons (SPEC §10), dans l'ordre. À la fin de chaque jalon : tes
 - Tests par couche (`tests/domain`, `application`, `adapters`, `contracts`, `e2e`, `architecture`) ; couverture bloquante (domaine ≥ 90 %, application ≥ 85 %).
 
 ## Commandes
-Disponibles : `inventory`, `check`, `darks-todo`, `run` (étapes `inventory`, `check`, `masters`, `calibrate`). Environnement : `.venv/` (installer avec `pip install -e .`). Tests Siril de bout en bout dans `tests/e2e/` (marqueur `siril`, sautés si `siril-cli` est absent).
+Disponibles : `inventory`, `check`, `darks-todo`, `run` (étapes `inventory`, `check`, `masters`, `calibrate`, `astrometry`). Environnement : `.venv/` (installer avec `pip install -e .`). Tests Siril de bout en bout dans `tests/e2e/` (marqueur `siril`, sautés si `siril-cli` est absent).
 ```
 varstar inventory <dossier>            # inventaire + niveaux de calibration, sans rien calculer
 varstar check <dossier> [--headers-only] # contrôles qualité précoces (qa/qa.md), dès le lendemain d'une séance
@@ -52,6 +52,7 @@ varstar darks-todo <dossier>           # liste des darks manquants à refaire
 pytest                                  # tests unitaires + e2e « minisky » (mini-images synthétiques)
 pytest -m siril                         # seulement les tests qui appellent le vrai siril-cli (sautés s'il est absent)
 pytest -m real_data                     # tests sur données réelles
+pytest -m network                       # tests qui interrogent les services Gaia (internet)
 pytest --update-golden                  # réécrit tests/e2e/golden/ et tests/snapshots/ (changement voulu : l'expliquer dans le commit)
 tools/check_coverage.sh                 # couverture par couche, seuils bloquants (ENFORCE=0 : rapport seulement)
 python tools/compare_outputs.py capture <workdir>             # instantané de recette (sept06) → <workdir>/_baseline

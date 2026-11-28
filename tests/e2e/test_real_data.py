@@ -31,3 +31,20 @@ def test_reference_inventory():
     assert [(t.kind, t.exptime) for t in darks_todo(inv)] == [("darkflat", 1.61)]
     assert inv.sensors[0].adu_scale == 4
     assert any(a.code == "folder_exptime" and len(a.files) == 2 for a in inv.anomalies)
+
+
+WORKDIR = DATA.parent / "varstar_work" / DATA.name
+
+
+@pytest.mark.skipif(not (WORKDIR / "manifests" / "calibrate").exists(), reason="sept06 pas encore calibrée")
+def test_reference_astrometry_sept06():
+    """M3 acceptance: every sept06 image solved against Gaia DR3 (cached after the first run)."""
+    from varstar.cli.bootstrap import run_pipeline
+    cfg = load_settings(CONFIG)
+    summary = run_pipeline(DATA, cfg, WORKDIR, from_step="astrometry", sessions=["sept06"])
+    ast = summary["astrometry"]
+    assert ast["n_images"] == 29 and ast["n_solved"] == 29
+    for row in ast["rows"]:
+        assert row["rms_median_arcsec"] < 0.6
+        assert abs(row["scale_median_arcsec"] - 3.486) < 0.005        # SPEC §4.4: ≈ 3.49″/px
+        assert row["segments"] == [1]                                  # no meridian flip that night

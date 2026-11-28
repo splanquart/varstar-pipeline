@@ -55,6 +55,43 @@ Règle choisie par l'utilisateur :
 - ces sessions n'apparaissent pas dans `darks-todo` : on ne peut pas refaire après coup des darks d'une nuit passée.
 Effet sur la photométrie : un décalage uniforme est retiré en grande partie par le fond local (anneau). Cette règle sert donc surtout à garder des masters justes, une mise à l'échelle des darks correcte (repli B, qui dépend de l'offset), des contrôles de fond lisibles et une provenance claire.
 
+**D17 — Astrométrie : solveur interne et Gaia DR3 (réponse à Q5, 27/11/2026).**
+Constat au jalon M3 :
+- Siril 1.4.5 n'a pas de catalogue local installé. Son mode en ligne passe par TAPVizieR (`tapvizier.u-strasbg.fr`), qui ne répondait pas (délai dépassé, même hors bac à sable).
+- ASTAP n'est pas installé.
+- Le service TAP de l'ESA renvoyait une page HTML au lieu des données ; le miroir Gaia DR3 d'ARI Heidelberg répondait.
+
+Choix :
+- un **solveur interne** (`domain/astrometry.py`) : détection des étoiles, vote sur la rotation, le miroir et la translation à partir du pointage et de l'échelle de l'en-tête, appariement itératif, ajustement TAN + SIP par moindres carrés linéaires ;
+- les étoiles de référence viennent de **Gaia DR3** par TAP (ARI puis ESA), interrogé **une fois par champ** et mis en cache dans `<library>/catalogs` ; un CSV local peut le remplacer (`astrometry.catalog`) ;
+- pas de résolution « à l'aveugle » : sans RA/DEC, FOCALLEN ou XPIXSZ, l'image est déclarée non résolue (A1).
+
+Pourquoi :
+- aucune dépendance à un serveur tiers à chaque exécution ;
+- le même catalogue servira au jalon M4 ;
+- le résultat est vérifiable : résidus, nombre d'étoiles appariées, contrôles A*.
+
+Résultat sur sept06 :
+- 29/29 images résolues, environ 300 étoiles appariées par image ;
+- résidus médians 0,3″ (0,09 px), échelle réelle 3,486″/px ;
+- une distorsion d'ordre 3 est nécessaire : 2,1″ de résidus sans elle ;
+- la WCS est relue à l'identique par astropy, et 1886 des 1947 étoiles Gaia (G < 13) tombent à moins d'1 px d'une étoile détectée.
+
+Sur l'ensemble de 2021 : **170/170 images résolues** en 27 s, une fois le cas de l'OIII de sept23 corrigé. Le fond de ciel y est fort et beaucoup d'étoiles brillantes saturent : le vote compte désormais aussi les étoiles du catalogue qui correspondent à ces étoiles saturées écartées.
+
+Les images calibrées **ne sont pas modifiées** : la WCS de chaque image (mots-clés FITS, SIP compris) est enregistrée dans `astrometry/<groupe>.json`. `astrometry.engine` n'accepte que `internal` ; brancher Siril ou ASTAP plus tard demandera un adaptateur `PlateSolver` (tests de contrat compris).
+
+**D18 — Rotation de tout le train optique entre le 02/09 et le 06/09 (réponse à Q7, 28/11/2026).**
+L'astrométrie (contrôle A5) mesure une rotation de la caméra **par rapport au ciel** de 4,4° entre le 02/09 (0,4°) et le 06/09 (4,8°), puis de −0,3° le 24/09. D'après l'utilisateur, c'est **tout le train optique** (tube, optique et caméra ensemble) qui a tourné, pour limiter la rotation apparente du champ.
+Les poussières et le vignetage restent donc fixes sur le capteur, et les flats de sept06 restent valables pour sept02 (D11 maintenue, niveau B).
+Ce n'est pas vrai pour tous les montages : sur un rotateur, ou après un démontage, c'est la caméra seule qui tourne, et le flat ne convient plus. L'astrométrie ne peut pas faire la différence : **c'est une question posée à l'utilisateur**.
+- Quand une nuit emprunte le flat d'une nuit où la caméra n'a pas le même angle sur le ciel (au-delà de `camera_rotation_tol_deg`), A5 pose la question (avertissement « QUESTION ») tant qu'elle n'a pas de réponse.
+- Réponse nuit par nuit : `astrometry.whole_train_rotation_nights: {AAAA-MM-JJ: true|false}`, prioritaire. Réponse par défaut pour toutes les nuits : `astrometry.whole_train_rotation`, qui vaut `null` (question posée).
+- `true` (tout le train optique a tourné) : information, le flat reste valable.
+- `false` (la caméra seule a tourné) : **erreur** A5, avec la marche à suivre : retirer la nuit de `matching.same_optical_setup` (le groupe passe au niveau C) ou refaire des flats. Le niveau n'est pas changé en silence.
+
+Pour 2021 : `whole_train_rotation_nights: {2021-09-02: true}` dans `config.yaml`. La forme réelle du flat reste contrôlée par P4.
+
 ## Questions ouvertes (à confirmer par l'utilisateur ; défauts entre crochets)
 
 **Q3 — Flats de aout31 pris le 29/08.** Montage inchangé jusqu'au 01/09 ?
@@ -62,9 +99,6 @@ Effet sur la photométrie : un décalage uniforme est retiré en grande partie p
 
 **Q4 — Lights du dossier `removed/`.**
 [Défaut : ignorés. Option `include_removed` pour les réintégrer : un rejet esthétique, par exemple pour un satellite, n'est pas forcément un rejet photométrique.]
-
-**Q5 — Moteur d'astrométrie.**
-[Défaut : solveur de Siril s'il fonctionne hors ligne avec un catalogue local ; sinon ASTAP (base D50 ou D80). À trancher au jalon M3 selon la version de Siril installée.]
 
 **Q6 — Magnitude limite du catalogue Gaia.**
 [Défaut : G < 15, à ajuster au jalon M4 selon la profondeur réelle en 300 s avec un filtre étroit.]

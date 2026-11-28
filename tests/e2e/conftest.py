@@ -10,7 +10,7 @@ from typing import Any
 import pytest
 
 from compare_outputs import diff, normalize, normalize_text
-from minisky import file_state, make_minisky, write_config
+from minisky import CATALOG_NAME, file_state, make_minisky, write_catalog, write_config
 
 GOLDEN_DIR = Path(__file__).parent / "golden"
 
@@ -39,7 +39,9 @@ class Minisky:
 def minisky(tmp_path_factory) -> Minisky:
     base = tmp_path_factory.mktemp("minisky")
     root = make_minisky(base / "raw")
-    return Minisky(base, root, base / "lib", write_config(base / "config.yaml", base / "lib"), file_state(root))
+    catalog = write_catalog(base / CATALOG_NAME)
+    return Minisky(base, root, base / "lib", write_config(base / "config.yaml", base / "lib", catalog),
+                   file_state(root))
 
 
 class Golden:

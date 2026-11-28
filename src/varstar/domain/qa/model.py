@@ -10,7 +10,7 @@ from ..model import Inventory, LightGroup
 from ..settings import Settings
 
 SEVERITIES = ("error", "warning", "info")
-STAGES = ("header", "raw", "calibrated")
+STAGES = ("header", "raw", "calibrated", "astrometry")
 
 TITLES = {
     "H1": "Dossiers incohérents avec les en-têtes",
@@ -31,6 +31,11 @@ TITLES = {
     "P9": "Darks à une autre température",
     "C1": "Résidu d'amp glow après calibration",
     "C3": "Fond calibré négatif ou pixels invalides",
+    "A1": "Images non résolues (astrométrie)",
+    "A2": "Échelle réelle et focale de l'en-tête",
+    "A3": "Cadrage entre sessions",
+    "A4": "Retournement au méridien (segments)",
+    "A5": "Rotation de la caméra entre sessions",
 }
 
 

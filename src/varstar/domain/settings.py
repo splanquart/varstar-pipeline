@@ -2,7 +2,7 @@
 
 The YAML files are read by ``varstar.adapters.config_loader``. ``Settings.from_dict`` checks the
 merged configuration (unknown keys, wrong types) and explains every problem in French.
-Sections of milestones not built yet (astrometry, photometry…) stay as plain dicts in ``raw``.
+Sections of milestones not built yet (quality, photometry…) stay as plain dicts in ``raw``.
 ``raw`` is also what is written to config.used.yaml and provenance.json, and what the cache
 fingerprints hash: it is never modified.
 """
@@ -106,6 +106,29 @@ class QASettings:
 
 
 @dataclass(frozen=True)
+class AstrometrySettings:
+    engine: str
+    catalog: str
+    catalog_mag_limit: float
+    tap_urls: tuple[str, ...]
+    pixel_scale_arcsec: float | None
+    pointing_tolerance_deg: float
+    scale_tolerance: float
+    rotation_step_deg: float
+    detect_sigma: float
+    max_stars: int
+    match_radius_px: float
+    min_matches: int
+    max_rms_arcsec: float
+    sip_order: int
+    segment_angle_deg: float
+    camera_rotation_tol_deg: float
+    whole_train_rotation: bool | None          # default answer to the A5 question (None: ask)
+    whole_train_rotation_nights: tuple[tuple[dt.date, bool], ...]   # answers per night (take precedence)
+    scale_check_pct: float
+
+
+@dataclass(frozen=True)
 class RuntimeSettings:
     processes: int
     log_level: str
@@ -113,7 +136,7 @@ class RuntimeSettings:
 
 TYPED_SECTIONS = {"paths": PathsSettings, "siril": SirilSettings, "inventory": InventorySettings,
                   "matching": MatchingSettings, "masters": MastersSettings, "masks": MasksSettings,
-                  "qa": QASettings, "runtime": RuntimeSettings}
+                  "qa": QASettings, "astrometry": AstrometrySettings, "runtime": RuntimeSettings}
 
 
 @dataclass(frozen=True, eq=False)
@@ -125,6 +148,7 @@ class Settings:
     masters: MastersSettings
     masks: MasksSettings
     qa: QASettings
+    astrometry: AstrometrySettings
     runtime: RuntimeSettings
     raw: Mapping[str, Any]                  # the merged configuration, as read (never modified)
 
@@ -162,6 +186,10 @@ def _section(name: str, cls: type, data: Mapping[str, Any]) -> Any:
             raise SettingsError(f"Configuration invalide : {name}.{key} absent")
         if name == "matching" and key == "same_optical_setup":
             values[key] = tuple(optical_setup_periods(data[key]))
+        elif name == "astrometry" and key == "whole_train_rotation_nights":
+            values[key] = _night_answers(f"{name}.{key}", data[key])
+        elif name == "astrometry" and key == "engine":
+            values[key] = _engine(data[key])
         elif name == "siril" and key == "python_init_guard":
             values[key] = _guard_mode(data[key])
         else:
@@ -198,6 +226,34 @@ def _convert(where: str, value: Any, hint: Any) -> Any:
             raise SettingsError(f"Configuration invalide : {where} = {value!r} (texte attendu)")
         return str(value)
     raise TypeError(f"type de réglage non pris en charge : {hint}")   # pragma: no cover
+
+
+ENGINES = ("internal",)
+
+
+def _engine(value: Any) -> str:
+    if value not in ENGINES:
+        raise SettingsError(f"Configuration invalide : astrometry.engine = {value!r} (moteurs disponibles : "
+                            f"{', '.join(ENGINES)} ; Siril et ASTAP ne sont pas branchés, voir DECISIONS D17)")
+    return str(value)
+
+
+def _night_answers(where: str, raw: Any) -> tuple[tuple[dt.date, bool], ...]:
+    """``{2021-09-02: true, …}`` → ((date, answer), …), sorted by date."""
+    if raw is None:
+        return ()
+    if not isinstance(raw, Mapping):
+        raise SettingsError(f"Configuration invalide : {where} = {raw!r} (attendu {{AAAA-MM-JJ: true/false}})")
+    out = []
+    for night, answer in raw.items():
+        try:
+            d = _as_date(night)
+        except ValueError:
+            raise SettingsError(f"Configuration invalide : {where} : date invalide {night!r}") from None
+        if not isinstance(answer, bool):
+            raise SettingsError(f"Configuration invalide : {where}.{night} = {answer!r} (true ou false attendu)")
+        out.append((d, answer))
+    return tuple(sorted(out))
 
 
 def _guard_mode(value: Any) -> str:

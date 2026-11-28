@@ -45,14 +45,24 @@ def local_median(img: np.ndarray, yx: tuple[int, int], r: int = 3) -> float:
     return float(np.nanmedian(win))
 
 
-def star_flux_ratios(img: np.ndarray) -> list[float]:
-    """Aperture flux / injected flux of each planted star (local annulus background)."""
+def star_flux_ratios(img: np.ndarray, curved: bool = False) -> list[float]:
+    """Aperture flux / injected flux of each planted star (background from an annulus r 6–9 px).
+
+    ``curved``: quadratic background fitted on the annulus — the median is biased by the curvature
+    of a vignetted sky (level C, no flat); on a flat background the median is less noisy.
+    """
     y, x = np.indices(img.shape)
     out = []
     for (yc, xc), flux in M.STARS:
         r = np.hypot(y - yc, x - xc)
-        bg = np.median(img[(r > 6) & (r < 9)])
-        out.append(float((img[r < 5] - bg).sum() / flux))
+        ring, ap = (r > 6) & (r < 9), r < 5
+        dy, dx = y - yc, x - xc
+        basis = lambda m: np.column_stack([np.ones(m.sum()), dx[m], dy[m], dx[m] ** 2, dy[m] ** 2])  # noqa: E731
+        if curved:
+            coef, *_ = np.linalg.lstsq(basis(ring), img[ring].astype(float), rcond=None)
+            out.append(float((img[ap] - basis(ap) @ coef).sum() / flux))
+        else:
+            out.append(float((img[ap] - np.median(img[ring])).sum() / flux))
     return out
 
 
@@ -227,17 +237,55 @@ def test_run_calibrated_images(siril_run):
                 assert excess > 0.75 * M.COSMIC_ADU
             else:
                 assert abs(excess) < 30
-            ratios = star_flux_ratios(data)
+            ratios = star_flux_ratios(data, curved=label not in FLAT_FIELDED)
             if label in FLAT_FIELDED:
                 # Vignetting corrected: flat background, same star flux everywhere in the field.
                 cols = np.median(data, axis=0)
                 assert cols.max() - cols.min() < 15
-                assert max(ratios) - min(ratios) < 0.02
+                # The three bright stars of M2 within 2 %; the fainter M3 stars (photon noise ≈ 1.7 %) within
+                # 5 % — without the flat, the vignetting alone spreads them by 15 %.
+                assert max(ratios[:3]) - min(ratios[:3]) < 0.02
+                assert max(ratios) - min(ratios) < 0.05
                 assert abs(np.median(data[M.AMP_GLOW]) - np.median(data[16:32, 80:96])) < 5
             else:
                 # Level C (no flat): the vignetting is left in the image, star by star.
-                expected = [M.vignetting()[int(yc), int(xc)] for (yc, xc), _ in M.STARS]
+                # Expected: the vignetting averaged over each star's profile (steep near the edges).
+                yy, xx = np.indices(M.SHAPE)
+                vig = M.vignetting()
+                expected = []
+                for (yc, xc), _ in M.STARS:
+                    psf = np.exp(-((yy - yc) ** 2 + (xx - xc) ** 2) / (2 * M.STAR_SIGMA ** 2))
+                    expected.append(float((psf * vig).sum() / psf.sum()))
                 assert np.allclose(ratios, expected, atol=0.02), (ratios, expected)
+
+
+@pytest.mark.siril
+def test_run_astrometry(siril_run):
+    """M3: every light is solved against the minisky catalogue; the WCS is the planted one."""
+    from varstar.domain.astrometry import WcsSolution
+    res, wd, _, groups = siril_run
+    assert "Astrométrie : 12/12 image(s) résolue(s)" in res.output
+    truth = M.true_wcs()
+    h, w = M.SHAPE
+    corners = np.array([[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1], [w / 2, h / 2]], float)
+    ra, dec = truth.pixel_to_world(corners[:, 0], corners[:, 1])
+    for g in groups.values():
+        sol = load(wd / "astrometry" / f"{g['key']}.json")
+        assert len(sol["images"]) == 3
+        for raw, row in sol["images"].items():
+            assert row["ok"], row["reason"]
+            assert row["n_matched"] == len(M.STARS) and row["rms_arcsec"] < 0.5
+            wcs = WcsSolution.from_dict(row["wcs"])
+            x, y = wcs.world_to_pixel(ra, dec)
+            assert np.hypot(x - corners[:, 0], y - corners[:, 1]).max() < 0.3     # pixels
+            assert abs(row["orientation_deg"] - M.TRUE_ORIENTATION_DEG) < 0.2 and row["parity"] == 1
+            assert row["segment"] == 1 and row["header"]["CTYPE1"] == "RA---TAN"
+    # The calibrated images are not modified: no WCS keyword added.
+    out = calibrated(wd, next(iter(groups.values())))[0]
+    assert "CRVAL1" not in fits.getheader(out)
+    assert (wd / "astrometry" / "astrometry.md").exists()
+    qa = load(wd / "qa" / "qa.json")
+    assert qa["astrometry"] == [] and len(qa["tables"]["astrometry"]) == 4
 
 
 @pytest.mark.siril

@@ -105,7 +105,10 @@ def test_end_to_end_level_a(tmp_path):
     assert len(list((tmp_path / "lib").rglob("master.fits"))) == 3
     # --from calibrate reuses the plan.
     again = run_pipeline(root, cfg, wd, from_step="calibrate")
-    assert again["steps"] == ["calibrate"]
+    assert again["steps"] == ["calibrate", "astrometry"]
+    # These frames have no RA/DEC: no blind solving, every image is reported as not solved (A1).
+    assert again["astrometry"]["n_solved"] == 0
+    assert [i["check"] for i in again["astrometry"]["qa"]] == ["A1"]
 
 
 def test_scaled_dark_level_b(tmp_path):

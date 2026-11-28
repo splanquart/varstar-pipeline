@@ -63,10 +63,11 @@ L'utilisateur continue à traiter ses « belles images » dans PixInsight. Ce pi
 
 ### 4.4 Astrométrie
 - Une WCS par image calibrée, **sans rééchantillonner l'image** (la WCS est seulement ajoutée à l'en-tête ou stockée à côté).
-- Moteur : solveur de Siril (`platesolve` / `seqplatesolve` selon la version) en premier choix ; **ASTAP** en ligne de commande en repli (configurable). Indices fournis : `RA`, `DEC`, `FOCALLEN`, `XPIXSZ` × binning.
+- Moteur : solveur interne (étoiles détectées ↔ Gaia DR3, ajustement TAN + SIP), voir DECISIONS D17 ; Siril ou ASTAP pourront être branchés plus tard comme adaptateurs. Indices fournis : `RA`, `DEC`, `FOCALLEN`, `XPIXSZ` (N.I.N.A. écrit déjà `XPIXSZ` multiplié par le binning : ne pas le remultiplier).
 - Échelle attendue pour le matériel de référence : ≈ 3,49″/px, champ ≈ 4,0° × 2,7°.
-- Image non résolue → exclue, et listée dans le rapport.
-- Déduire de l'angle de rotation de la WCS un **segment** (orientation 0° / 180° = avant / après retournement au méridien). Un changement d'orientation coupe la session en segments indépendants pour la photométrie.
+- Image non résolue → exclue, et listée dans le rapport (contrôle A1, avec la raison).
+- Déduire de l'angle de rotation de la WCS un **segment** (orientation 0° / 180° = avant / après retournement au méridien). Un changement d'orientation coupe la session en segments indépendants pour la photométrie. Les segments sont calculés par nuit, tous filtres confondus (`astrometry.segment_angle_deg`).
+- Contrôles A1–A5 (QA_CHECKS §4) : images non résolues, focale réelle, cadrage, retournements, rotation de la caméra entre nuits (flats partagés).
 
 ### 4.5 Qualité des images
 Pour chaque image : FWHM médiane, ellipticité, fond de ciel, nombre d'étoiles détectées, point zéro instrumental (étape 4.7). Rejet automatique (configurable) si FWHM > `fwhm_max_factor` × médiane de la session, si le nombre d'étoiles chute fortement (nuages) ou si le point zéro chute de plus de `zp_drop_max` mag. Les images rejetées sont listées avec la raison.
@@ -116,7 +117,8 @@ Croisement **VSX** (VizieR `B/vsx/vsx`, rayon ~2 px ≈ 7″) : variable connue 
 <workdir>/
   inventory.md / inventory.json
   library/            masters (cache partagé, peut être hors workdir)
-  calibrated/<session>/<filtre>/*.fits   (float32 + WCS)
+  calibrated/<session>/<filtre>/*.fits   (float32, non modifiés après calibration)
+  astrometry/<groupe>.json               (WCS de chaque image, segments ; astrometry.md)
   masks/              BPM, amp glow
   photometry/raw_measurements.parquet
   photometry/lightcurves.parquet         (toutes les étoiles, différentiel)
