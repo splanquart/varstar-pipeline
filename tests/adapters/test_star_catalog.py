@@ -1,15 +1,30 @@
 """Star catalogues: local CSV, Gaia DR3 over TAP (network faked, except under the « network » marker)."""
 
-import urllib.error
-
 import numpy as np
 import pytest
+import pyvo
+import requests
 
-from varstar.adapters.star_catalog import CsvStarCatalog, GaiaTapCatalog, parse_csv
+from varstar.adapters.star_catalog import CsvStarCatalog, GaiaTapCatalog, parse_csv, table_to_csv
 from varstar.domain.calibration import PipelineError
 
 GAIA_CSV = ("source_id,ra,dec,phot_g_mean_mag\n"
             "1,60.44,36.11,9.5\n2,60.50,36.10,8.0\n3,60.44,36.60,10.0\n4,60.45,36.12,14.5\n5,61.40,36.11,7.0\n")
+
+
+def gaia_table(text: str = GAIA_CSV) -> dict:
+    """What pyvo's ``to_table()`` gives for the Gaia query: one column per field."""
+    st = parse_csv(text)
+    return {"source_id": np.array([int(i) for i in st.ids]), "ra": st.ra, "dec": st.dec, "phot_g_mean_mag": st.mag}
+
+
+def test_table_to_csv_skips_stars_without_magnitude():
+    t = gaia_table()
+    t["phot_g_mean_mag"] = np.ma.masked_array(t["phot_g_mean_mag"], mask=[0, 0, 1, 0, 0])
+    st = parse_csv(table_to_csv(t))
+    assert st.n == 4 and "3" not in st.ids
+    with pytest.raises(KeyError):
+        table_to_csv({"ra": [1.0]})
 
 
 def test_parse_csv_variants():
@@ -39,7 +54,7 @@ def test_gaia_downloads_once_then_uses_the_cache(tmp_path):
 
     def fetch(url, query):
         calls.append((url, query))
-        return GAIA_CSV
+        return gaia_table(), False
 
     cat = GaiaTapCatalog(tmp_path / "catalogs", ["https://tap.example/tap"], fetch=fetch)
     st = cat.cone(60.44, 36.11, 0.3, 13.0)
@@ -57,9 +72,13 @@ def test_gaia_downloads_once_then_uses_the_cache(tmp_path):
 
 
 def test_gaia_falls_back_and_explains_failures(tmp_path):
-    answers = {"https://down/tap": urllib.error.URLError("timeout"),
-               "https://html/tap": "<!doctype html><title>Maintenance</title>",
-               "https://ok/tap": GAIA_CSV}
+    answers = {"https://down/tap": pyvo.dal.DALServiceError("Connection timed out"),
+               "https://html/tap": pyvo.dal.DALFormatError(ValueError("1:0: syntax error")),
+               "https://net/tap": requests.ConnectionError("no route"),
+               "https://adql/tap": pyvo.dal.DALQueryError("unknown table"),
+               "https://full/tap": (gaia_table(), True),
+               "https://cols/tap": ({"ra": [1.0]}, False),
+               "https://ok/tap": (gaia_table(), False)}
 
     def fetch(url, query):
         a = answers[url]
@@ -67,19 +86,24 @@ def test_gaia_falls_back_and_explains_failures(tmp_path):
             raise a
         return a
 
-    cat = GaiaTapCatalog(tmp_path, ["https://down/tap", "https://html/tap", "https://ok/tap"], fetch=fetch)
-    assert cat.cone(60.44, 36.11, 0.3, 13.0).n == 2
-    bad = GaiaTapCatalog(tmp_path / "other", ["https://down/tap", "https://html/tap"], fetch=fetch)
+    order = ["https://down/tap", "https://html/tap", "https://net/tap", "https://adql/tap", "https://full/tap",
+             "https://cols/tap"]
+    cat = GaiaTapCatalog(tmp_path, order + ["https://ok/tap"], fetch=fetch)
+    st = cat.cone(60.44, 36.11, 0.3, 13.0)
+    assert st.n == 2 and "ok" in st.source
+    bad = GaiaTapCatalog(tmp_path / "other", order, fetch=fetch)
     with pytest.raises(PipelineError) as exc:
         bad.cone(60.44, 36.11, 0.3, 13.0)
     msg = str(exc.value)
-    assert "down : timeout" in msg and "html : réponse inattendue" in msg and "astrometry.catalog" in msg
+    for part in ("down : Connection timed out", "html : réponse inattendue", "net : no route", "adql : unknown table",
+                 "full : résultat tronqué", "cols : colonnes inattendues", "astrometry.catalog"):
+        assert part in msg, part
 
 
 def test_gaia_ignores_broken_cache_entries(tmp_path):
     (tmp_path / "gaia_dr3_x.json").write_text("{not json")
     (tmp_path / "gaia_dr3_y.json").write_text('{"version": 0}')
-    cat = GaiaTapCatalog(tmp_path, ["https://ok/tap"], fetch=lambda u, q: GAIA_CSV)
+    cat = GaiaTapCatalog(tmp_path, ["https://ok/tap"], fetch=lambda u, q: (gaia_table(), False))
     assert cat.cone(60.44, 36.11, 0.3, 13.0).n == 2
 
 

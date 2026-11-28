@@ -1,4 +1,4 @@
-"""``StarCatalog`` adapters: Gaia DR3 through TAP services (cached on disk), or a local CSV file.
+"""``StarCatalog`` adapters: Gaia DR3 through TAP services (pyvo, cached on disk), or a local CSV file.
 
 The Gaia cache lives in the shared library (``<library>/catalogs``): a field is downloaded once,
 then reused by every run and every target that falls inside the cached cone.
@@ -11,13 +11,13 @@ import hashlib
 import io
 import json
 import logging
-import urllib.error
 import urllib.parse
-import urllib.request
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
+import pyvo
+import requests
 
 from ..domain.astrometry import CatalogStars, angular_sep_arcsec
 from ..domain.calibration import PipelineError
@@ -28,6 +28,32 @@ GAIA_QUERY = ("SELECT source_id, ra, dec, phot_g_mean_mag FROM gaiadr3.gaia_sour
               "WHERE 1=CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', {ra:.6f}, {dec:.6f}, {radius:.4f})) "
               "AND phot_g_mean_mag < {mag:.2f}")
 CACHE_VERSION = 1
+COLUMNS = ("source_id", "ra", "dec", "phot_g_mean_mag")
+MAXREC = 5_000_000           # far above any field of this pipeline; an overflow is still detected
+
+
+class _TimeoutSession(requests.Session):
+    """A requests session with a default timeout (pyvo has none: a silent server would hang the run)."""
+
+    def __init__(self, timeout_s: float):
+        super().__init__()
+        self.timeout_s = timeout_s
+        self.headers["User-Agent"] = "varstar-pipeline"
+
+    def request(self, *args, **kwargs):
+        kwargs.setdefault("timeout", self.timeout_s)
+        return super().request(*args, **kwargs)
+
+
+def table_to_csv(table: Mapping[str, Any]) -> str:
+    """Gaia columns of a result table (astropy Table, or any mapping of columns) as the cache CSV."""
+    sid, ra, dec = (np.asarray(table[c]) for c in COLUMNS[:3])
+    g = np.ma.masked_invalid(np.ma.asarray(table[COLUMNS[3]], dtype=float))   # keeps the VOTable mask
+    keep = ~np.ma.getmaskarray(g)
+    lines = [",".join(COLUMNS)]
+    for i in np.nonzero(keep)[0]:
+        lines.append(f"{int(sid[i])},{float(ra[i]):.9f},{float(dec[i]):.9f},{float(g[i]):.4f}")
+    return "\n".join(lines) + "\n"
 
 
 def _filter(stars: CatalogStars, ra: float, dec: float, radius_deg: float, mag_limit: float,
@@ -76,14 +102,19 @@ class CsvStarCatalog:
 
 
 class GaiaTapCatalog:
-    """Gaia DR3 by ADQL on TAP services (tried in order), cached in ``cache_dir``."""
+    """Gaia DR3 by ADQL on TAP services (tried in order, through pyvo), cached in ``cache_dir``.
+
+    ``fetch(url, query)`` returns ``(table, overflow)``; it is injectable so that the tests need no
+    network. pyvo errors (service down, an HTML page instead of a VOTable, ADQL error) make the
+    next service be tried.
+    """
 
     def __init__(self, cache_dir: Path, tap_urls: Sequence[str], timeout_s: float = 300.0,
-                 fetch=None):
+                 fetch: Callable[[str, str], tuple[Mapping[str, Any], bool]] | None = None):
         self.cache_dir = Path(cache_dir).expanduser()
         self.tap_urls = list(tap_urls)
         self.timeout_s = timeout_s
-        self._fetch = fetch or self._http
+        self._fetch = fetch or self._tap
 
     def describe(self) -> str:
         return "Gaia DR3"
@@ -123,13 +154,10 @@ class GaiaTapCatalog:
 
     # ------------------------------------------------------------------ network
 
-    def _http(self, url: str, query: str) -> str:
-        data = urllib.parse.urlencode({"REQUEST": "doQuery", "LANG": "ADQL", "FORMAT": "csv",
-                                       "QUERY": query}).encode()
-        req = urllib.request.Request(url.rstrip("/") + "/sync", data=data,
-                                     headers={"User-Agent": "varstar-pipeline"})
-        with urllib.request.urlopen(req, timeout=self.timeout_s) as resp:
-            return resp.read().decode("utf-8")
+    def _tap(self, url: str, query: str) -> tuple[Mapping[str, Any], bool]:
+        service = pyvo.dal.TAPService(url, session=_TimeoutSession(self.timeout_s))
+        result = service.run_sync(query, maxrec=MAXREC)
+        return result.to_table(), result.query_status == "OVERFLOW"
 
     def cone(self, ra: float, dec: float, radius_deg: float, mag_limit: float) -> CatalogStars:
         cached = self._cached(ra, dec, radius_deg, mag_limit)
@@ -140,13 +168,21 @@ class GaiaTapCatalog:
         for url in self.tap_urls:
             host = urllib.parse.urlparse(url).netloc or url
             try:
-                text = self._fetch(url, query)
-            except (urllib.error.URLError, OSError, TimeoutError) as exc:
-                problems.append(f"{host} : {getattr(exc, 'reason', exc)}")
+                table, overflow = self._fetch(url, query)
+            except pyvo.dal.DALFormatError:
+                # Some services answer 200 with an HTML page (maintenance).
+                problems.append(f"{host} : réponse inattendue (pas une table VOTable)")
                 continue
-            # Some services answer 200 with an HTML page (maintenance): check the CSV header.
-            if not text.lstrip().lower().startswith("source_id"):
-                problems.append(f"{host} : réponse inattendue (pas un CSV Gaia)")
+            except (pyvo.dal.DALServiceError, pyvo.dal.DALQueryError, requests.RequestException, OSError) as exc:
+                problems.append(f"{host} : {str(exc).splitlines()[0][:160] if str(exc) else type(exc).__name__}")
+                continue
+            if overflow:
+                problems.append(f"{host} : résultat tronqué par le service (réduire astrometry.catalog_mag_limit)")
+                continue
+            try:
+                text = table_to_csv(table)
+            except (KeyError, ValueError, TypeError) as exc:
+                problems.append(f"{host} : colonnes inattendues ({exc})")
                 continue
             self._store(text, ra, dec, radius_deg, mag_limit, host)
             log.info("Catalogue Gaia téléchargé depuis %s", host)

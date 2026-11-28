@@ -338,7 +338,9 @@ def star_catalog(request, tmp_path):
         p = tmp_path / "cat.csv"
         p.write_text(text)
         return CsvStarCatalog(p)
-    return GaiaTapCatalog(tmp_path / "catalogs", ["https://tap.example/tap"], fetch=lambda url, q: text)
+    table = {"source_id": np.array([int(r[0]) for r in CATALOG_ROWS]), "ra": np.array([r[1] for r in CATALOG_ROWS]),
+             "dec": np.array([r[2] for r in CATALOG_ROWS]), "phot_g_mean_mag": np.array([r[3] for r in CATALOG_ROWS])}
+    return GaiaTapCatalog(tmp_path / "catalogs", ["https://tap.example/tap"], fetch=lambda url, q: (table, False))
 
 
 def test_star_catalog_contract(star_catalog):

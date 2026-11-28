@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Raw N.I.N.A. frames -> calibration -> astrometry -> differential photometry -> variable star detection"
 requires-python = ">=3.11"
 dependencies = [
-    "numpy", "scipy", "astropy", "photutils", "astroquery", "pandas",
+    "numpy", "scipy", "astropy", "photutils", "astroquery", "pyvo", "requests", "pandas",
     "matplotlib", "pyyaml", "typer",
 ]
 
