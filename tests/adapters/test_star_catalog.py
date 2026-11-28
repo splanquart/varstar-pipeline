@@ -71,14 +71,24 @@ def test_gaia_downloads_once_then_uses_the_cache(tmp_path):
     assert len(list((tmp_path / "catalogs").glob("gaia_dr3_*.csv"))) == 3
 
 
+def pyvo_error(kind: str) -> Exception:
+    """The exceptions as pyvo 1.10 really raises them from ``run_sync`` (checked against the real services):
+    connection failures and timeouts come wrapped in a DALFormatError, never as requests exceptions."""
+    if kind == "down":
+        return pyvo.dal.DALFormatError(requests.ConnectionError("Failed to resolve 'down'"), "https://down/tap/sync")
+    if kind == "slow":
+        return pyvo.dal.DALFormatError(requests.ReadTimeout("read timed out"), "https://slow/tap/sync")
+    if kind == "html":
+        return pyvo.dal.DALFormatError(ValueError("1:0: syntax error"), "https://html/tap/sync")
+    if kind == "http":
+        return pyvo.dal.DALServiceError("500 Server Error: Internal Server Error", 500, url="https://http/tap/sync")
+    return pyvo.dal.DALQueryError("unknown table gaiadr3.gaia_source")
+
+
 def test_gaia_falls_back_and_explains_failures(tmp_path):
-    answers = {"https://down/tap": pyvo.dal.DALServiceError("Connection timed out"),
-               "https://html/tap": pyvo.dal.DALFormatError(ValueError("1:0: syntax error")),
-               "https://net/tap": requests.ConnectionError("no route"),
-               "https://adql/tap": pyvo.dal.DALQueryError("unknown table"),
-               "https://full/tap": (gaia_table(), True),
-               "https://cols/tap": ({"ra": [1.0]}, False),
-               "https://ok/tap": (gaia_table(), False)}
+    answers = {f"https://{k}/tap": pyvo_error(k) for k in ("down", "slow", "html", "http", "adql")}
+    answers.update({"https://full/tap": (gaia_table(), True), "https://cols/tap": ({"ra": [1.0]}, False),
+                    "https://ok/tap": (gaia_table(), False)})
 
     def fetch(url, query):
         a = answers[url]
@@ -86,18 +96,26 @@ def test_gaia_falls_back_and_explains_failures(tmp_path):
             raise a
         return a
 
-    order = ["https://down/tap", "https://html/tap", "https://net/tap", "https://adql/tap", "https://full/tap",
-             "https://cols/tap"]
-    cat = GaiaTapCatalog(tmp_path, order + ["https://ok/tap"], fetch=fetch)
+    order = [f"https://{k}/tap" for k in ("down", "slow", "html", "http", "adql", "full", "cols")]
+    cat = GaiaTapCatalog(tmp_path, order + ["https://ok/tap"], timeout_s=30, fetch=fetch)
     st = cat.cone(60.44, 36.11, 0.3, 13.0)
     assert st.n == 2 and "ok" in st.source
-    bad = GaiaTapCatalog(tmp_path / "other", order, fetch=fetch)
+    bad = GaiaTapCatalog(tmp_path / "other", order, timeout_s=30, fetch=fetch)
     with pytest.raises(PipelineError) as exc:
         bad.cone(60.44, 36.11, 0.3, 13.0)
     msg = str(exc.value)
-    for part in ("down : Connection timed out", "html : réponse inattendue", "net : no route", "adql : unknown table",
-                 "full : résultat tronqué", "cols : colonnes inattendues", "astrometry.catalog"):
+    for part in ("down : injoignable", "slow : pas de réponse en 30 s", "html : réponse inattendue",
+                 "http : 500 Server Error", "adql : unknown table", "full : résultat tronqué",
+                 "cols : colonnes inattendues", "astrometry.catalog"):
         assert part in msg, part
+
+
+@pytest.mark.network
+def test_real_unreachable_service_is_reported_as_such(tmp_path):
+    """Against the real pyvo: a host that does not resolve is « injoignable », not « réponse inattendue »."""
+    cat = GaiaTapCatalog(tmp_path, ["https://nonexistent.invalid/tap"], timeout_s=10)
+    with pytest.raises(PipelineError, match="nonexistent.invalid : injoignable"):
+        cat.cone(60.44, 36.11, 0.1, 10.0)
 
 
 def test_gaia_ignores_broken_cache_entries(tmp_path):

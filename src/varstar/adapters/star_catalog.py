@@ -45,6 +45,25 @@ class _TimeoutSession(requests.Session):
         return super().request(*args, **kwargs)
 
 
+def tap_problem(exc: Exception, timeout_s: float) -> str:
+    """French reason of a failed TAP query.
+
+    pyvo (1.10) never lets a ``requests`` exception escape ``run_sync``: HTTP errors become
+    ``DALServiceError``, but a connection failure or a timeout is re-raised as ``DALFormatError``
+    with the requests exception as ``cause`` (``execute_votable`` wraps everything). The cause,
+    not the class, tells a server down from a real non-VOTable answer (HTML maintenance page).
+    """
+    cause = getattr(exc, "cause", None)
+    if isinstance(cause, requests.Timeout):
+        return f"pas de réponse en {timeout_s:g} s"
+    if isinstance(cause, requests.ConnectionError):
+        return "injoignable (réseau ou serveur arrêté)"
+    if isinstance(exc, pyvo.dal.DALFormatError):
+        return "réponse inattendue (pas une table VOTable : page de maintenance ?)"
+    text = str(getattr(exc, "reason", None) or exc).strip()
+    return text.splitlines()[0][:160] if text else type(exc).__name__
+
+
 def table_to_csv(table: Mapping[str, Any]) -> str:
     """Gaia columns of a result table (astropy Table, or any mapping of columns) as the cache CSV."""
     sid, ra, dec = (np.asarray(table[c]) for c in COLUMNS[:3])
@@ -169,12 +188,8 @@ class GaiaTapCatalog:
             host = urllib.parse.urlparse(url).netloc or url
             try:
                 table, overflow = self._fetch(url, query)
-            except pyvo.dal.DALFormatError:
-                # Some services answer 200 with an HTML page (maintenance).
-                problems.append(f"{host} : réponse inattendue (pas une table VOTable)")
-                continue
-            except (pyvo.dal.DALServiceError, pyvo.dal.DALQueryError, requests.RequestException, OSError) as exc:
-                problems.append(f"{host} : {str(exc).splitlines()[0][:160] if str(exc) else type(exc).__name__}")
+            except pyvo.dal.DALAccessError as exc:
+                problems.append(f"{host} : {tap_problem(exc, self.timeout_s)}")
                 continue
             if overflow:
                 problems.append(f"{host} : résultat tronqué par le service (réduire astrometry.catalog_mag_limit)")
